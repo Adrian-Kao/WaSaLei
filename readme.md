@@ -1,1 +1,1 @@
-This is the readme file
+先執行 pip install -r requirements.txt
