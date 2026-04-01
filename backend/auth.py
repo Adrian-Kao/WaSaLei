@@ -1,4 +1,6 @@
-"""這邊主要是做資料庫的連接，現在是測試版版的資料庫，但結構上大致一樣"""
+"""這邊是用來比對登入的帳密是否正確，會從資料庫撈出來比對，如果正確就回傳使用者的 id 和 username，否則回傳 None。"""
+
+#叫出db.py的connection function 才可以用sql的語法
 from db import get_db_connection
 
 def check_login(username, password):

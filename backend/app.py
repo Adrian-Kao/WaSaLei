@@ -1,3 +1,5 @@
+"""這邊專門處理前後端的api串聯，讓前端能夠透過這些api來與後端進行資料操作"""
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from auth import check_login
