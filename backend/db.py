@@ -32,11 +32,8 @@ def get_user_by_account(account):
         connection.close()
 
 # 建立user
-def create_user(name, account, password):
-    if get_user_by_account(account) is not None:
-        print("帳號已存在, 無法重複註冊")
-        return False
-    
+def insert_new_user(name, account, password):
+    """(內部工具) 純粹把新資料寫進資料庫"""
     connection = get_connection()
     try:
         with connection.cursor() as cursor:
@@ -45,11 +42,11 @@ def create_user(name, account, password):
                 VALUES (%s, %s, %s, 'free')
             """
             cursor.execute(sql, (name, account, password))
-            connection.commit() # 存進資料庫
-            print(f"成功註冊新會員:{name}")
+            connection.commit()
             return True
     except Exception as e:
-        print(f"註冊失敗: {e}")
+        print(f"❌ 寫入發生錯誤: {e}")
+        connection.rollback()
         return False
     finally:
         connection.close()
@@ -67,25 +64,3 @@ def verify_login(account, password):
     else:
         print("密碼錯誤")
         return None
-    
-# ==========================================
-# 3. 本機測試
-# ==========================================
-if __name__ == "__main__":
-    print("=== 正在測試 db.py 功能 ===")
-    
-    # 1. 測試註冊功能
-    print("\n--- 測試註冊 ---")
-    create_user("測試", "test@example.com", "123456")
-    
-    # 2. 測試重複註冊
-    print("\n--- 測試重複註冊防呆 ---")
-    create_user("小明", "test@example.com", "654321")
-
-    # 3. 測試登入功能 (成功)
-    print("\n--- 測試登入 (成功案例) ---")
-    verify_login("test@example.com", "123456")
-
-    # 4. 測試登入功能 (密碼錯誤)
-    print("\n--- 測試登入 (失敗案例) ---")
-    verify_login("test@example.com", "wrongpassword")
