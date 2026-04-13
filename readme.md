@@ -7,6 +7,7 @@
 
 
 前端怎麼開啟：
+先到前端資料夾：cd frontend
 第一次下載到本地端：npm install
 之後：npm run dev
 測試後如果有問題幫我修改readme！
