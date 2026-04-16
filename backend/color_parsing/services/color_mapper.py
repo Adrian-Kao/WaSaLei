@@ -16,18 +16,32 @@ def map_color(rgb):
     if s < 40:
         return "gray"
 
-    # 顏色（Hue）
-    if h < 10 or h > 170:
+    # 顏色（Hue），OpenCV HSV: h ∈ [0, 179]
+    if h < 10 or h > 160:
         return "red"
-    elif h < 25:
+    elif h < 15:
         return "orange"
-    elif h < 35:
+    elif h < 22:
         return "yellow"
-    elif h < 85:
+    elif h < 28:
+        return "yellow-green"
+    elif h < 35:
+        return "lime"
+    elif h < 65:
         return "green"
-    elif h < 130:
+    elif h < 80:
+        return "teal"
+    elif h < 92:
+        return "cyan"
+    elif h < 100:
+        return "sky blue"
+    elif h < 115:
         return "blue"
-    elif h < 160:
+    elif h < 130:
+        return "navy"       # 也可叫 indigo
+    elif h < 148:
         return "purple"
-    else:
+    elif h < 155:
+        return "magenta"
+    else:                   # 155–160
         return "pink"
