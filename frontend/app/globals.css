@@ -1,0 +1,25 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f7f7f7;
+  color: #111;
+}
+
+main {
+  max-width: 360px;
+  margin: 40px auto;
+}
+
+input {
+  display: block;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+button {
+  cursor: pointer;
+}
