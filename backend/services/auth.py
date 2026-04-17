@@ -1,4 +1,4 @@
-import db
+from database import db
 
 # 註冊
 def register(name, account, password):

@@ -1,4 +1,4 @@
-import db
+from database import db
 
 VALID_SPACE_TYPES = ["衣櫃", "行李箱"]
 
