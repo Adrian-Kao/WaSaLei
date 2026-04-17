@@ -47,7 +47,7 @@ def insert_new_user(name, account, password):
             connection.commit()
             return True
     except Exception as e:
-        print(f"❌ 寫入發生錯誤: {e}")
+        print(f"寫入發生錯誤: {e}")
         connection.rollback()
         return False
     finally:
