@@ -105,3 +105,35 @@ def get_spaces_by_user_id(user_id):
     finally:
         connection.close()
 
+# 撈取空間內衣服的原始資料
+def fetch_raw_items_by_space(space_id):
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            sql = """
+                SELECT
+                    i.Name,
+                    t.Type_Name,
+                    i.Season,
+                    GROUP_CONCAT(DISTINCT s.Style_Name SEPARATOR '、') as Styles, 
+                    GROUP_CONCAT(DISTINCT c.Color_Name ORDER BY c.Color_ID SEPARATOR ',') as Colors
+                FROM Item i
+                LEFT JOIN Type t ON i.Type_ID = t.Type_ID
+                LEFT JOIN Item_Style isty ON i.Item_ID = isty.Item_ID
+                LEFT JOIN Style s ON isty.Style_ID = s.Style_ID
+                LEFT JOIN Item_Color ic ON i.Item_ID = ic.Item_ID
+                LEFT JOIN Color c ON ic.Color_ID = c.Color_ID
+                WHERE i.Space_ID = %s
+                GROUP BY i.Item_ID
+            """
+
+            cursor.execute(sql, (space_id,))
+            return cursor.fetchall()
+    except Exception as e:
+        print(f"查詢空間衣服的屬性時發生錯誤: {e}")
+        return []
+    finally:
+        connection.close()
+
+
+
