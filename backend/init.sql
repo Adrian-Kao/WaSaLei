@@ -118,7 +118,7 @@ CREATE TABLE `item` (
   CONSTRAINT `item_ibfk_1` FOREIGN KEY (`User_ID`) REFERENCES `user` (`User_ID`) ON DELETE CASCADE,
   CONSTRAINT `item_ibfk_2` FOREIGN KEY (`Space_ID`) REFERENCES `space` (`Space_ID`) ON DELETE SET NULL,
   CONSTRAINT `item_ibfk_3` FOREIGN KEY (`Type_ID`) REFERENCES `type` (`Type_ID`) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -127,6 +127,7 @@ CREATE TABLE `item` (
 
 LOCK TABLES `item` WRITE;
 /*!40000 ALTER TABLE `item` DISABLE KEYS */;
+INSERT INTO `item` VALUES (1,'純白短袖T恤','夏','容易髒要注意',NULL,1,1,1),(2,'深藍色直筒牛仔褲','四季','微彈性很舒服',NULL,1,1,2),(3,'黑色西裝外套','秋','面試與正式場合穿',NULL,1,1,3),(4,'灰色百褶裙','春','材質偏厚',NULL,1,1,4),(5,'白色基本款帆布鞋','四季','底有點硬',NULL,1,1,5),(6,'紅色保暖毛帽','冬','去雪地玩買的',NULL,1,1,6),(7,'黃色碎花洋裝','夏','去海邊度假穿',NULL,1,2,4),(8,'軍綠色多口袋工裝褲','秋','',NULL,1,2,2),(9,'黑色高領羊毛衣','冬','很保暖但需乾洗',NULL,1,1,1),(10,'卡其色防風風衣','秋','防潑水材質',NULL,1,1,3),(11,'深灰寬鬆運動棉褲','四季','當睡褲很舒服',NULL,1,1,2),(12,'白色長袖抗皺襯衫','春','上班必備',NULL,1,1,1),(13,'黑色亮面皮鞋','四季','搭配西裝',NULL,1,1,5),(14,'藍白紅格紋法蘭絨襯衫','春','休閒百搭',NULL,1,2,1),(15,'黑色真皮皮帶','四季','五金容易刮傷',NULL,1,1,6),(16,'粉色柔軟針織衫','秋','洗過有點縮水',NULL,1,1,1),(17,'淺藍色牛仔短褲','夏','超級涼爽',NULL,1,2,2),(18,'黑色長版連帽羽絨外套','冬','寒流來才穿得到',NULL,1,1,3),(19,'白色運動長襪','四季','消耗品',NULL,1,1,6),(20,'黑色漆皮包鞋','秋','跟高5公分',NULL,1,1,5);
 /*!40000 ALTER TABLE `item` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -153,6 +154,7 @@ CREATE TABLE `item_color` (
 
 LOCK TABLES `item_color` WRITE;
 /*!40000 ALTER TABLE `item_color` DISABLE KEYS */;
+INSERT INTO `item_color` VALUES (14,1),(2,2),(14,2),(3,3),(1,4),(14,4),(7,5);
 /*!40000 ALTER TABLE `item_color` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -179,6 +181,7 @@ CREATE TABLE `item_style` (
 
 LOCK TABLES `item_style` WRITE;
 /*!40000 ALTER TABLE `item_style` DISABLE KEYS */;
+INSERT INTO `item_style` VALUES (1,1),(11,1),(14,1),(3,2),(11,3),(1,4),(11,4);
 /*!40000 ALTER TABLE `item_style` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -197,7 +200,7 @@ CREATE TABLE `space` (
   PRIMARY KEY (`Space_ID`),
   KEY `User_ID` (`User_ID`),
   CONSTRAINT `space_ibfk_1` FOREIGN KEY (`User_ID`) REFERENCES `user` (`User_ID`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -206,7 +209,7 @@ CREATE TABLE `space` (
 
 LOCK TABLES `space` WRITE;
 /*!40000 ALTER TABLE `space` DISABLE KEYS */;
-INSERT INTO `space` VALUES (1,'衣櫃',20,1),(2,'行李箱',40,1);
+INSERT INTO `space` VALUES (1,'衣櫃',20,1),(2,'行李箱',40,1),(3,'衣櫃',20,1),(4,'行李箱',40,1),(5,'衣櫃',20,1),(6,'行李箱',40,1),(7,'衣櫃',20,1),(8,'行李箱',40,1),(9,'衣櫃',20,1),(10,'行李箱',40,1),(11,'衣櫃',20,1),(12,'行李箱',40,1),(13,'衣櫃',20,1),(14,'行李箱',40,1);
 /*!40000 ALTER TABLE `space` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -302,4 +305,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-04-17 13:55:18
+-- Dump completed on 2026-04-22 15:28:37
