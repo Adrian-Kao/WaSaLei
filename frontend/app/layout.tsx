@@ -31,7 +31,7 @@ export default function RootLayout({
       data-theme="lofi"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="m-0 flex min-h-screen items-center justify-center bg-white">
+      <body className="m-0 h-full flex min-h-screen items-center justify-center bg-white">
         <div className="relative h-[852px] min-h-[852px] max-h-[852px] w-[393px] min-w-[393px] max-w-[393px] overflow-hidden border border-black">
           {children}
           <Menu />

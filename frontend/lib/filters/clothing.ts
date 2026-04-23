@@ -15,7 +15,11 @@ export function filterClothingItems(items: ClothingItem[], filters: ClothingFilt
 
     const colorMatch =
       filters.color === "all" ||
-      normalizeHexColor(item.color) === normalizeHexColor(filters.color);
+      item.color.some(
+        (slotColor) =>
+          slotColor !== "none" &&
+          normalizeHexColor(slotColor) === normalizeHexColor(filters.color),
+      );
 
     return seasonMatch && styleMatch && typeMatch && colorMatch;
   });
