@@ -15,13 +15,12 @@ type ItemCardProps = {
 };
 
 function normalizeColor(input: string) {
-    const normalized = input.trim().toLowerCase();
-
-    if (normalized === "none") {
+    if (input === "none") {
         return null;
     }
 
-    const withHash = normalized.startsWith("#") ? normalized : `#${normalized}`;
+    const value = input.trim();
+    const withHash = value.startsWith("#") ? value : `#${value}`;
     const isValidHex = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(withHash);
     return isValidHex ? withHash : null;
 }
