@@ -28,8 +28,7 @@ def login(account, password):
     user = db.get_user_by_account(account)
 
     if user is None:
-        print("找不到此帳號")
-        return False
+        return False, "找不到此帳號"
     
     if user['Password'] == password:
         return True, user
