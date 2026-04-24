@@ -135,5 +135,41 @@ def fetch_raw_items_by_space(space_id):
     finally:
         connection.close()
 
+# ==========================================
+# 4. 衣服管理功能 (Item) (對應item.py)
+# ==========================================
 
+# 同時寫入Item及相關聯的表
+def insert_new_item(user_id, name, space_id, type_id, season, color_ids, style_ids):
+    connection = get_connection()
 
+    try:
+        with connection.cursor() as cursor:
+            # 寫入Item表
+            sql_item = """
+                INSERT INTO `Item` (`User_id`, `Name`, `Space_ID`, `Type_ID`, `Season`) 
+                VALUES (%s, %s, %s, %s, %s)
+            """
+            cursor.execute(sql_item, (user_id, name, space_id, type_id, season))
+
+            # 取得剛剛新增的Item的ID
+            new_item_id = cursor.lastrowid
+
+            # 寫入Item_Color表
+            if color_ids:
+                sql_color = "INSERT INTO `Item_Color` (`Item_ID`, `Color_ID`) VALUES (%s, %s)"
+                cursor.executemany(sql_color, [(new_item_id, color_id) for color_id in color_ids])
+                
+            # 寫入Item_Style表
+            if style_ids:
+                sql_style = "INSERT INTO `Item_Style` (`Item_ID`, `Style_ID`) VALUES (%s, %s)"
+                cursor.executemany(sql_style, [(new_item_id, style_id) for style_id in style_ids])
+
+        connection.commit()
+        return True, new_item_id
+    except Exception as e:
+        print(f"新增衣服時發生錯誤: {e}")
+        connection.rollback()
+        return False, str(e)
+    finally:
+        connection.close()
