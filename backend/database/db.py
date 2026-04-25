@@ -140,17 +140,17 @@ def fetch_raw_items_by_space(space_id):
 # ==========================================
 
 # 同時寫入Item及相關聯的表
-def insert_new_item(user_id, name, space_id, type_id, season, color_ids, style_ids):
+def insert_new_item(user_id, name, space_id, type_id, season, color_ids, style_ids, photo_path=None):
     connection = get_connection()
 
     try:
         with connection.cursor() as cursor:
             # 寫入Item表
             sql_item = """
-                INSERT INTO `Item` (`User_id`, `Name`, `Space_ID`, `Type_ID`, `Season`) 
-                VALUES (%s, %s, %s, %s, %s)
+                INSERT INTO `Item` (`User_id`, `Name`, `Space_ID`, `Type_ID`, `Season`, `Photo`) 
+                VALUES (%s, %s, %s, %s, %s, %s)
             """
-            cursor.execute(sql_item, (user_id, name, space_id, type_id, season))
+            cursor.execute(sql_item, (user_id, name, space_id, type_id, season, photo_path))
 
             # 取得剛剛新增的Item的ID
             new_item_id = cursor.lastrowid
