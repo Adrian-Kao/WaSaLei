@@ -21,6 +21,9 @@ export function filterClothingItems(items: ClothingItem[], filters: ClothingFilt
           normalizeHexColor(slotColor) === normalizeHexColor(filters.color),
       );
 
-    return seasonMatch && styleMatch && typeMatch && colorMatch;
+    const roomMatch =
+      !filters.room || filters.room === "all" || item.room === filters.room;
+
+    return seasonMatch && styleMatch && typeMatch && colorMatch && roomMatch;
   });
 }

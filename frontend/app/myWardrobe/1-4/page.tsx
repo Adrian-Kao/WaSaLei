@@ -53,6 +53,7 @@ export default function ItemDetailPage() {
             season={item.season}
             type={item.type}
             style={item.style}
+            imageUrl={item.url}
           />
         </div>
       </div>

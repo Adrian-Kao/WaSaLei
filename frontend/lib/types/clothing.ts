@@ -5,7 +5,9 @@ export type ClothingItem = {
   season: string[];
   type: string;
   style: string;
-  note?: string; // Optional note about this item
+  room?: string;
+  note?: string;
+  url: string;
 };
 
 export type ClothingFilters = {
@@ -13,6 +15,7 @@ export type ClothingFilters = {
   style: string;
   type: string;
   color: string;
+  room?: string;
 };
 
 export type ItemHistory = {
@@ -30,3 +33,14 @@ export const defaultClothingFilters: ClothingFilters = {
   type: "all",
   color: "all",
 };
+
+export function createClothingFilters(room?: string): ClothingFilters {
+  if (!room) {
+    return { ...defaultClothingFilters };
+  }
+
+  return {
+    ...defaultClothingFilters,
+    room,
+  };
+}

@@ -7,7 +7,7 @@ type ItemCardProps = {
     season: string[];
     type: string;
     style: string | string[];
-    imageUrl?: string;
+    imageUrl: string;
     imageAlt?: string;
     editable?: boolean;
     selected?: boolean;
@@ -56,21 +56,19 @@ export default function ItemCard({
                     {selected ? <FiCheck className="text-xl" /> : <FiPlus className="text-xl" />}
                 </button>
             ) : null}
-            <div className="relative mb-3 aspect-square w-full overflow-hidden rounded-2xl">
-                {imageUrl ? (
-                    <Image
-                        src={imageUrl}
-                        alt={imageAlt ?? name}
-                        fill
-                        sizes="(max-width: 768px) 70vw, 320px"
-                        className="object-cover"
-                    />
-                ) : null}
+            <div className="relative mb-3 aspect-square w-full overflow-hidden rounded-md">
+                <Image
+                    src={imageUrl}
+                    alt={imageAlt ?? name}
+                    fill
+                    sizes="(max-width: 768px) 70vw, 320px"
+                    className="object-cover"
+                />
             </div>
 
             <div className="mb-2 flex items-center justify-center gap-3 text-md leading-none ">
                 <span>{name}</span>
-                <div className="inline-flex overflow-hidden rounded-md border-2 border-black">
+                <div className="inline-flex overflow-hidden rounded-2xl border-2 border-black">
                     {colorSlots.map((slotColor, index) => (
                         <span
                             key={`${name}-color-${index}`}

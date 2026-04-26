@@ -1,6 +1,7 @@
 import type { ClothingItem, ItemHistory } from "@/lib/types/clothing";
 
 const wardrobeName = "測試衣櫃";
+const fixedItemUrl = "/1.webp";
 
 const mockClothingItems: ClothingItem[] = Array.from({ length: 6 }, (_, index) => ({
   id: index + 1,
@@ -9,6 +10,8 @@ const mockClothingItems: ClothingItem[] = Array.from({ length: 6 }, (_, index) =
   season: ["春", "夏"],
   type: "上身",
   style: "日常",
+  room: "台北宿舍",
+  url: fixedItemUrl,
   note: index === 0 ? "很舒服的棉質材料，適合日常穿著" : undefined,
 }));
 
