@@ -2,6 +2,21 @@ import sys
 import os
 import uuid
 
+
+def configure_console_encoding():
+    """Force UTF-8 output to avoid garbled Chinese text in terminal/output panel."""
+    try:
+        if hasattr(sys.stdout, "reconfigure"):
+            sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        if hasattr(sys.stderr, "reconfigure"):
+            sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        # Keep execution unaffected even if stream reconfiguration is unsupported.
+        pass
+
+
+configure_console_encoding()
+
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
