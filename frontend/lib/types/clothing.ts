@@ -11,10 +11,10 @@ export type ClothingItem = {
 };
 
 export type ClothingFilters = {
-  season: string;
-  style: string;
-  type: string;
-  color: string;
+  season: string[];
+  style: string[];
+  type: string[];
+  color: string[];
   room?: string;
 };
 
@@ -27,11 +27,18 @@ export type ItemHistory = {
   occasion?: string; // What occasion this was worn for
 };
 
+export type OutfitHistory = {
+  id: number;
+  imageUrl: string;
+  wornDate: string;
+  occasion: string;
+};
+
 export const defaultClothingFilters: ClothingFilters = {
-  season: "all",
-  style: "all",
-  type: "all",
-  color: "all",
+  season: [],
+  style: [],
+  type: [],
+  color: [],
 };
 
 export function createClothingFilters(room?: string): ClothingFilters {

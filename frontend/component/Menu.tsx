@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const HIDDEN_PATHS = new Set(["/login", "/registration"]);
+const HIDDEN_PATHS = new Set(["/login", "/registration", "/myWardrobe/1-5"]);
 
 export default function Menu() {
 	const pathname = usePathname();

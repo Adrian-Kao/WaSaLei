@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { requestDeleteSelectedItems, requestMoveSelectedItemsToRoom } from "@/lib/api/clothing";
 import type { ClothingItem } from "@/lib/types/clothing";
 
 export function useWardrobeEditor(initialItems: ClothingItem[]) {
@@ -33,16 +34,23 @@ export function useWardrobeEditor(initialItems: ClothingItem[]) {
 			return;
 		}
 
-		setItems((prev) => prev.filter((item) => !selectedItemIds.includes(item.id)));
+		void requestDeleteSelectedItems(selectedItemIds);
 		setSelectedItemIds([]);
 	}
 
-	// MOVE 先保留為流程入口，之後可接到目的地選擇或 modal。
+	// MOVE 先開啟 UI 流程，不直接改資料。
 	function handleMoveSelectedItems() {
 		if (selectedItemIds.length === 0) {
 			return;
 		}
+	}
 
+	function moveSelectedItemsToRoom(targetRoom: string) {
+		if (selectedItemIds.length === 0 || !targetRoom) {
+			return;
+		}
+
+		void requestMoveSelectedItemsToRoom(selectedItemIds, targetRoom);
 		setSelectedItemIds([]);
 	}
 
@@ -59,6 +67,7 @@ export function useWardrobeEditor(initialItems: ClothingItem[]) {
 		toggleSelectedItem,
 		handleDeleteSelectedItems,
 		handleMoveSelectedItems,
+		moveSelectedItemsToRoom,
 		handleAddItem,
 	};
 }

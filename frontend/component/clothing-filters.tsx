@@ -1,6 +1,12 @@
 import type { Dispatch, SetStateAction } from "react";
+import Select, { type MultiValue, type StylesConfig } from "react-select";
 
 import type { ClothingFilters } from "@/lib/types/clothing";
+
+type SelectOption = {
+    value: string;
+    label: string;
+};
 
 type ClothingFiltersProps = {
     filters: ClothingFilters;
@@ -23,6 +29,69 @@ export default function ClothingFilters({
     showRoomFilter = false,
     roomOptions = [],
 }: ClothingFiltersProps) {
+    const normalizeOptions = (options: string[]) => options.filter((value) => value !== "all").map((value) => ({ value, label: value }));
+
+    const toSelectedOptions = (selectedValues: string[], options: SelectOption[]) =>
+        options.filter((option) => selectedValues.includes(option.value));
+
+    const toFilterValues = (selected: MultiValue<SelectOption>) => selected.map((option) => option.value);
+
+    const seasonSelectOptions = normalizeOptions(seasonOptions);
+    const styleSelectOptions = normalizeOptions(styleOptions);
+    const typeSelectOptions = normalizeOptions(typeOptions);
+    const colorSelectOptions = normalizeOptions(colorOptions);
+
+    const selectStyles: StylesConfig<SelectOption, true> = {
+        control: (base) => ({
+            ...base,
+            minHeight: 40,
+            border: 0,
+            borderRadius: 12,
+            boxShadow: "none",
+            backgroundColor: "#fff",
+            paddingLeft: 2,
+            paddingRight: 2,
+        }),
+        valueContainer: (base) => ({
+            ...base,
+            paddingTop: 2,
+            paddingBottom: 2,
+            gap: 4,
+        }),
+        placeholder: (base) => ({
+            ...base,
+            fontSize: 16,
+            lineHeight: 1,
+        }),
+        multiValue: (base) => ({
+            ...base,
+            borderRadius: 9999,
+            backgroundColor: "#ececec",
+        }),
+        multiValueLabel: (base) => ({
+            ...base,
+            fontSize: 16,
+        }),
+        option: (base) => ({
+            ...base,
+            fontSize: 16,
+            lineHeight: 1.2,
+            paddingTop: 10,
+            paddingBottom: 10,
+        }),
+        menu: (base) => ({
+            ...base,
+            zIndex: 40,
+        }),
+    };
+
+    const formatColorOptionLabel = (option: SelectOption) => (
+        <span className="flex items-center gap-2">
+            <span className="inline-block h-5 w-5 rounded border border-black" style={{ backgroundColor: option.value }} />
+            <span>{option.label}</span>
+        </span>
+    );
+
     return (
         <div className="grid gap-3">
             {showRoomFilter ? (
@@ -42,93 +111,68 @@ export default function ClothingFilters({
                 </div>
             ) : null}
 
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 gap-1">
                 <div className="space-y-1">
-                    <label className="block text-2xl leading-none">Season</label>
-                    <select
-                        value={filters.season}
-                        onChange={(e) => setFilters((prev) => ({ ...prev, season: e.target.value }))}
-                        className="select h-12 min-h-0 w-full rounded-xl border-0 bg-white text-2xl font-medium"
-                    >
-                        {seasonOptions.map((opt) => (
-                            <option key={opt} value={opt}>
-                                {opt}
-                            </option>
-                        ))}
-                    </select>
+                    <label className="block text-xl leading-none">season</label>
+                    <Select
+                        isMulti
+                        closeMenuOnSelect={false}
+                        hideSelectedOptions={false}
+                        options={seasonSelectOptions}
+                        value={toSelectedOptions(filters.season, seasonSelectOptions)}
+                        onChange={(selected) => setFilters((prev) => ({ ...prev, season: toFilterValues(selected) }))}
+                        placeholder="全部"
+                        styles={selectStyles}
+                        noOptionsMessage={() => "沒有選項"}
+                    />
                 </div>
 
                 <div className="space-y-1">
-                    <label className="block text-2xl leading-none">style</label>
-                    <select
-                        value={filters.style}
-                        onChange={(e) => setFilters((prev) => ({ ...prev, style: e.target.value }))}
-                        className="select h-12 min-h-0 w-full rounded-xl border-0 bg-white text-2xl font-medium"
-                    >
-                        {styleOptions.map((opt) => (
-                            <option key={opt} value={opt}>
-                                {opt}
-                            </option>
-                        ))}
-                    </select>
+                    <label className="block text-xl leading-none">style</label>
+                    <Select
+                        isMulti
+                        closeMenuOnSelect={false}
+                        hideSelectedOptions={false}
+                        options={styleSelectOptions}
+                        value={toSelectedOptions(filters.style, styleSelectOptions)}
+                        onChange={(selected) => setFilters((prev) => ({ ...prev, style: toFilterValues(selected) }))}
+                        placeholder="全部"
+                        styles={selectStyles}
+                        noOptionsMessage={() => "沒有選項"}
+                    />
                 </div>
 
                 <div className="space-y-1">
-                    <label className="block text-2xl leading-none">type</label>
-                    <select
-                        value={filters.type}
-                        onChange={(e) => setFilters((prev) => ({ ...prev, type: e.target.value }))}
-                        className="select h-12 min-h-0 w-full rounded-xl border-0 bg-white text-2xl font-medium"
-                    >
-                        {typeOptions.map((opt) => (
-                            <option key={opt} value={opt}>
-                                {opt}
-                            </option>
-                        ))}
-                    </select>
+                    <label className="block text-xl leading-none">type</label>
+                    <Select
+                        isMulti
+                        closeMenuOnSelect={false}
+                        hideSelectedOptions={false}
+                        options={typeSelectOptions}
+                        value={toSelectedOptions(filters.type, typeSelectOptions)}
+                        onChange={(selected) => setFilters((prev) => ({ ...prev, type: toFilterValues(selected) }))}
+                        placeholder="全部"
+                        styles={selectStyles}
+                        noOptionsMessage={() => "沒有選項"}
+                    />
                 </div>
 
                 <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                        <label className="block text-2xl leading-none">color</label>
+                        <label className="block text-xl leading-none">color</label>
                     </div>
-                    <div className="dropdown w-full">
-                        <div
-                            tabIndex={0}
-                            className="btn btn-outline h-12 min-h-0 w-full rounded-xl border-0 bg-white p-0"
-                        >
-                            {filters.color === "all" ? (
-                                <span className="text-2xl font-medium leading-none">all</span>
-                            ) : (
-                                <span
-                                    className="inline-block h-6 w-6 rounded border border-black"
-                                    style={{ backgroundColor: filters.color }}
-                                />
-                            )}
-                        </div>
-                        <ul className="dropdown-content menu z-30 mt-1 w-full rounded-xl bg-base-100 p-2 shadow" tabIndex={0}>
-                            {colorOptions.map((opt) => (
-                                <li key={opt}>
-                                    <button
-                                        type="button"
-                                        onClick={() => setFilters((prev) => ({ ...prev, color: opt }))}
-                                        className="flex h-10 items-center justify-center"
-                                        aria-label={opt === "all" ? "all" : opt}
-                                        title={opt === "all" ? "all" : opt}
-                                    >
-                                        {opt === "all" ? (
-                                            <span className="text-base font-medium">all</span>
-                                        ) : (
-                                            <span
-                                                className="inline-block h-5 w-5 rounded border border-black"
-                                                style={{ backgroundColor: opt }}
-                                            />
-                                        )}
-                                    </button>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
+                    <Select
+                        isMulti
+                        closeMenuOnSelect={false}
+                        hideSelectedOptions={false}
+                        options={colorSelectOptions}
+                        value={toSelectedOptions(filters.color, colorSelectOptions)}
+                        onChange={(selected) => setFilters((prev) => ({ ...prev, color: toFilterValues(selected) }))}
+                        placeholder="全部"
+                        styles={selectStyles}
+                        noOptionsMessage={() => "沒有選項"}
+                        formatOptionLabel={formatColorOptionLabel}
+                    />
                 </div>
             </div>
         </div>
