@@ -1,7 +1,6 @@
 import sys
 import os
 
-# --- 尋路魔法：讓 Python 知道上一層資料夾 (backend) 的存在 ---
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
@@ -25,6 +24,9 @@ def search_wardrobe(user_id, keyword=None, space_id=None, type_id=None, season=N
     for item in raw_items:
         color_list = item['Colors'].split(',') if item['Colors'] else []
 
+        photo_filename = item.get('Photo')
+        photo_url = f"http://127.0.1:5000/images/{photo_filename}" if photo_filename else None
+
         formatted_item = {
             "item_id": item['Item_ID'],
             "name" : item['Name'],
@@ -33,7 +35,8 @@ def search_wardrobe(user_id, keyword=None, space_id=None, type_id=None, season=N
             "style": item['Styles'],
             "color1": color_list[0] if len(color_list) > 0 else None,
             "color2": color_list[1] if len(color_list) > 1 else None,
-            "color3": color_list[2] if len(color_list) > 2 else None
+            "color3": color_list[2] if len(color_list) > 2 else None,
+            "photo_url": photo_url
         }
         formatted_items.append(formatted_item)
     
