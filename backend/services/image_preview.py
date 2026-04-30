@@ -14,25 +14,22 @@ if str(BACKEND_DIR) not in sys.path:
 
 from database import db
 
-# pictures 放在專案根目錄，與 frontend、backend 同一層。
+# pictures is at the project root, next to frontend and backend.
 PICTURES_DIR = PROJECT_DIR / "pictures"
 INPUT_DIR = PICTURES_DIR / "input"
 OUTPUT_DIR = PICTURES_DIR / "output"
 FINAL_DIR = PICTURES_DIR / "final"
 
-# input/output 是暫存區，所以固定使用 input.* 和 output.png。
 OUTPUT_FILENAME = "output.png"
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
 
 
 def ensure_picture_folders():
-    # 確保圖片流程需要的三個資料夾都存在。
     for folder in (INPUT_DIR, OUTPUT_DIR, FINAL_DIR):
         folder.mkdir(parents=True, exist_ok=True)
 
 
 def clear_folder(folder_path):
-    # input 和 output 最多只保留一張圖，新流程開始前會先清空。
     folder = Path(folder_path)
     folder.mkdir(parents=True, exist_ok=True)
 
@@ -56,14 +53,13 @@ def save_upload_to_input(file_storage):
     input_path = INPUT_DIR / f"input{Path(safe_name).suffix.lower()}"
     file_storage.save(input_path)
 
-    return input_path
+    return _to_project_relative_path(input_path)
 
 
-def preview_item_image(file_storage, mode="garment"):
-    # 儲存原圖到 pictures/input，再呼叫 color_parsing 產生 pictures/output/output.png。
-    input_path = save_upload_to_input(file_storage)
+def parse_current_input_image(mode="garment"):
+    input_path = get_current_input_image()
 
-    # rembg/onnxruntime 載入較重，所以延後到真正需要去背時才 import。
+    # rembg/onnxruntime is heavy, so import only when parsing is requested.
     from color_parsing.app import run_color_parsing
 
     result = run_color_parsing(
@@ -83,13 +79,29 @@ def preview_item_image(file_storage, mode="garment"):
     }
 
 
+def preview_item_image(file_storage, mode="garment"):
+    save_upload_to_input(file_storage)
+    return parse_current_input_image(mode=mode)
+
+
+def get_current_input_image():
+    ensure_picture_folders()
+
+    input_files = sorted(path for path in INPUT_DIR.iterdir() if path.is_file())
+    if not input_files:
+        raise FileNotFoundError("No image exists in pictures/input.")
+    if len(input_files) > 1:
+        raise RuntimeError("pictures/input should contain only one image.")
+
+    return input_files[0]
+
+
 def move_output_to_final():
     ensure_picture_folders()
 
-    # 使用者確認後，才把暫存 output 搬進 final 長期保存。
     output_path = OUTPUT_DIR / OUTPUT_FILENAME
     if not output_path.exists():
-        raise FileNotFoundError("No parsed output image exists. Please preview an image first.")
+        raise FileNotFoundError("No parsed output image exists. Please parse an image first.")
 
     final_path = FINAL_DIR / f"{uuid.uuid4().hex}.png"
     shutil.copy2(str(output_path), str(final_path))
@@ -106,7 +118,6 @@ def confirm_item_image(
     color_ids=None,
     style_ids=None,
 ):
-    # 確認階段：搬移圖片、寫入資料庫，成功後清空 input/output。
     if color_ids is None:
         color_ids = []
     if style_ids is None:
@@ -129,13 +140,11 @@ def confirm_item_image(
             photo_path=photo_path,
         )
     except Exception:
-        # 資料庫寫入失敗時，避免留下沒有資料庫紀錄的 final 圖片。
         if final_path.exists():
             final_path.unlink()
         raise
 
     if not success:
-        # 資料庫寫入失敗時，避免留下沒有資料庫紀錄的 final 圖片。
         if final_path.exists():
             final_path.unlink()
         raise RuntimeError(result)
@@ -158,5 +167,4 @@ def _get_upload_extension(filename):
 
 
 def _to_project_relative_path(path):
-    # 回傳給前端和資料庫使用的路徑，以專案根目錄為基準。
     return Path(path).resolve().relative_to(PROJECT_DIR).as_posix()

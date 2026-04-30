@@ -5,14 +5,16 @@ from services.image_preview import (
     PICTURES_DIR,
     confirm_item_image,
     ensure_picture_folders,
+    parse_current_input_image,
     preview_item_image,
+    save_upload_to_input,
 )
 
-# Flask 後端主入口，提供前端圖片預覽與確認存檔 API。
+# Main Flask API for the frontend image workflow.
 app = Flask(__name__)
 CORS(app)
 
-# 啟動時確認 pictures/input、pictures/output、pictures/final 都存在。
+# Make sure WaSaLei/pictures/input|output|final exist when the server starts.
 ensure_picture_folders()
 
 
@@ -23,13 +25,41 @@ def health_check():
 
 @app.get("/pictures/<path:filename>")
 def serve_picture(filename):
-    # 讓前端可以透過 /pictures/... 讀取 output 預覽圖和 final 正式圖。
+    # Exposes WaSaLei/pictures so the frontend can preview output/final images.
     return send_from_directory(PICTURES_DIR, filename)
+
+
+@app.post("/api/images/upload-input")
+def upload_input_image():
+    # Stage 1: frontend uploads an image and backend stores it in pictures/input.
+    file_storage = request.files.get("file") or request.files.get("image")
+
+    try:
+        input_path = save_upload_to_input(file_storage)
+        return jsonify({
+            "success": True,
+            "input_path": input_path,
+        })
+    except Exception as exc:
+        return jsonify({"success": False, "message": str(exc)}), 400
+
+
+@app.post("/api/images/parse-input")
+def parse_input_image():
+    # Stage 2: frontend asks backend to parse the current picture in input.
+    data = request.get_json(silent=True) or request.form.to_dict(flat=True)
+    mode = data.get("mode", "garment")
+
+    try:
+        result = parse_current_input_image(mode=mode)
+        return jsonify({"success": True, **result})
+    except Exception as exc:
+        return jsonify({"success": False, "message": str(exc)}), 400
 
 
 @app.post("/api/items/preview-image")
 def preview_image():
-    # 第一階段：前端上傳圖片，後端放入 input，呼叫 color_parsing 後輸出到 output。
+    # Backward-compatible one-step endpoint: upload to input and parse immediately.
     file_storage = request.files.get("file") or request.files.get("image")
     mode = request.form.get("mode", "garment")
 
@@ -42,7 +72,7 @@ def preview_image():
 
 @app.post("/api/items/confirm-image")
 def confirm_image():
-    # 第二階段：前端確認後，把 output 圖片搬到 final 並寫入資料庫。
+    # Final stage: copy output image to final, write DB record, then clear input/output.
     data = request.get_json(silent=True) or request.form.to_dict(flat=True)
 
     try:
@@ -79,7 +109,6 @@ def _optional_int(data, key):
 
 
 def _int_list(value):
-    # 支援 JSON array，例如 [1, 2]，也支援表單字串，例如 "1,2"。
     if value is None or value == "":
         return []
     if isinstance(value, list):
