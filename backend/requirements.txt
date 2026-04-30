@@ -1,3 +1,14 @@
 flask==3.0.2
 flask-cors==4.0.0
 mysql-connector-python==8.3.0
+pymysql
+python-dotenv
+opencv-python
+numpy
+scikit-learn
+Pillow
+torch
+torchvision
+rembg
+onnxruntime
+matplotlib

@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 from sklearn.cluster import MiniBatchKMeans
-from services.color_mapper_lab import map_color_lab
+from color_parsing.services.color_mapper_lab import map_color_lab
 
 def get_best_k(pixels):
     pixel_std = np.std(pixels)

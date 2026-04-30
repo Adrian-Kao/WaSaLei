@@ -1,5 +1,5 @@
-from models.schp_parser import parse_clothes
-from services.color_analyzer import analyze_colors
+from color_parsing.models.schp_parser import parse_clothes
+from color_parsing.services.color_analyzer import analyze_colors
 
 
 def process_person(image):
