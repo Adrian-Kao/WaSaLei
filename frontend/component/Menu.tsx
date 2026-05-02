@@ -26,7 +26,7 @@ export default function Menu() {
 				我的衣櫃
 			</Link>
 			<Link
-				href="/myOutfits"
+				href= "/myOutfits/allOutfits"
 				className={`tab h-[80%] self-center flex flex-1 items-center justify-center rounded-xl border-0 text-base ${isMyOutfits ? "bg-base-100 text-base-content font-semibold" : "text-base-content/60"}`}
 			>
 				我的穿搭
