@@ -1,6 +1,7 @@
-from flask import Flask, jsonify, request, send_from_directory
+﻿from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 
+from services.auth import login, register
 from services.image_preview import (
     PICTURES_DIR,
     confirm_item_image,
@@ -10,7 +11,7 @@ from services.image_preview import (
     save_upload_to_input,
 )
 
-# Main Flask API for the frontend image workflow.
+# Main Flask API for frontend workflows.
 app = Flask(__name__)
 CORS(app)
 
@@ -21,6 +22,38 @@ ensure_picture_folders()
 @app.get("/")
 def health_check():
     return jsonify({"status": "ok"})
+
+
+@app.post("/api/auth/login")
+def login_user():
+    data = request.get_json(silent=True) or request.form.to_dict(flat=True)
+
+    try:
+        success, result = login(
+            account=_required_value(data, "account"),
+            password=_required_value(data, "password"),
+        )
+        if success:
+            return jsonify({"success": True, "user": result})
+        return jsonify({"success": False, "message": result}), 401
+    except Exception as exc:
+        return jsonify({"success": False, "message": str(exc)}), 400
+
+
+@app.post("/api/auth/register")
+def register_user():
+    data = request.get_json(silent=True) or request.form.to_dict(flat=True)
+
+    try:
+        success, message = register(
+            name=_required_value(data, "name"),
+            account=_required_value(data, "account"),
+            password=_required_value(data, "password"),
+        )
+        status_code = 200 if success else 400
+        return jsonify({"success": success, "message": message}), status_code
+    except Exception as exc:
+        return jsonify({"success": False, "message": str(exc)}), 400
 
 
 @app.get("/pictures/<path:filename>")

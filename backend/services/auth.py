@@ -1,4 +1,4 @@
-import sys
+﻿import sys
 import os
 
 # --- 尋路魔法：讓 Python 知道上一層資料夾 (backend) 的存在 ---
