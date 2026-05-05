@@ -1,74 +1,92 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAppStore } from "@/store/store";
+import { getUserRooms } from "@/lib/api/clothing";
+
+type RoomInfo = {
+  name: string;
+  itemCount: number;
+  totalCapacity: number;
+};
+
 export default function WardrobeListPage() {
+  const router = useRouter();
+  const userId = useAppStore((s) => s.userId);
+  const setCurrentRoom = useAppStore((s) => s.setCurrentRoom);
+  const setRooms = useAppStore((s) => s.setRooms);
+  
+  const [rooms, setRooms_local] = useState<RoomInfo[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchRooms() {
+      setLoading(true);
+      try {
+        if (!userId) {
+          setRooms_local([]);
+          setRooms([]);
+          return;
+        }
+        const roomList = await getUserRooms(userId);
+        // 更新到 zustand store
+        setRooms(roomList);
+        // TODO: 後端返回房間時應包含 itemCount 和 totalCapacity，暫時用假資料
+        const roomsWithInfo = roomList.map((name) => ({
+          name,
+          itemCount: 5,
+          totalCapacity: 30,
+        }));
+        setRooms_local(roomsWithInfo);
+      } catch (error) {
+        console.error("Failed to fetch rooms:", error);
+        setRooms_local([]);
+        setRooms([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    void fetchRooms();
+  }, [userId, setRooms]);
+
+  function handleRoomClick(roomName: string) {
+    setCurrentRoom(roomName);
+    router.push("/myWardrobe/1-2");
+  }
+
   return (
     <div className="flex h-[90%] flex-col items-center bg-base-100 px-5 pb-6 text-black">
       <div className="text-7xl font-bold tracking-tight mt-28">衣櫃列表</div>
 
       <div className="mt-10 w-full h-full rounded-2xl bg-base-300 px-4 py-6 space-y-3 overflow-scroll scrollbar-hide">
-        <button
-          type="button"
-          className="btn relative h-25 w-full rounded-2xl border-0 bg-base-100 text-black hover:bg-base-200"
-        >
-          <div className="text-center text-3xl">房間A</div>
-          <div className="absolute bottom-3 right-4 text-2xl">5/30</div>
-        </button>
+        {loading ? (
+          <div className="flex h-44 items-center justify-center">
+            <span className="loading loading-spinner loading-lg"></span>
+          </div>
+        ) : rooms.length > 0 ? (
+          <>
+            {rooms.map((room) => (
+              <button
+                key={room.name}
+                type="button"
+                onClick={() => handleRoomClick(room.name)}
+                className="btn relative h-25 w-full rounded-2xl border-0 bg-base-100 text-black hover:bg-base-200 transition-colors"
+              >
+                <div className="text-center text-3xl">{room.name}</div>
+                <div className="absolute bottom-3 right-4 text-2xl">{room.itemCount}/{room.totalCapacity}</div>
+              </button>
+            ))}
+          </>
+        ) : null}
 
         <button
           type="button"
-          className="btn relative h-25 w-full rounded-2xl border-0 bg-base-100 text-black hover:bg-base-200"
+          className="btn btn-neutral btn-outline btn-xs h-25 w-full rounded-2xl text-5xl font-semibold"
         >
-          <div className="text-center text-3xl">房間A</div>
-          <div className="absolute bottom-3 right-4 text-2xl">5/30</div>
+          +
         </button>
-
-        <button
-          type="button"
-          className="btn relative h-25 w-full rounded-2xl border-0 bg-base-100 text-black hover:bg-base-200"
-        >
-          <div className="text-center text-3xl">房間A</div>
-          <div className="absolute bottom-3 right-4 text-2xl">5/30</div>
-        </button>
-
-        <button
-          type="button"
-          className="btn relative h-25 w-full rounded-2xl border-0 bg-base-100 text-black hover:bg-base-200"
-        >
-          <div className="text-center text-3xl">房間A</div>
-          <div className="absolute bottom-3 right-4 text-2xl">5/30</div>
-        </button>
-
-        <button
-          type="button"
-          className="btn relative h-25 w-full rounded-2xl border-0 bg-base-100 text-black hover:bg-base-200"
-        >
-          <div className="text-center text-3xl">房間A</div>
-          <div className="absolute bottom-3 right-4 text-2xl">5/30</div>
-        </button>
-
-        <button
-          type="button"
-          className="btn relative h-25 w-full rounded-2xl border-0 bg-base-100 text-black hover:bg-base-200"
-        >
-          <div className="text-center text-3xl">房間A</div>
-          <div className="absolute bottom-3 right-4 text-2xl">5/30</div>
-        </button>
-
-        <button
-          type="button"
-          className="btn relative h-25 w-full rounded-2xl border-0 bg-base-100 text-black hover:bg-base-200"
-        >
-          <div className="text-center text-3xl">房間A</div>
-          <div className="absolute bottom-3 right-4 text-2xl">5/30</div>
-        </button>
-
-        {/* <div className="relative flex h-25 items-center justify-center rounded-2xl bg-base-100 p-4"> */}
-          <button
-            type="button"
-            className="btn btn-neutral btn-outline btn-xs h-25 w-full rounded-2xl text-5xl font-semibold"
-          >
-            + 
-          </button>
-        {/* </div> */}
-
       </div>
     </div>
   );

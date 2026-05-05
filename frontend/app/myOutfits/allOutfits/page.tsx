@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react";
 
 import OutfitHistoryCard from "@/component/outfit-history-card";
-import { getOutfitHistories, getOutfitOccasionOptions } from "@/lib/api/clothing";
-import type { OutfitHistory } from "@/lib/types/clothing";
+import { getAllOutfits,getOutfitOccasionOptions } from "@/lib/api/outfits";
+
+import type { Outfit } from "@/lib/types/outfit";
 
 export default function Home() {
   const [occasionFilter, setOccasionFilter] = useState("all");
-  const [outfits, setOutfits] = useState<OutfitHistory[]>([]);
+  const [outfits, setOutfits] = useState<Outfit[]>([]);
   const [occasionOptions, setOccasionOptions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -34,10 +35,15 @@ export default function Home() {
 
     async function loadOutfits() {
       setIsLoading(true);
-      const history = await getOutfitHistories(occasionFilter);
+      const allOutfits = await getAllOutfits();
+      
+      // 前端篩選 occasion
+      const filtered = occasionFilter === "all" 
+        ? allOutfits 
+        : allOutfits.filter(o => o.occasion === occasionFilter);
 
       if (isMounted) {
-        setOutfits(history);
+        setOutfits(filtered);
         setIsLoading(false);
       }
     }
@@ -79,7 +85,7 @@ export default function Home() {
           {outfits.map((outfit) => (
             <OutfitHistoryCard
               key={outfit.id}
-              imageUrl={outfit.imageUrl}
+              imageUrl={outfit.photo}
               wornDate={outfit.wornDate}
               occasion={outfit.occasion}
             />

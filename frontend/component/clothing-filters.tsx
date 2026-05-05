@@ -92,22 +92,24 @@ export default function ClothingFilters({
         </span>
     );
 
+    const roomSelectOptions = normalizeOptions(roomOptions);
+
     return (
         <div className="grid gap-3">
             {showRoomFilter ? (
-                <div className="space-y-1 w-full mx-auto">
-                    <label className="block text-2xl leading-none">room</label>
-                    <select
-                        value={filters.room ?? "all"}
-                        onChange={(e) => setFilters((prev) => ({ ...prev, room: e.target.value }))}
-                        className="select h-12 min-h-0 w-full rounded-xl border-0 bg-white text-2xl font-medium"
-                    >
-                        {roomOptions.map((opt) => (
-                            <option key={opt} value={opt}>
-                                {opt}
-                            </option>
-                        ))}
-                    </select>
+                <div className="space-y-1">
+                    <label className="block text-xl leading-none">room</label>
+                    <Select
+                        isMulti
+                        closeMenuOnSelect={false}
+                        hideSelectedOptions={false}
+                        options={roomSelectOptions}
+                        value={toSelectedOptions(filters.room ?? [], roomSelectOptions)}
+                        onChange={(selected) => setFilters((prev) => ({ ...prev, room: toFilterValues(selected) }))}
+                        placeholder="全部"
+                        styles={selectStyles}
+                        noOptionsMessage={() => "沒有選項"}
+                    />
                 </div>
             ) : null}
 

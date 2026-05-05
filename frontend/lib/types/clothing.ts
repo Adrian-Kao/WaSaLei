@@ -4,10 +4,8 @@ export type ClothingItem = {
   color: [string, string, string];
   season: string[];
   type: string;
-  style: string;
-  room?: string;
-  note?: string;
-  url: string;
+  style: string | string[];
+  imageUrl: string;
 };
 
 export type ClothingFilters = {
@@ -15,9 +13,9 @@ export type ClothingFilters = {
   style: string[];
   type: string[];
   color: string[];
-  room?: string;
+  room?: string[];
 };
-
+// ??這有用到嗎
 export type ItemHistory = {
   id: number;
   itemId: number;
@@ -27,12 +25,6 @@ export type ItemHistory = {
   occasion?: string; // What occasion this was worn for
 };
 
-export type OutfitHistory = {
-  id: number;
-  imageUrl: string;
-  wornDate: string;
-  occasion: string;
-};
 
 export const defaultClothingFilters: ClothingFilters = {
   season: [],
@@ -41,13 +33,10 @@ export const defaultClothingFilters: ClothingFilters = {
   color: [],
 };
 
-export function createClothingFilters(room?: string): ClothingFilters {
-  if (!room) {
-    return { ...defaultClothingFilters };
-  }
-
+export function createClothingFilters(room?: string | string[]): ClothingFilters {
+  const roomArray = room ? (Array.isArray(room) ? room : [room]) : undefined;
   return {
     ...defaultClothingFilters,
-    room,
+    ...(roomArray ? { room: roomArray } : {}),
   };
 }

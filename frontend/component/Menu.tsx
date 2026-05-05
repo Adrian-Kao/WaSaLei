@@ -32,7 +32,7 @@ export default function Menu() {
 				我的穿搭
 			</Link>
 			<Link
-				href="/luggagePacking"
+				href="/luggagePacking/luggageHome"
 				className={`tab h-[80%] self-center flex flex-1 items-center justify-center rounded-xl border-0 text-base ${isLuggagePacking ? "bg-base-100 text-base-content font-semibold" : "text-base-content/60"}`}
 			>
 				一鍵打包

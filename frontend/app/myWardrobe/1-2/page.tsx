@@ -7,12 +7,12 @@ import EditActionBar from "@/component/edit-action-bar";
 import EditModeToggleButton from "@/component/edit-mode-toggle-button";
 import { useCurrentRoom } from "@/hooks/useCurrentRoom";
 import { useWardrobeEditor } from "@/hooks/useWardrobeEditor";
+import { useAppStore } from "@/store/store";
 import ItemCard from "@/component/item-card";
 import {
     getWardrobeClothingItems,
     getWardrobeFilteredClothingItems,
     getWardrobeName,
-    getWardrobeRooms,
 } from "@/lib/api/clothing";
 import { createClothingFilters, type ClothingFilters, type ClothingItem } from "@/lib/types/clothing";
 
@@ -28,6 +28,7 @@ const initialClothingItems = getWardrobeClothingItems();
 
 export default function WardrobePage() {
     const currentRoom = useCurrentRoom();
+    const storeRooms = useAppStore((s) => s.rooms);
 
     // 編輯狀態集中在 hook，page 只負責組 UI 與 filter。
     const {
@@ -45,7 +46,6 @@ export default function WardrobePage() {
     const [isMoveModalOpen, setIsMoveModalOpen] = useState(false);
     const [roomOptions, setRoomOptions] = useState<string[]>([]);
     const [selectedTargetRoom, setSelectedTargetRoom] = useState("");
-    const [isLoadingRooms, setIsLoadingRooms] = useState(false);
 
     async function handleOpenMoveModal() {
         handleMoveSelectedItems();
@@ -55,13 +55,11 @@ export default function WardrobePage() {
         }
 
         setIsMoveModalOpen(true);
-        setIsLoadingRooms(true);
 
-        const rooms = await getWardrobeRooms();
-        const availableRooms = rooms.filter((room) => room !== currentRoom);
+        // 從 zustand store 拿房間列表，過濾掉當前房間
+        const availableRooms = storeRooms.filter((room: string) => room !== currentRoom);
         setRoomOptions(availableRooms);
         setSelectedTargetRoom(availableRooms[0] ?? "");
-        setIsLoadingRooms(false);
     }
 
     function handleCloseMoveModal() {
@@ -77,19 +75,6 @@ export default function WardrobePage() {
         moveSelectedItemsToRoom(selectedTargetRoom);
         handleCloseMoveModal();
     }
-
-    useEffect(() => {
-        setFilters((prev) => {
-            if (prev.room === currentRoom) {
-                return prev;
-            }
-
-            return {
-                ...prev,
-                room: currentRoom,
-            };
-        });
-    }, [currentRoom]);
 
     useEffect(() => {
         let isMounted = true;
@@ -149,7 +134,7 @@ export default function WardrobePage() {
                             season={item.season}
                             type={item.type}
                             style={item.style}
-                            imageUrl={item.url}
+                            imageUrl={item.imageUrl}
                             editable={isEditMode}
                             selected={selectedItemIds.includes(item.id)}
                             onSelectToggle={() => toggleSelectedItem(item.id)}
@@ -163,11 +148,7 @@ export default function WardrobePage() {
                 <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/45 px-4" role="presentation">
                     <div className="w-full rounded-2xl bg-[#D3D3D3] p-8">
                         <div className="space-y-6">
-                            {isLoadingRooms ? (
-                                <div className="flex h-44 items-center justify-center">
-                                    <span className="loading loading-spinner loading-lg"></span>
-                                </div>
-                            ) : roomOptions.length > 0 ? (
+                            {roomOptions.length > 0 ? (
                                 roomOptions.map((room) => {
                                     const isSelected = selectedTargetRoom === room;
 

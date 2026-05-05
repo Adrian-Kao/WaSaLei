@@ -4,14 +4,16 @@ type EditActionBarProps = {
     selectedCount: number;
     onAdd: () => void;
     onDelete: () => void;
-    onMove: () => void;
+    onMove?: () => void;
+    showMove?: boolean;
 };
 
-export default function EditActionBar({ selectedCount, onAdd, onDelete, onMove }: EditActionBarProps) {
+export default function EditActionBar({ selectedCount, onAdd, onDelete, onMove, showMove = true }: EditActionBarProps) {
     const isBatchActionDisabled = selectedCount === 0;
+    const columnsClass = showMove ? "grid-cols-3" : "grid-cols-2";
 
     return (
-        <div className="mt-4 grid grid-cols-3 gap-2">
+        <div className={`mt-4 grid ${columnsClass} gap-2`}>
             <button
                 type="button"
                 onClick={onAdd}
@@ -33,16 +35,18 @@ export default function EditActionBar({ selectedCount, onAdd, onDelete, onMove }
                 <FiTrash2 className="shrink-0" />
             </button>
 
-            <button
-                type="button"
-                onClick={onMove}
-                disabled={isBatchActionDisabled}
-                className="btn btn-neutral h-14 min-h-0 w-full rounded-xl px-5 text-2xl font-medium [&>svg]:h-8! [&>svg]:w-8!"
-                aria-label="移動已選衣服"
-                title="移動已選衣服"
-            >
-                <FiMove className="shrink-0" />
-            </button>
+            {showMove ? (
+                <button
+                    type="button"
+                    onClick={onMove}
+                    disabled={isBatchActionDisabled}
+                    className="btn btn-neutral h-14 min-h-0 w-full rounded-xl px-5 text-2xl font-medium [&>svg]:h-8! [&>svg]:w-8!"
+                    aria-label="移動已選衣服"
+                    title="移動已選衣服"
+                >
+                    <FiMove className="shrink-0" />
+                </button>
+            ) : null}
         </div>
     );
 }
