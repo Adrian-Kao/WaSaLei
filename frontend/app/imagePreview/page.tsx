@@ -25,6 +25,9 @@ export default function ImagePreviewPage() {
   const canUpload = Boolean(file) && step !== "uploading" && step !== "parsing";
   const canParse = Boolean(inputPath) && step !== "uploading" && step !== "parsing";
 
+  const [isSaving, setIsSaving] = useState(false);
+  const [savedMessage, setSavedMessage] = useState("");
+
   //UI提示狀態
   const statusText = useMemo(() => {
     if (step === "uploading") return "Uploading to input";
@@ -89,6 +92,47 @@ export default function ImagePreviewPage() {
     setStep("parsed");
   }
 
+  async function handleConfirm() {
+    //防止output為空
+    if (!outputUrl) return;
+
+    setIsSaving(true);
+    setSavedMessage("");
+
+    try {
+      const response = await fetch(
+        "http://127.0.0.1:5000/api/items/confirm-image",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({}), //僅觸發copy
+        }
+      );
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.message || "Save failed");
+      }
+
+      setSavedMessage("已儲存 ✔");
+
+      // 3 秒後自動消失
+      setTimeout(() => {
+        setSavedMessage("");
+      }, 3000);
+    } catch (err: any) {
+      setSavedMessage(err.message || "儲存失敗");
+      setTimeout(() => {
+        setSavedMessage("");
+      }, 3000);
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
   return (
     <main className="flex h-full flex-col bg-base-100 px-5 pb-24 pt-8 text-base-content">
       <header className="mb-6">
@@ -137,10 +181,16 @@ export default function ImagePreviewPage() {
 
       <section className="mt-6 min-h-0 flex-1 overflow-y-auto">
         <h2 className="mb-3 text-lg font-semibold">Output</h2>
-
-        <div className="flex h-52 items-center justify-center rounded-lg border border-base-300 bg-base-200">
+        
+        <div className="relative flex h-52 items-center justify-center rounded-lg border border-base-300 bg-base-200">
           {outputUrl ? (
-            <img src={outputUrl} alt="Parsed output" className="h-full w-full rounded-lg object-contain p-2" />
+            <>
+              <img src={outputUrl} alt="Parsed output" className="h-full w-full rounded-lg object-contain p-2" />
+            
+              <button onClick={handleConfirm} disabled={isSaving} className="absolute bottom-3 right-3 btn btn-primary btn-sm">
+                {isSaving ? "儲存中..." : "確認"}
+              </button>
+            </>
           ) : (
             <p className="text-sm text-base-content/60">No output yet</p>
           )}
@@ -161,6 +211,11 @@ export default function ImagePreviewPage() {
           )}
         </div>
       </section>
+      {savedMessage && (
+        <div className="mt-3 text-sm text-success font-medium">
+          {savedMessage}
+        </div>
+      )}
     </main>
   );
 }
