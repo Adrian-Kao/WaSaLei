@@ -3,6 +3,7 @@
 import { ChangeEvent, useMemo, useState } from "react";
 import { ImagePlus, Loader2, Play, Upload } from "lucide-react";
 
+//API
 import {
   getApiImageUrl,
   parseInputImage,
@@ -24,6 +25,7 @@ export default function ImagePreviewPage() {
   const canUpload = Boolean(file) && step !== "uploading" && step !== "parsing";
   const canParse = Boolean(inputPath) && step !== "uploading" && step !== "parsing";
 
+  //UI提示狀態
   const statusText = useMemo(() => {
     if (step === "uploading") return "Uploading to input";
     if (step === "uploaded") return "Image is in input";
@@ -34,8 +36,9 @@ export default function ImagePreviewPage() {
   }, [step]);
 
   function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
-    const selectedFile = event.target.files?.[0] ?? null;
+    const selectedFile = event.target.files?.[0] ?? null; //拿檔案
 
+    //重置所有狀態 避免圖片殘留
     setFile(selectedFile);
     setInputPath(null);
     setOutputUrl(null);
@@ -57,7 +60,7 @@ export default function ImagePreviewPage() {
     setOutputUrl(null);
     setColors([]);
 
-    const result = await uploadInputImage(file);
+    const result = await uploadInputImage(file); //call API
 
     if (!result.success || !result.input_path) {
       setStep("error");
@@ -73,7 +76,7 @@ export default function ImagePreviewPage() {
     setStep("parsing");
     setMessage("");
 
-    const result = await parseInputImage("garment");
+    const result = await parseInputImage("garment"); //call API
 
     if (!result.success || !result.preview_url) {
       setStep("error");
@@ -81,7 +84,7 @@ export default function ImagePreviewPage() {
       return;
     }
 
-    setOutputUrl(getApiImageUrl(`${result.preview_url}?t=${Date.now()}`));
+    setOutputUrl(getApiImageUrl(`${result.preview_url}?t=${Date.now()}`)); //防cache
     setColors(result.colors ?? []);
     setStep("parsed");
   }

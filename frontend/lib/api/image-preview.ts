@@ -38,6 +38,7 @@ export async function uploadInputImage(file: File): Promise<UploadInputResponse>
 }
 
 export async function parseInputImage(mode = "garment"): Promise<ParseInputResponse> {
+  console.log("API:", API_BASE_URL);//
   const response = await fetch(`${API_BASE_URL}/api/images/parse-input`, {
     method: "POST",
     headers: {

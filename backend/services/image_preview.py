@@ -5,6 +5,7 @@ from pathlib import Path
 
 from werkzeug.utils import secure_filename
 
+#專案結構
 CURRENT_DIR = Path(__file__).resolve().parent
 BACKEND_DIR = CURRENT_DIR.parent
 PROJECT_DIR = BACKEND_DIR.parent
@@ -24,6 +25,7 @@ OUTPUT_FILENAME = "output.png"
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
 
 
+#資料夾不存在時建立
 def ensure_picture_folders():
     for folder in (INPUT_DIR, OUTPUT_DIR, FINAL_DIR):
         folder.mkdir(parents=True, exist_ok=True)
@@ -57,8 +59,10 @@ def save_upload_to_input(file_storage):
 
 
 def parse_current_input_image(mode="garment"):
+    print("start parse")
     input_path = get_current_input_image()
-
+    print("input_path:", input_path)
+    print("before run_color_parsing")
     # rembg/onnxruntime is heavy, so import only when parsing is requested.
     from color_parsing.app import run_color_parsing
 
@@ -68,9 +72,10 @@ def parse_current_input_image(mode="garment"):
         output_dir=str(OUTPUT_DIR),
         output_filename=OUTPUT_FILENAME,
     )
-
+    
     output_path = Path(result["image_path"])
 
+    #前端要用的
     return {
         "input_path": _to_project_relative_path(input_path),
         "preview_path": _to_project_relative_path(output_path),
@@ -79,6 +84,7 @@ def parse_current_input_image(mode="garment"):
     }
 
 
+#整合API
 def preview_item_image(file_storage, mode="garment"):
     save_upload_to_input(file_storage)
     return parse_current_input_image(mode=mode)
@@ -129,7 +135,7 @@ def confirm_item_image(
     photo_path = _to_project_relative_path(final_path)
 
     try:
-        success, result = db.insert_new_item(
+        success, result = db.insert_new_item( #寫入db
             user_id=user_id,
             name=name,
             space_id=space_id,
@@ -159,6 +165,7 @@ def confirm_item_image(
     }
 
 
+#檢查副檔名
 def _get_upload_extension(filename):
     ext = Path(filename or "").suffix.lower()
     if ext not in ALLOWED_EXTENSIONS:
@@ -166,5 +173,6 @@ def _get_upload_extension(filename):
     return ext
 
 
+#轉成相對路徑(給前端用)
 def _to_project_relative_path(path):
     return Path(path).resolve().relative_to(PROJECT_DIR).as_posix()
