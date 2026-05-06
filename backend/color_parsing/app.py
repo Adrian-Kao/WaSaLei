@@ -4,6 +4,9 @@ import sys
 import cv2
 import numpy as np
 
+import shutil
+import uuid
+
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 # 讓 color_parsing 內部的 models/services 優先被找到，避免撞到 backend/services。
 if CURRENT_DIR in sys.path:
@@ -16,6 +19,9 @@ from color_parsing.services.person_pipline import process_person
 
 DEFAULT_OUTPUT_DIR = os.path.join(CURRENT_DIR, "outputs")
 DEFAULT_OUTPUT_FILENAME = "output.png"
+
+FINAL_DIR = os.path.join(CURRENT_DIR, "final")
+os.makedirs(FINAL_DIR, exist_ok=True)
 
 
 def run_color_parsing(
@@ -75,6 +81,26 @@ def read_image(image_path):
     if len(image_bytes) == 0:
         return None
     return cv2.imdecode(image_bytes, cv2.IMREAD_COLOR)
+
+def save_to_final(output_image_path):
+    if output_image_path is None:
+        raise ValueError("output_image_path is None")
+
+    if not os.path.exists(output_image_path):
+        raise FileNotFoundError(f"Output image not found: {output_image_path}")
+    
+    # 1. 唯一檔名
+    filename = f"{uuid.uuid4().hex}.png"
+    final_path = os.path.join(FINAL_DIR, filename)
+
+    # 2. 從output複製檔案
+    shutil.copy2(output_image_path, final_path)
+
+    # 3. 回傳 DB 用 path（建議用 relative）
+    return {
+        "final_path": final_path,
+        "db_path": os.path.relpath(final_path, CURRENT_DIR).replace("\\", "/")
+    }
 
 
 def main(image_path="test_images/test.jpg", mode="garment"):
