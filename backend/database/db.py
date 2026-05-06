@@ -4,7 +4,6 @@ import config
 # ==========================================
 # 1. 連線資料庫 (Database Connection)
 # ==========================================
-
 def get_connection():
     return pymysql.connect(
         host=config.DB_HOST,
@@ -18,7 +17,6 @@ def get_connection():
 # ==========================================
 # 2. 會員系統功能 (User) (對應auth.py)
 # ==========================================
-
 # 透過Email尋找user
 def get_user_by_account(account):
     connection = get_connection()
@@ -70,7 +68,6 @@ def verify_login(account, password):
 # ==========================================
 # 3. 儲存空間功能 (Space) (對應space.py)
 # ==========================================
-
 # 為該使用者建立一個新空間
 def create_new_space(user_id, space_type, capacity = 30):
     connection = get_connection()
@@ -112,15 +109,19 @@ def fetch_raw_items_by_space(space_id):
         with connection.cursor() as cursor:
             sql = """
                 SELECT
+                    i.Item_ID,
                     i.Name,
-                    t.Type_Name,
-                    i.Season,
-                    GROUP_CONCAT(DISTINCT s.Style_Name SEPARATOR '、') as Styles, 
+                    i.Photo,
+                    t.Type_Name as Type,
+                    GROUP_CONCAT(DISTINCT se.Season_Name SEPARATOR '、') as Seasons,
+                    GROUP_CONCAT(DISTINCT st.Style_Name SEPARATOR '、') as Styles, 
                     GROUP_CONCAT(DISTINCT c.Color_Name ORDER BY c.Color_ID SEPARATOR ',') as Colors
                 FROM Item i
                 LEFT JOIN Type t ON i.Type_ID = t.Type_ID
+                LEFT JOIN Item_Season ise ON i.Item_ID = ise.Item_ID
+                LEFT JOIN Season se ON ise.Season_ID = se.Season_ID
                 LEFT JOIN Item_Style isty ON i.Item_ID = isty.Item_ID
-                LEFT JOIN Style s ON isty.Style_ID = s.Style_ID
+                LEFT JOIN Style st ON isty.Style_ID = st.Style_ID
                 LEFT JOIN Item_Color ic ON i.Item_ID = ic.Item_ID
                 LEFT JOIN Color c ON ic.Color_ID = c.Color_ID
                 WHERE i.Space_ID = %s
@@ -138,22 +139,26 @@ def fetch_raw_items_by_space(space_id):
 # ==========================================
 # 4. 衣服管理功能 (Item) (對應item.py)
 # ==========================================
-
 # 同時寫入Item及相關聯的表
-def insert_new_item(user_id, name, space_id, type_id, season, color_ids, style_ids, photo_path=None):
+def insert_new_item(user_id, name, space_id, type_id, season_ids, color_ids, style_ids, photo_path=None):
     connection = get_connection()
 
     try:
         with connection.cursor() as cursor:
             # 寫入Item表
             sql_item = """
-                INSERT INTO `Item` (`User_id`, `Name`, `Space_ID`, `Type_ID`, `Season`, `Photo`) 
-                VALUES (%s, %s, %s, %s, %s, %s)
+                INSERT INTO `Item` (`User_id`, `Name`, `Space_ID`, `Type_ID`, `Photo`) 
+                VALUES (%s, %s, %s, %s, %s)
             """
-            cursor.execute(sql_item, (user_id, name, space_id, type_id, season, photo_path))
+            cursor.execute(sql_item, (user_id, name, space_id, type_id, photo_path))
 
             # 取得剛剛新增的Item的ID
             new_item_id = cursor.lastrowid
+
+            # 寫入Item_Season表
+            if season_ids:
+                sql_season = "INSERT INTO `Item_Season` (`Item_ID`, `Season_ID`) VALUES (%s, %s)"
+                cursor.executemany(sql_season, [(new_item_id, season_id) for season_id in season_ids])
 
             # 寫入Item_Color表
             if color_ids:
@@ -177,22 +182,25 @@ def insert_new_item(user_id, name, space_id, type_id, season, color_ids, style_i
 # ==========================================
 # 5. 搜尋與篩選 (對應search.py)
 # ==========================================
-def search_items(user_id, keyword=None, space_id=None, type_id=None, season=None, color_id=None, style_id=None):
+def search_items(user_id, keyword=None, space_id=None, type_id=None, season_id=None, color_id=None, style_id=None):
     connection = get_connection()
     try:
         with connection.cursor() as cursor:
             sql = """
                 SELECT 
                     i.Item_ID,
-                    i.Name, 
+                    i.Name,
+                    i.Photo,
                     t.Type_Name as Type,
-                    i.Season,
-                    GROUP_CONCAT(DISTINCT s.Style_Name SEPARATOR '、') as Styles,
+                    GROUP_CONCAT(DISTINCT se.Season_Name SEPARATOR '、') as Seasons,
+                    GROUP_CONCAT(DISTINCT st.Style_Name SEPARATOR '、') as Styles,
                     GROUP_CONCAT(DISTINCT c.Color_Name ORDER BY c.Color_ID SEPARATOR ',') as Colors
                 FROM Item i
                 LEFT JOIN Type t ON i.Type_ID = t.Type_ID
+                LEFT JOIN Item_Season ise ON i.Item_ID = ise.Item_ID
+                LEFT JOIN Season se ON ise.Season_ID = se.Season_ID
                 LEFT JOIN Item_Style isty ON i.Item_ID = isty.Item_ID
-                LEFT JOIN Style s ON isty.Style_ID = s.Style_ID
+                LEFT JOIN Style st ON isty.Style_ID = st.Style_ID
                 LEFT JOIN Item_Color ic ON i.Item_ID = ic.Item_ID
                 LEFT JOIN Color c ON ic.Color_ID = c.Color_ID
                 WHERE i.User_ID = %s
@@ -211,11 +219,11 @@ def search_items(user_id, keyword=None, space_id=None, type_id=None, season=None
             if type_id:
                 sql += " AND i.Type_ID = %s"
                 params.append(type_id)
-            if season:
-                sql += " AND i.Season = %s"
-                params.append(season)
             
             # 針對多對多
+            if season_id:
+                sql += "AND EXISTS (SELECT 1 FROM Item_Season sub_ise WHERE sub_ise.Item_ID = i.Item_ID AND sub_ise.Season_ID = %s)"
+                params.append(season_id)
             if color_id:
                 sql += " AND EXISTS (SELECT 1 FROM Item_Color sub_ic WHERE sub_ic.Item_ID = i.Item_ID AND sub_ic.Color_ID = %s)"
                 params.append(color_id)
