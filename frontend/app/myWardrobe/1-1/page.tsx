@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAppStore } from "@/store/store";
+// import { useAppStore } from "@/store/store";
 import { getUserRooms } from "@/lib/api/clothing";
 
 type RoomInfo = {
@@ -11,12 +11,9 @@ type RoomInfo = {
   totalCapacity: number;
 };
 
-export default function WardrobeListPage() {
+export default function MyWardrobePage() {
   const router = useRouter();
-  const userId = useAppStore((s) => s.userId);
-  const setCurrentRoom = useAppStore((s) => s.setCurrentRoom);
-  const setRooms = useAppStore((s) => s.setRooms);
-  
+  const userId = localStorage.getItem("userId");
   const [rooms, setRooms_local] = useState<RoomInfo[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -26,14 +23,11 @@ export default function WardrobeListPage() {
       try {
         if (!userId) {
           setRooms_local([]);
-          setRooms([]);
           return;
         }
         const roomList = await getUserRooms(userId);
-        // 更新到 zustand store
-        setRooms(roomList);
         // TODO: 後端返回房間時應包含 itemCount 和 totalCapacity，暫時用假資料
-        const roomsWithInfo = roomList.map((name) => ({
+        const roomsWithInfo = roomList.map((name: string) => ({
           name,
           itemCount: 5,
           totalCapacity: 30,
@@ -42,17 +36,16 @@ export default function WardrobeListPage() {
       } catch (error) {
         console.error("Failed to fetch rooms:", error);
         setRooms_local([]);
-        setRooms([]);
       } finally {
         setLoading(false);
       }
     }
 
     void fetchRooms();
-  }, [userId, setRooms]);
+  }, [userId]); // 移除 setRooms 依賴
 
   function handleRoomClick(roomName: string) {
-    setCurrentRoom(roomName);
+    // 若要記錄當前房間可用 localStorage.setItem("currentRoom", roomName)
     router.push("/myWardrobe/1-2");
   }
 

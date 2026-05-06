@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { use, useState } from "react";
 import { loginApi } from "@/lib/api/auth";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
     const [account, setAccount] = useState("");
@@ -9,6 +10,8 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
+
+    const router = useRouter();
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -19,7 +22,8 @@ export default function LoginPage() {
             const res = await loginApi(account, password);
             if (res.success) {
                 setSuccess("登入成功！");
-                // TODO: 儲存登入狀態、跳轉頁面等
+                localStorage.setItem("userName", res.user.User_Name); // 假設後端回傳 user.User_Name
+                router.push("/myWardrobe/1-1");
             } else {
                 setError(res.message || "登入失敗");
             }

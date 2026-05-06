@@ -7,7 +7,7 @@ import EditActionBar from "@/component/edit-action-bar";
 import EditModeToggleButton from "@/component/edit-mode-toggle-button";
 import { useCurrentRoom } from "@/hooks/useCurrentRoom";
 import { useWardrobeEditor } from "@/hooks/useWardrobeEditor";
-import { useAppStore } from "@/store/store";
+import { getUserRooms } from "@/lib/api/clothing";
 import ItemCard from "@/component/item-card";
 import {
     getWardrobeClothingItems,
@@ -26,9 +26,11 @@ const colorOptions = ["#2A3388", "#000000", "#FFFFFF", "#9CA3AF"];
 const wardrobeName = getWardrobeName();
 const initialClothingItems = getWardrobeClothingItems();
 
+
 export default function WardrobePage() {
     const currentRoom = useCurrentRoom();
-    const storeRooms = useAppStore((s) => s.rooms);
+    const userId = localStorage.getItem("userId") || null;
+    const [allRooms, setAllRooms] = useState<string[]>([]);
 
     // 編輯狀態集中在 hook，page 只負責組 UI 與 filter。
     const {
@@ -56,11 +58,27 @@ export default function WardrobePage() {
 
         setIsMoveModalOpen(true);
 
-        // 從 zustand store 拿房間列表，過濾掉當前房間
-        const availableRooms = storeRooms.filter((room: string) => room !== currentRoom);
+        // 從 allRooms 拿房間列表，過濾掉當前房間
+        const availableRooms = allRooms.filter((room: string) => room !== currentRoom);
         setRoomOptions(availableRooms);
         setSelectedTargetRoom(availableRooms[0] ?? "");
     }
+    // 頁面載入時取得所有房間
+    useEffect(() => {
+        async function fetchRooms() {
+            if (!userId) {
+                setAllRooms([]);
+                return;
+            }
+            try {
+                const roomList = await getUserRooms(userId);
+                setAllRooms(roomList);
+            } catch (error) {
+                setAllRooms([]);
+            }
+        }
+        fetchRooms();
+    }, [userId]);
 
     function handleCloseMoveModal() {
         setIsMoveModalOpen(false);
@@ -141,7 +159,7 @@ export default function WardrobePage() {
                         />
                     ))}
                 </div>
-                    {/* 下方是衣服卡片清單，會跟著 filter 與編輯選取狀態更新。 */}
+                {/* 下方是衣服卡片清單，會跟著 filter 與編輯選取狀態更新。 */}
             </section>
 
             {isMoveModalOpen ? (

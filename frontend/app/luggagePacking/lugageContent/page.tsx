@@ -15,7 +15,7 @@ import {
 	type LuggageSpaceFilters,
 	type LuggageSpaceItem,
 } from "@/lib/api/luggage";
-import { useAppStore } from "@/store/store";
+// import { useAppStore } from "@/store/store";
 
 const seasonOptions = ["春", "夏", "秋", "冬"];
 const styleOptions = ["日常", "運動", "正式", "其他"];
@@ -25,7 +25,7 @@ const colorOptions = ["#2A3388", "#000000", "#FFFFFF", "#9CA3AF"];
 export default function LuggageContentPage() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
-	const userId = useAppStore((s) => s.userId);
+	const userId = localStorage.getItem("userId");
 
 	const luggageId = Number(searchParams.get("id") ?? 0);
 
@@ -37,10 +37,11 @@ export default function LuggageContentPage() {
 
 	useEffect(() => {
 		let isMounted = true;
+		const nextUserId = userId ?? "";
 
 		async function loadLuggageName() {
 			try {
-				const list = await getLuggageList(userId);
+				const list = await getLuggageList(nextUserId);
 				const current = list.find((item) => item.id === luggageId);
 				if (isMounted) {
 					setLuggageName(current?.name ?? "我的行李");

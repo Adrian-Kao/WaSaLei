@@ -1,7 +1,10 @@
+"use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { registerApi } from "@/lib/api/auth";
 
 export default function RegistrationPage() {
+    const router = useRouter();
     const [name, setName] = useState("");
     const [account, setAccount] = useState("");
     const [password, setPassword] = useState("");
@@ -78,6 +81,12 @@ export default function RegistrationPage() {
                     </button>
                     {error && <div className="text-red-500 mt-2">{error}</div>}
                     {success && <div className="text-green-600 mt-2">{success}</div>}
+                    <span
+                        className="block mt-4 text-black hover:underline cursor-pointer text-center select-none"
+                        onClick={() => router.push('/login')}
+                    >
+                        回到登入頁面
+                    </span>
                 </fieldset>
             </form>
         </main>

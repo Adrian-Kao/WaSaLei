@@ -1,4 +1,11 @@
+"use client";
+import { useEffect, useState } from "react";
+
 export default function MyAccountPage() {
+    const [userName, setUserName] = useState("");
+    useEffect(() => {
+        setUserName(localStorage.getItem("userName") || "未登入");
+    }, []);
     return (
         <main className="flex h-[90%] flex-col items-center bg-base-100 px-6 pb-32 pt-10 text-black">
             <div className="avatar mt-4">
@@ -10,7 +17,7 @@ export default function MyAccountPage() {
                 </div>
             </div>
 
-            <h1 className="mt-5 text-3xl font-medium">許先生</h1>
+            <h1 className="mt-5 text-3xl font-medium">{userName}</h1>
 
             <section className=" mt-28 w-full max-w-xs space-y-8 text-2xl">
                 <p>帳號：1234567</p>

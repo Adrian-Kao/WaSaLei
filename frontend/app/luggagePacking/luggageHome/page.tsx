@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAppStore } from "@/store/store";
+// import { useAppStore } from "@/store/store";
 import { getLuggageList } from "@/lib/api/luggage";
 
 export default function LuggageHomePage() {
   const router = useRouter();
-  const userId = useAppStore((s) => s.userId);
+  const userId = localStorage.getItem("userId");
 
   const [luggages, setLuggages] = useState<Array<{ id: number; name: string }>>([]);
   const [loading, setLoading] = useState(true);
@@ -16,7 +16,7 @@ export default function LuggageHomePage() {
     async function fetchLuggages() {
       setLoading(true);
       try {
-        const result = await getLuggageList(userId);
+        const result = await getLuggageList(userId ?? "");
         setLuggages(result);
       } catch (error) {
         console.error("Failed to fetch luggages:", error);
