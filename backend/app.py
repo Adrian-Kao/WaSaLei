@@ -102,7 +102,6 @@ def api_get_predefined_space_types():
     types = get_predefined_space_types()
     return jsonify({"status": "success", "success": True, "data": types}), 200
 
-
 @app.route("/api/space", methods=["POST"])
 def api_add_space():
     from services.space import add_space
@@ -117,14 +116,12 @@ def api_add_space():
         return jsonify({"status": "success", "success": True, "message": msg}), 201
     return jsonify({"status": "error", "success": False, "message": msg}), 400
 
-
 @app.route("/api/space/user/<int:user_id>", methods=["GET"])
 def api_get_user_all_spaces(user_id):
     from services.space import get_user_all_spaces
 
     spaces = get_user_all_spaces(user_id)
     return jsonify({"status": "success", "success": True, "data": spaces}), 200
-
 
 @app.route("/api/space/<int:space_id>/items", methods=["GET"])
 def api_get_space_items(space_id):
@@ -134,7 +131,6 @@ def api_get_space_items(space_id):
     if success:
         return jsonify({"status": "success", "success": True, "data": result}), 200
     return jsonify({"status": "error", "success": False, "message": result}), 404
-
 
 # ==========================================
 # 3. Items
@@ -162,7 +158,6 @@ def api_add_item():
         return jsonify({"status": "success", "success": True, "message": msg}), 201
     return jsonify({"status": "error", "success": False, "message": msg}), 400
 
-
 @app.post("/api/items/preview-image")
 def preview_image():
     # Backward-compatible one-step endpoint: upload to input and parse immediately.
@@ -174,7 +169,6 @@ def preview_image():
         return jsonify({"success": True, "status": "success", **result})
     except Exception as exc:
         return jsonify({"success": False, "status": "error", "message": str(exc)}), 400
-
 
 @app.post("/api/items/confirm-image")
 def confirm_image():
@@ -194,7 +188,6 @@ def confirm_image():
         return jsonify({"success": True, "status": "success", **result})
     except Exception as exc:
         return jsonify({"success": False, "status": "error", "message": str(exc)}), 400
-
 
 # ==========================================
 # 4. Search
@@ -223,7 +216,6 @@ def api_search_wardrobe():
         return jsonify({"status": "success", "success": True, "data": result}), 200
     return jsonify({"status": "error", "success": False, "message": result}), 500
 
-
 # ==========================================
 # 5. Current image input/output pipeline
 # ==========================================
@@ -237,7 +229,6 @@ def upload_input_image():
     except Exception as exc:
         return jsonify({"success": False, "status": "error", "message": str(exc)}), 400
 
-
 @app.post("/api/images/parse-input")
 def parse_input_image():
     data = request.get_json(silent=True) or request.form.to_dict(flat=True)
@@ -249,13 +240,11 @@ def parse_input_image():
     except Exception as exc:
         return jsonify({"success": False, "status": "error", "message": str(exc)}), 400
 
-
 # ==========================================
 # Helpers
 # ==========================================
 def _status(success):
     return "success" if success else "error"
-
 
 def _required_value(data, key):
     value = data.get(key)
@@ -263,17 +252,14 @@ def _required_value(data, key):
         raise ValueError(f"{key} is required.")
     return value
 
-
 def _required_int(data, key):
     return int(_required_value(data, key))
-
 
 def _optional_int(data, key):
     value = data.get(key)
     if value is None or value == "":
         return None
     return int(value)
-
 
 def _int_list(value):
     if value is None or value == "":
@@ -283,7 +269,6 @@ def _int_list(value):
     if isinstance(value, str):
         return [int(item.strip()) for item in value.split(",") if item.strip()]
     return [int(value)]
-
 
 if __name__ == "__main__":
     print("API started")

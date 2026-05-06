@@ -47,6 +47,8 @@ def get_formatted_items(space_id):
     for item in raw_items:
         # 顏色拆分
         color_list = item['Colors'].split(',') if item['Colors'] else []
+        style_list = item['Styles'].split('、') if item['Styles'] else []
+        season_list = item['Seasons'].split('、') if item['Seasons'] else []
 
         photo_filename = item.get('Photo')
         photo_url = f"http://127.0.1:5000/images/{photo_filename}" if photo_filename else None
@@ -55,8 +57,8 @@ def get_formatted_items(space_id):
         formatted_item = {
             "name" : item['Name'],
             "type": item['Type_Name'],
-            "season": item['Season'],
-            "style": item['Styles'],
+            "seasons": season_list,
+            "styles": style_list,
             "color1": color_list[0] if len(color_list) > 0 else None,
             "color2": color_list[1] if len(color_list) > 1 else None,
             "color3": color_list[2] if len(color_list) > 2 else None,
