@@ -35,10 +35,16 @@ export async function getWardrobeFilteredClothingItems(filters: ClothingFilters)
   return Promise.resolve(filtered);
 }
 
-// TODO: 之後在這裡接後端呼叫取得該使用者的所有房間清單
+// 串接後端 API 取得該使用者所有 type 為「衣櫃」的空間名稱
 export async function getUserRooms(userId: string | number) {
-  void userId;
-  return Promise.resolve(mockRooms);
+  if (!userId) return [];
+  const res = await fetch(`/api/space/user/${userId}`);
+  if (!res.ok) return [];
+  const data = await res.json();
+  // 後端回傳格式: { status: 'success', success: true, data: [ { Space_ID, Space_Type, Capacity }, ... ] }
+  if (!data.success || !Array.isArray(data.data)) return [];
+  // 過濾 type 為「衣櫃」
+  return data.data.filter((s: any) => s.Space_Type === "衣櫃").map((s: any) => s.Space_Type + (s.Space_ID ? `#${s.Space_ID}` : ""));
 }
 
 // TODO: 之後在這裡接後端呼叫（移動衣物到指定 room）。

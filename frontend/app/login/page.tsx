@@ -22,13 +22,14 @@ export default function LoginPage() {
             const res = await loginApi(account, password);
             if (res.success) {
                 setSuccess("登入成功！");
-                localStorage.setItem("userName", res.user.User_Name); // 假設後端回傳 user.User_Name
+                localStorage.setItem("userName", res.user_name); // 假設後端回傳 user.User_Name
                 router.push("/myWardrobe/1-1");
             } else {
                 setError(res.message || "登入失敗");
             }
         } catch (err) {
             setError("伺服器錯誤");
+            console.error("Login error:", err);
         } finally {
             setLoading(false);
         }

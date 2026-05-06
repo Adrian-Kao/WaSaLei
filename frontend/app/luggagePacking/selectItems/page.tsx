@@ -38,6 +38,13 @@ export default function SelectItemsPage() {
 		let isMounted = true;
 
 		async function loadRoomOptions() {
+			if (!userId) {
+				if (isMounted) {
+					setRoomOptions([]);
+				}
+				return;
+			}
+
 			try {
 				const rooms = await getLuggageRoomOptions(userId);
 				if (isMounted) {
