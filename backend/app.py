@@ -51,19 +51,26 @@ def serve_image(filename):
 # ==========================================
 @app.post("/api/auth/register")
 def register_user():
+    # silent = True : 預設情況下，如果前端傳過來的不是json會報錯，加上silent = True就只會回傳None
+    # 若左邊失敗了，就會嘗試讀傳統的Form data
     data = request.get_json(silent=True) or request.form.to_dict(flat=True)
 
     try:
-        success, message = register(
-            name=_required_value(data, "name"),
-            account=_required_value(data, "account"),
-            password=_required_value(data, "password"),
+        success, msg = register(
+            name = _required_value(data, "name"),
+            account = _required_value(data, "account"),
+            password = _required_value(data, "password")
         )
-        status_code = 200 if success else 400
-        return jsonify({"success": success, "status": _status(success), "message": message}), status_code
-    except Exception as exc:
-        return jsonify({"success": False, "status": "error", "message": str(exc)}), 400
 
+        if success:
+            return jsonify({"success": True, "status": "success", "message": msg}), 201
+        
+        return jsonify({"success": False, "status": "error", "message": msg}), 400
+
+    except ValueError as e:
+        return jsonify({"success": False, "status": "error", "message": str(e)}), 400
+    except Exception as exc:
+        return jsonify({"success": False, "status": "error", "message": "伺服器內部錯誤"}), 500
 
 @app.post("/api/auth/login")
 def login_user():
@@ -71,42 +78,19 @@ def login_user():
 
     try:
         success, result = login(
-            account=_required_value(data, "account"),
-            password=_required_value(data, "password"),
+            account = _required_value(data, "account"),
+            password = _required_value(data, "password")
         )
+
         if success:
-            return jsonify({"success": True, "status": "success", "user": result, "data": result}), 200
-        return jsonify({"success": False, "status": "error", "message": result}), 401
+            return jsonify({"success": True, "status": "success", "data": result}), 200
+        
+        return jsonify({"success": False, "status": "error", "message": result}), 201
+
+    except ValueError as e:
+        return jsonify({"success": False, "status": "error", "message": str(e)}), 400
     except Exception as exc:
-        return jsonify({"success": False, "status": "error", "message": str(exc)}), 400
-
-
-@app.route("/api/register", methods=["POST"])
-def api_register():
-    # Backward-compatible route from the original app.py.
-    data = request.get_json(silent=True) or request.form.to_dict(flat=True)
-    name = data.get("name")
-    account = data.get("account")
-    password = data.get("password")
-
-    success, message = register(name, account, password)
-    if success:
-        return jsonify({"status": "success", "success": True, "message": message}), 200
-    return jsonify({"status": "error", "success": False, "message": message}), 400
-
-
-@app.route("/api/login", methods=["POST"])
-def api_login():
-    # Backward-compatible route from the original app.py.
-    data = request.get_json(silent=True) or request.form.to_dict(flat=True)
-    account = data.get("account")
-    password = data.get("password")
-
-    success, data_or_msg = login(account, password)
-    if success:
-        return jsonify({"status": "success", "success": True, "data": data_or_msg, "user": data_or_msg}), 200
-    return jsonify({"status": "error", "success": False, "message": data_or_msg}), 401
-
+        return jsonify({"success": False, "status": "error", "message": "伺服器內部錯誤"}), 500
 
 # ==========================================
 # 2. Space
