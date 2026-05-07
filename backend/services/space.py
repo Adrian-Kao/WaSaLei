@@ -30,7 +30,7 @@ def add_space(user_id, space_type, capacity):
 def get_user_all_spaces(user_id):
     return db.get_spaces_by_user_id(user_id)
 
-#給前端抓選項
+# 給前端抓選項
 def get_predefined_space_types():
     return VALID_SPACE_TYPES
 
@@ -56,7 +56,7 @@ def get_formatted_items(space_id):
         # 組成格式
         formatted_item = {
             "name" : item['Name'],
-            "type": item['Type_Name'],
+            "type": item['Type'],
             "seasons": season_list,
             "styles": style_list,
             "color1": color_list[0] if len(color_list) > 0 else None,
@@ -94,7 +94,7 @@ if __name__ == "__main__":
         print(f"成功撈到資料！共 {len(result)} 件衣服：")
         for item in result:
             print(f"衣服名稱: {item['name']}")
-            print(f"   - 基本資訊: 類型({item['type']}) | 季節({item['season']}) | 風格({item['style']})")
+            print(f"   - 基本資訊: 類型({item['type']}) | 季節({item['seasons']}) | 風格({item['styles']})")
             print(f"   - 顏色拆解: 1.{item['color1']} / 2.{item['color2']} / 3.{item['color3']}")
             print("-" * 30)
     else:
