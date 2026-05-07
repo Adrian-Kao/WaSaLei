@@ -2,8 +2,8 @@ import shutil
 import sys
 import uuid
 from pathlib import Path
-
 from werkzeug.utils import secure_filename
+from services.items import create_item_record
 
 #專案結構
 CURRENT_DIR = Path(__file__).resolve().parent
@@ -12,8 +12,6 @@ PROJECT_DIR = BACKEND_DIR.parent
 
 if str(BACKEND_DIR) not in sys.path:
     sys.path.append(str(BACKEND_DIR))
-
-from database import db
 
 # pictures is at the project root, next to frontend and backend.
 PICTURES_DIR = PROJECT_DIR / "pictures"
@@ -24,12 +22,10 @@ FINAL_DIR = PICTURES_DIR / "final"
 OUTPUT_FILENAME = "output.png"
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
 
-
 #資料夾不存在時建立
 def ensure_picture_folders():
     for folder in (INPUT_DIR, OUTPUT_DIR, FINAL_DIR):
         folder.mkdir(parents=True, exist_ok=True)
-
 
 def clear_folder(folder_path):
     folder = Path(folder_path)
@@ -40,7 +36,6 @@ def clear_folder(folder_path):
             item.unlink()
         elif item.is_dir():
             shutil.rmtree(item)
-
 
 def save_upload_to_input(file_storage):
     if file_storage is None or not file_storage.filename:
@@ -56,7 +51,6 @@ def save_upload_to_input(file_storage):
     file_storage.save(input_path)
 
     return _to_project_relative_path(input_path)
-
 
 def parse_current_input_image(mode="garment"):
     print("start parse")
@@ -83,12 +77,10 @@ def parse_current_input_image(mode="garment"):
         "colors": result["colors"],
     }
 
-
 #整合API
 def preview_item_image(file_storage, mode="garment"):
     save_upload_to_input(file_storage)
     return parse_current_input_image(mode=mode)
-
 
 def get_current_input_image():
     ensure_picture_folders()
@@ -100,7 +92,6 @@ def get_current_input_image():
         raise RuntimeError("pictures/input should contain only one image.")
 
     return input_files[0]
-
 
 def move_output_to_final():
     ensure_picture_folders()
@@ -114,7 +105,6 @@ def move_output_to_final():
 
     return final_path
 
-
 def confirm_item_image(
     user_id,
     name,
@@ -124,18 +114,12 @@ def confirm_item_image(
     color_ids=None,
     style_ids=None,
 ):
-    if color_ids is None:
-        color_ids = []
-    if style_ids is None:
-        style_ids = []
-    if not str(name or "").strip():
-        raise ValueError("Item name is required.")
 
     final_path = move_output_to_final()
     photo_path = _to_project_relative_path(final_path)
 
     try:
-        success, result = db.insert_new_item(
+        success, result = create_item_record(
             user_id=user_id,
             name=name,
             space_id=space_id,
@@ -164,14 +148,12 @@ def confirm_item_image(
         "photo_url": "/" + photo_path,
     }
 
-
 #檢查副檔名
 def _get_upload_extension(filename):
     ext = Path(filename or "").suffix.lower()
     if ext not in ALLOWED_EXTENSIONS:
         raise ValueError("Only jpg, jpeg, png, and webp images are supported.")
     return ext
-
 
 #轉成相對路徑(給前端用)
 def _to_project_relative_path(path):

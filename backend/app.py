@@ -131,32 +131,8 @@ def api_get_space_items(space_id):
 # ==========================================
 # 3. Items
 # ==========================================
-@app.route("/api/items", methods=["POST"])
-def api_add_item():
-    from services.items import add_new_item
-
-    data = request.get_json(silent=True) or request.form.to_dict(flat=True)
-    if not data:
-        return jsonify({"status": "error", "success": False, "message": "Please provide valid JSON data."}), 400
-
-    success, msg = add_new_item(
-        user_id=data.get("user_id"),
-        name=data.get("name"),
-        space_id=data.get("space_id"),
-        type_id=data.get("type_id"),
-        season_ids=_int_list(data.get("season_ids") or data.get("season")),
-        color_ids=_int_list(data.get("color_ids")),
-        style_ids=_int_list(data.get("style_ids")),
-        photo_filename=data.get("photo_filename"),
-    )
-
-    if success:
-        return jsonify({"status": "success", "success": True, "message": msg}), 201
-    return jsonify({"status": "error", "success": False, "message": msg}), 400
-
 @app.post("/api/items/preview-image")
 def preview_image():
-    # Backward-compatible one-step endpoint: upload to input and parse immediately.
     file_storage = request.files.get("file") or request.files.get("image")
     mode = request.form.get("mode", "garment")
 
@@ -168,7 +144,6 @@ def preview_image():
 
 @app.post("/api/items/confirm-image")
 def confirm_image():
-    # Final stage: copy output image to final, write DB record, then clear input/output.
     data = request.get_json(silent=True) or request.form.to_dict(flat=True)
 
     try:

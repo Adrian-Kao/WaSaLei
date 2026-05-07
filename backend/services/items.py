@@ -12,7 +12,6 @@ def configure_console_encoding():
         # Keep execution unaffected even if stream reconfiguration is unsupported.
         pass
 
-
 configure_console_encoding()
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -21,19 +20,16 @@ sys.path.append(parent_dir)
 
 from database import db
 
-# 新增一件衣服
-def add_new_item(user_id, name, space_id, type_id, season_ids, color_ids = None, style_ids = None, photo_filename = None):
-    # 統一轉換成陣列格式並去除空值
+# 
+def create_item_record(user_id, name, space_id, type_id, season_ids, color_ids=None, style_ids=None, photo_path=None):
     color_ids = _normalize_id_list(color_ids)
     style_ids = _normalize_id_list(style_ids)
     season_ids = _normalize_id_list(season_ids)
 
-    if not name.strip():
+    if not str(name or "").strip():
         return False, "衣服名稱不能為空"
-    
-    print(f"準備寫入的顏色清單: {color_ids}, 風格清單: {style_ids}, 季節清單: {season_ids}")
-    
-    success , result = db.insert_new_item(
+
+    return db.insert_new_item(
         user_id,
         name,
         space_id,
@@ -41,13 +37,9 @@ def add_new_item(user_id, name, space_id, type_id, season_ids, color_ids = None,
         season_ids,
         color_ids,
         style_ids,
-        photo_filename)
-
-    if success:
-        return True, f"成功新增衣服: {name} (ID: {result})"
-    else:
-        return False, f"新增衣服失敗: {result}"
-    
+        photo_path
+    )
+ 
 # ==========================================
 # Helper
 # ==========================================
