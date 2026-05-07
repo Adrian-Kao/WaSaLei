@@ -15,9 +15,9 @@ const mockClothingItems: ClothingItem[] = Array.from({ length: 6 }, (_, index) =
 }));
 
 
-export function getWardrobeName() {
-  return wardrobeName;
-}
+// export function getWardrobeName() {
+//   return wardrobeName;
+// }
 
 export function getWardrobeClothingItems() {
   return mockClothingItems;
@@ -38,13 +38,13 @@ export async function getWardrobeFilteredClothingItems(filters: ClothingFilters)
 // 串接後端 API 取得該使用者所有 type 為「衣櫃」的空間名稱
 export async function getUserRooms(userId: string | number) {
   if (!userId) return [];
-  const res = await fetch(`/api/space/user/${userId}`);
+  // 直接請求 type=衣櫃，後端已過濾
+  const res = await fetch(`/api/space/user/${userId}?type=衣櫃`);
   if (!res.ok) return [];
   const data = await res.json();
-  // 後端回傳格式: { status: 'success', success: true, data: [ { Space_ID, Space_Type, Capacity }, ... ] }
-  if (!data.success || !Array.isArray(data.data)) return [];
-  // 過濾 type 為「衣櫃」
-  return data.data.filter((s: any) => s.Space_Type === "衣櫃").map((s: any) => s.Space_Type + (s.Space_ID ? `#${s.Space_ID}` : ""));
+  // if (!data.success || !Array.isArray(data.data)) return [];
+  // 只回傳空間名稱（可依需求調整）
+  return data.data.map((s: any) => s.Space_Type + (s.Space_ID ? `#${s.Space_ID}` : ""));
 }
 
 // TODO: 之後在這裡接後端呼叫（移動衣物到指定 room）。

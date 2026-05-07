@@ -23,10 +23,12 @@ export default function LoginPage() {
         try {
             const res = await loginApi(account, password);
             if (res.success) {
-                setSuccess("登入成功！");
+                
                 // 假設後端回傳 user_id 和 user_name
-                setUserInfo(res.user.user_id, res.user.user_name);
+                setUserInfo(res.data.User_ID, res.data.User_Name);
                 router.push("/myWardrobe/1-1");
+                setSuccess("登入成功！");
+                
             } else {
                 setError(res.message || "登入失敗");
             }

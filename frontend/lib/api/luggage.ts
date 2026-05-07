@@ -1,7 +1,6 @@
 import {
   getWardrobeClothingItems,
   getWardrobeFilteredClothingItems,
-  getWardrobeName,
   getUserRooms,
   requestDeleteSelectedItems,
   requestMoveSelectedItemsToRoom,
@@ -76,8 +75,8 @@ export async function deleteLuggage(luggageId: number): Promise<void> {
   void luggageId;
 }
 
-export function getLuggageSpaceName() {
-  return getWardrobeName();
+export function getLuggageSpaceName(userId: string | number) {
+  return getUserRooms(userId);
 }
 
 export function getLuggageSpaceItems() {
@@ -88,9 +87,9 @@ export async function getLuggageFilteredItems(filters: LuggageSpaceFilters) {
   return getWardrobeFilteredClothingItems(filters);
 }
 
-export async function getLuggageRoomOptions(userId: string | number) {
-  return getUserRooms(userId);
-}
+// export async function getLuggageRoomOptions(userId: string | number) {
+//   return getUserRooms(userId);
+// }
 
 export async function requestMoveLuggageItemsToRoom(itemIds: number[], targetRoom: string) {
   return requestMoveSelectedItemsToRoom(itemIds, targetRoom);

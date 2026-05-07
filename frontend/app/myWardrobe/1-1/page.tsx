@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-// import { useAppStore } from "@/store/store";
+import { useUserStore} from "@/store/store";
 import { getUserRooms } from "@/lib/api/clothing";
 
 type RoomInfo = {
@@ -14,8 +14,8 @@ type RoomInfo = {
 export default function MyWardrobePage() {
   const router = useRouter();
 
-  // 用useEdffect
-  const userId = typeof window !== 'undefined' ? localStorage.getItem("userId") : null;
+  // 用use
+  const userId = useUserStore((state) => state.userId);
   const [rooms, setRooms_local] = useState<RoomInfo[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -28,11 +28,11 @@ export default function MyWardrobePage() {
           return;
         }
         const roomList = await getUserRooms(userId);
-        // TODO: 後端返回房間時應包含 itemCount 和 totalCapacity，暫時用假資料
-        const roomsWithInfo = roomList.map((name: string) => ({
-          name,
-          itemCount: 5,
-          totalCapacity: 30,
+        // roomList 應為 [{ Space_ID, Space_Type, Capacity, ... }]
+        const roomsWithInfo = roomList.map((room: any) => ({
+          name: room.Space_Type + (room.Space_ID ? `#${room.Space_ID}` : ""),
+          itemCount: room.Item_Count ?? 0, // 若後端有回傳 Item_Count
+          totalCapacity: room.Capacity ?? 0,
         }));
         setRooms_local(roomsWithInfo);
       } catch (error) {
