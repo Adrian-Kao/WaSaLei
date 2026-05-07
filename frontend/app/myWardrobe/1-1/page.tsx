@@ -13,6 +13,8 @@ type RoomInfo = {
 
 export default function MyWardrobePage() {
   const router = useRouter();
+
+  // 用useEdffect
   const userId = typeof window !== 'undefined' ? localStorage.getItem("userId") : null;
   const [rooms, setRooms_local] = useState<RoomInfo[]>([]);
   const [loading, setLoading] = useState(true);
