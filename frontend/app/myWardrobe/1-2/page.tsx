@@ -7,12 +7,11 @@ import EditActionBar from "@/component/edit-action-bar";
 import EditModeToggleButton from "@/component/edit-mode-toggle-button";
 import { useCurrentRoom } from "@/hooks/useCurrentRoom";
 import { useWardrobeEditor } from "@/hooks/useWardrobeEditor";
-import { getUserRooms } from "@/lib/api/clothing";
 import ItemCard from "@/component/item-card";
 import {
     getWardrobeClothingItems,
     getWardrobeFilteredClothingItems,
-    getWardrobeName,
+    getUserRooms
 } from "@/lib/api/clothing";
 import { createClothingFilters, type ClothingFilters, type ClothingItem } from "@/lib/types/clothing";
 
@@ -23,7 +22,7 @@ const styleOptions = ["日常", "運動", "正式", "其他"];
 const typeOptions = ["上身", "下身", "配件", "鞋類", "其他"];
 const colorOptions = ["#2A3388", "#000000", "#FFFFFF", "#9CA3AF"];
 
-const wardrobeName = getWardrobeName();
+// const wardrobeName = getWardrobeName();
 const initialClothingItems = getWardrobeClothingItems();
 
 
@@ -129,7 +128,7 @@ export default function WardrobePage() {
                 {/* 標題列：左邊是衣櫃名稱，右邊是編輯模式切換。 */}
                 <div className="flex items-center h-[10%] gap-5">
                     <div className="flex h-full flex-1 items-center justify-center rounded-2xl border-2 border-black text-center text-3xl tracking-[0.18em]">
-                        {wardrobeName}
+                        {/* {wardrobeName} */}
                     </div>
                     <EditModeToggleButton isEditMode={isEditMode} onToggle={toggleEditMode} />
                 </div>
