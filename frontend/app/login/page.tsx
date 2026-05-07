@@ -1,6 +1,7 @@
 "use client"
 import Link from "next/link";
-import { use, useState } from "react";
+import { useState } from "react";
+import { useUserStore } from "@/store/store";
 import { loginApi } from "@/lib/api/auth";
 import { useRouter } from "next/navigation";
 
@@ -12,6 +13,7 @@ export default function LoginPage() {
     const [success, setSuccess] = useState("");
 
     const router = useRouter();
+    const setUserInfo = useUserStore((state) => state.setUserInfo);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -22,18 +24,19 @@ export default function LoginPage() {
             const res = await loginApi(account, password);
             if (res.success) {
                 setSuccess("登入成功！");
-                localStorage.setItem("userName", res.user_name); // 假設後端回傳 user.User_Name
+                // 假設後端回傳 user_id 和 user_name
+                setUserInfo(res.user.user_id, res.user.user_name);
                 router.push("/myWardrobe/1-1");
             } else {
                 setError(res.message || "登入失敗");
             }
         } catch (err) {
             setError("伺服器錯誤");
-            console.error("Login error:", err);
         } finally {
             setLoading(false);
         }
-    };
+    }
+    
 
     return (
         <main className="flex h-full flex-col items-center bg-base-100 px-5 pb-8 pt-12">
