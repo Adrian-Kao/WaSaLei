@@ -182,8 +182,16 @@ def insert_new_item(user_id, name, space_id, type_id, season_ids, color_ids, sty
 # ==========================================
 # 5. 搜尋與篩選 (對應search.py)
 # ==========================================
-def search_items(user_id, keyword=None, space_id=None, type_id=None, season_id=None, color_id=None, style_id=None):
+def search_items(user_id, keyword=None, space_id=None, type_id=None, season_ids=None, color_ids=None, style_ids=None):
     connection = get_connection()
+
+    if season_ids is None:
+        season_ids = []
+    if color_ids is None:
+        color_ids = []
+    if style_ids is None:
+        style_ids = []
+
     try:
         with connection.cursor() as cursor:
             sql = """
@@ -221,15 +229,42 @@ def search_items(user_id, keyword=None, space_id=None, type_id=None, season_id=N
                 params.append(type_id)
             
             # 針對多對多
-            if season_id:
-                sql += "AND EXISTS (SELECT 1 FROM Item_Season sub_ise WHERE sub_ise.Item_ID = i.Item_ID AND sub_ise.Season_ID = %s)"
-                params.append(season_id)
-            if color_id:
-                sql += " AND EXISTS (SELECT 1 FROM Item_Color sub_ic WHERE sub_ic.Item_ID = i.Item_ID AND sub_ic.Color_ID = %s)"
-                params.append(color_id)
-            if style_id:
-                sql += " AND EXISTS (SELECT 1 FROM Item_Style sub_is WHERE sub_is.Item_ID = i.Item_ID AND sub_is.Style_ID = %s)"
-                params.append(style_id)
+            if season_ids:
+                placeholders = ",".join(["%s"] * len(season_ids))
+                sql += f"""
+                    AND EXISTS (
+                        SELECT 1
+                        FROM Item_Season sub_ise
+                        WHERE sub_ise.Item_ID = i.Item_ID
+                        AND sub_ise.Season_ID IN ({placeholders})
+                    )
+                """
+                params.extend(season_ids)
+
+            if color_ids:
+                placeholders = ",".join(["%s"] * len(color_ids))
+                sql += f"""
+                    AND EXISTS (
+                        SELECT 1
+                        FROM Item_Color sub_ic
+                        WHERE sub_ic.Item_ID = i.Item_ID
+                        AND sub_ic.Color_ID IN ({placeholders})
+                    )
+                """
+                params.extend(color_ids)
+
+            if style_ids:
+                placeholders = ",".join(["%s"] * len(style_ids))
+                sql += f"""
+                    AND EXISTS (
+                        SELECT 1
+                        FROM Item_Style sub_is
+                        WHERE sub_is.Item_ID = i.Item_ID
+                        AND sub_is.Style_ID IN ({placeholders})
+                    )
+                """
+                params.extend(style_ids)
+
 
             sql += " GROUP BY i.Item_ID;"
 
