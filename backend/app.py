@@ -115,8 +115,8 @@ def api_add_space():
 @app.route("/api/space/user/<int:user_id>", methods=["GET"])
 def api_get_user_all_spaces(user_id):
     from services.space import get_user_all_spaces
-
-    spaces = get_user_all_spaces(user_id)
+    space_type = request.args.get("type")
+    spaces = get_user_all_spaces(user_id, space_type)
     return jsonify({"status": "success", "success": True, "data": spaces}), 200
 
 @app.route("/api/space/<int:space_id>/items", methods=["GET"])

@@ -26,9 +26,12 @@ def add_space(user_id, space_type, capacity):
     else:
         return False, "建立儲衣空間失敗"
     
-# 取得該用戶的所有空間
-def get_user_all_spaces(user_id):
-    return db.get_spaces_by_user_id(user_id)
+# 取得該用戶的所有空間，若有 type 則過濾
+def get_user_all_spaces(user_id, space_type=None):
+    spaces = db.get_spaces_by_user_id(user_id)
+    if space_type:
+        spaces = [s for s in spaces if s.get("Space_Type") == space_type]
+    return spaces
 
 # 給前端抓選項
 def get_predefined_space_types():
