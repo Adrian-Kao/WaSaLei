@@ -18,29 +18,25 @@ CORS(app, origins="*")
 # Make sure WaSaLei/pictures/input|output|final exist when the server starts.
 ensure_picture_folders()
 
-
 @app.get("/")
 def health_check():
     return jsonify({"status": "ok", "success": True})
-
 
 # ==========================================
 # Static image access
 # ==========================================
 @app.get("/pictures/<path:filename>")
 def serve_picture(filename):
-    # New image pipeline: serves files from WaSaLei/pictures.
     return send_from_directory(PICTURES_DIR, filename)
 
 
 @app.route("/images/<path:filename>")
 def serve_image(filename):
-    # Backward-compatible route from the original app.py.
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    shared_output_dir = os.path.join(base_dir, "shared_data", "output")
+    pictures_dir = os.path.join(base_dir, "pictures", "output")
 
-    if os.path.exists(os.path.join(shared_output_dir, filename)):
-        return send_from_directory(shared_output_dir, filename)
+    if os.path.exists(os.path.join(pictures_dir, filename)):
+        return send_from_directory(pictures_dir, filename)
 
     # Fallback for the current project structure.
     return send_from_directory(PICTURES_DIR / "output", filename)
@@ -148,9 +144,9 @@ def api_add_item():
         name=data.get("name"),
         space_id=data.get("space_id"),
         type_id=data.get("type_id"),
-        season=data.get("season"),
-        color_ids=data.get("color_ids"),
-        style_ids=data.get("style_ids"),
+        season_ids=_int_list(data.get("season_ids") or data.get("season")),
+        color_ids=_int_list(data.get("color_ids")),
+        style_ids=_int_list(data.get("style_ids")),
         photo_filename=data.get("photo_filename"),
     )
 
@@ -181,7 +177,7 @@ def confirm_image():
             name=_required_value(data, "name"),
             space_id=_optional_int(data, "space_id"),
             type_id=_optional_int(data, "type_id"),
-            season=data.get("season"),
+            season_ids=_int_list(data.get("season_ids")) or data.get("season"),
             color_ids=_int_list(data.get("color_ids")),
             style_ids=_int_list(data.get("style_ids")),
         )
@@ -207,9 +203,9 @@ def api_search_wardrobe():
         keyword=data.get("keyword"),
         space_id=data.get("space_id"),
         type_id=data.get("type_id"),
-        season=data.get("season"),
-        color_id=data.get("color_id"),
-        style_id=data.get("style_id"),
+        season_ids=_int_list(data.get("season_ids") or data.get("season_id")),
+        color_ids=_int_list(data.get("color_ids") or data.get("color_id")),
+        style_ids=_int_list(data.get("style_ids") or data.get("style_id")),
     )
 
     if success:

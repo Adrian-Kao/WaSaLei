@@ -120,7 +120,7 @@ def confirm_item_image(
     name,
     space_id,
     type_id,
-    season,
+    season_ids,
     color_ids=None,
     style_ids=None,
 ):
@@ -135,12 +135,12 @@ def confirm_item_image(
     photo_path = _to_project_relative_path(final_path)
 
     try:
-        success, result = db.insert_new_item( #寫入db
+        success, result = db.insert_new_item(
             user_id=user_id,
             name=name,
             space_id=space_id,
             type_id=type_id,
-            season=season,
+            season_ids=season_ids,
             color_ids=color_ids,
             style_ids=style_ids,
             photo_path=photo_path,

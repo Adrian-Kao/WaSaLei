@@ -23,27 +23,46 @@ from database import db
 
 # 新增一件衣服
 def add_new_item(user_id, name, space_id, type_id, season_ids, color_ids = None, style_ids = None, photo_filename = None):
-    if color_ids is None: color_ids = []
-    if style_ids is None: style_ids = []
-    if season_ids is None: season_ids = []
-
-    # 避免重複寫入重複的顏色和風格ID，
-    color_ids = list(set(color_ids))  
-    style_ids = list(set(style_ids))  
-    season_ids = list(set(season_ids))
+    # 統一轉換成陣列格式並去除空值
+    color_ids = _normalize_id_list(color_ids)
+    style_ids = _normalize_id_list(style_ids)
+    season_ids = _normalize_id_list(season_ids)
 
     if not name.strip():
         return False, "衣服名稱不能為空"
     
     print(f"準備寫入的顏色清單: {color_ids}, 風格清單: {style_ids}, 季節清單: {season_ids}")
     
-    success , result = db.insert_new_item(user_id, name, space_id, type_id, season_ids, color_ids, style_ids, photo_filename)
+    success , result = db.insert_new_item(
+        user_id,
+        name,
+        space_id,
+        type_id,
+        season_ids,
+        color_ids,
+        style_ids,
+        photo_filename)
 
     if success:
         return True, f"成功新增衣服: {name} (ID: {result})"
     else:
         return False, f"新增衣服失敗: {result}"
     
+# ==========================================
+# Helper
+# ==========================================
+def _normalize_id_list(value):
+    if value is None or value == "":
+        return []
+
+    if isinstance(value, list):
+        return list({int(item) for item in value if item != "" and item is not None})
+
+    if isinstance(value, str):
+        return list({int(item.strip()) for item in value.split(",") if item.strip()})
+
+    return [int(value)]
+
 # ==========================================
 # 本機測試區塊
 # ==========================================

@@ -8,9 +8,23 @@ sys.path.append(parent_dir)
 from database import db
 
 # 複合條件搜尋衣服
-def search_wardrobe(user_id, keyword=None, space_id=None, type_id=None, season_id=None, color_id=None, style_id=None):
-    
-    raw_items = db.search_items(user_id, keyword, space_id, type_id, season_id, color_id, style_id)
+def search_wardrobe(user_id, keyword=None, space_id=None, type_id=None, season_ids=None, color_ids=None, style_ids=None):
+    if season_ids is None:
+        season_ids = []
+    if color_ids is None:
+        color_ids = []
+    if style_ids is None:
+        style_ids = []
+
+    raw_items = db.search_items(
+        user_id,
+        keyword=keyword,
+        space_id=space_id,
+        type_id=type_id,
+        season_ids=season_ids,
+        color_ids=color_ids,
+        style_ids=style_ids,
+    )
 
     if raw_items is None:
         return False, "搜尋時發生錯誤，請稍後再試"
