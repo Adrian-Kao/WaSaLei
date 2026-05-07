@@ -6,6 +6,7 @@ import { useUserStore} from "@/store/store";
 import { getUserRooms } from "@/lib/api/clothing";
 
 type RoomInfo = {
+  roomId: number;
   name: string;
   itemCount: number;
   totalCapacity: number;
@@ -30,6 +31,7 @@ export default function MyWardrobePage() {
         const roomList = await getUserRooms(userId);
         // roomList 應為 [{ Space_ID, Space_Type, Capacity, ... }]
         const roomsWithInfo = roomList.map((room: any) => ({
+          roomId: room.Space_ID,
           name: room.Space_Type + (room.Space_ID ? `#${room.Space_ID}` : ""),
           itemCount: room.Item_Count ?? 0, // 若後端有回傳 Item_Count
           totalCapacity: room.Capacity ?? 0,
@@ -46,9 +48,8 @@ export default function MyWardrobePage() {
     void fetchRooms();
   }, [userId]); // 移除 setRooms 依賴
 
-  function handleRoomClick(roomName: string) {
-    // 若要記錄當前房間可用 localStorage.setItem("currentRoom", roomName)
-    router.push("/myWardrobe/1-2");
+  function handleRoomClick(roomId: number) {
+    router.push(`/myWardrobe/1-2?roomId=${roomId}`);
   }
 
   return (
@@ -64,12 +65,12 @@ export default function MyWardrobePage() {
           <>
             {rooms.map((room) => (
               <button
-                key={room.name}
+                key={room.roomId}
                 type="button"
-                onClick={() => handleRoomClick(room.name)}
+                onClick={() => handleRoomClick(room.roomId)}
                 className="btn relative h-25 w-full rounded-2xl border-0 bg-base-100 text-black hover:bg-base-200 transition-colors"
               >
-                <div className="text-center text-3xl">{room.name}</div>
+                <div className="text-center text-3xl">Room ID: {room.roomId}</div>
                 <div className="absolute bottom-3 right-4 text-2xl">{room.itemCount}/{room.totalCapacity}</div>
               </button>
             ))}

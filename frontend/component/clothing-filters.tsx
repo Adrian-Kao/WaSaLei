@@ -100,6 +100,7 @@ export default function ClothingFilters({
                 <div className="space-y-1">
                     <label className="block text-xl leading-none">room</label>
                     <Select
+                        instanceId="room-filter-select"
                         isMulti
                         closeMenuOnSelect={false}
                         hideSelectedOptions={false}
@@ -117,6 +118,7 @@ export default function ClothingFilters({
                 <div className="space-y-1">
                     <label className="block text-xl leading-none">season</label>
                     <Select
+                        instanceId="season-filter-select"
                         isMulti
                         closeMenuOnSelect={false}
                         hideSelectedOptions={false}
@@ -132,6 +134,7 @@ export default function ClothingFilters({
                 <div className="space-y-1">
                     <label className="block text-xl leading-none">style</label>
                     <Select
+                        instanceId="style-filter-select"
                         isMulti
                         closeMenuOnSelect={false}
                         hideSelectedOptions={false}
@@ -147,6 +150,7 @@ export default function ClothingFilters({
                 <div className="space-y-1">
                     <label className="block text-xl leading-none">type</label>
                     <Select
+                        instanceId="type-filter-select"
                         isMulti
                         closeMenuOnSelect={false}
                         hideSelectedOptions={false}
@@ -164,6 +168,7 @@ export default function ClothingFilters({
                         <label className="block text-xl leading-none">color</label>
                     </div>
                     <Select
+                        instanceId="color-filter-select"
                         isMulti
                         closeMenuOnSelect={false}
                         hideSelectedOptions={false}

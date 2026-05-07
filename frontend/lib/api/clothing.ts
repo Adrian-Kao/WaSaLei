@@ -1,5 +1,7 @@
 import type { ClothingFilters, ClothingItem } from "@/lib/types/clothing";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:5000";
+
 const wardrobeName = "測試衣櫃";
 const fixedItemUrl = "/1.webp";
 const mockRooms = ["台北宿舍", "房間A", "房間B", "工作室"];
@@ -38,13 +40,43 @@ export async function getWardrobeFilteredClothingItems(filters: ClothingFilters)
 // 串接後端 API 取得該使用者所有 type 為「衣櫃」的空間名稱
 export async function getUserRooms(userId: string | number) {
   if (!userId) return [];
-  // 直接請求 type=衣櫃，後端已過濾
-  const res = await fetch(`/api/space/user/${userId}?type=衣櫃`);
+  const res = await fetch(`${API_BASE_URL}/api/space/user/${userId}`);
   if (!res.ok) return [];
   const data = await res.json();
-  // if (!data.success || !Array.isArray(data.data)) return [];
-  // 只回傳空間名稱（可依需求調整）
-  return data.data.map((s: any) => s.Space_Type + (s.Space_ID ? `#${s.Space_ID}` : ""));
+  if (!data.success || !Array.isArray(data.data)) return [];
+  // 前端還要自己拿多於資料做篩選，顯然已經受不了後端的效率?
+  return data.data.filter((s: any) => s.Space_Type === "衣櫃");
+}
+
+type BackendSpaceItem = {
+  name: string;
+  type: string;
+  seasons: string[];
+  styles: string[];
+  color1: string | null;
+  color2: string | null;
+  color3: string | null;
+  photo_url: string | null;
+};
+
+export async function getSpaceItems(spaceId: string | number): Promise<ClothingItem[]> {
+  if (!spaceId) return [];
+
+  const res = await fetch(`${API_BASE_URL}/api/space/${spaceId}/items`);
+  if (!res.ok) return [];
+
+  const data = await res.json();
+  if (!data.success || !Array.isArray(data.data)) return [];
+
+  return (data.data as BackendSpaceItem[]).map((item, index) => ({
+    id: index + 1,
+    name: item.name,
+    color: [item.color1 ?? "none", item.color2 ?? "none", item.color3 ?? "none"],
+    season: item.seasons ?? [],
+    type: item.type,
+    style: item.styles ?? [],
+    imageUrl: item.photo_url ?? fixedItemUrl,
+  }));
 }
 
 // TODO: 之後在這裡接後端呼叫（移動衣物到指定 room）。

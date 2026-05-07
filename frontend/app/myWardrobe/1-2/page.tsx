@@ -1,35 +1,67 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 import ClothingFiltersPanel from "@/component/clothing-filters";
 import EditActionBar from "@/component/edit-action-bar";
 import EditModeToggleButton from "@/component/edit-mode-toggle-button";
-import { useCurrentRoom } from "@/hooks/useCurrentRoom";
 import { useWardrobeEditor } from "@/hooks/useWardrobeEditor";
 import ItemCard from "@/component/item-card";
 import {
     getWardrobeClothingItems,
-    getWardrobeFilteredClothingItems,
+    getSpaceItems,
     getUserRooms
 } from "@/lib/api/clothing";
 import { createClothingFilters, type ClothingFilters, type ClothingItem } from "@/lib/types/clothing";
-
+import { useUserStore } from "@/store/store";
 
 // 這些選項目前是寫死的測試資料，未來可直接換成後端回傳值。
 const seasonOptions = ["春", "夏", "秋", "冬"];
-const styleOptions = ["日常", "運動", "正式", "其他"];
-const typeOptions = ["上身", "下身", "配件", "鞋類", "其他"];
+const styleOptions = ["運動", "正式", "日常", "社交", "其他"];
+const typeOptions = ["上身長", "上身短", "下身長", "下身短", "配件", "鞋類", "其他"];
 const colorOptions = ["#2A3388", "#000000", "#FFFFFF", "#9CA3AF"];
 
 // const wardrobeName = getWardrobeName();
 const initialClothingItems = getWardrobeClothingItems();
 
+type RoomInfo = {
+    roomId: number;
+    name: string;
+    itemCount: number;
+    totalCapacity: number;
+};
+
+function matchesFilters(item: ClothingItem, filters: ClothingFilters) {
+    const itemStyles = Array.isArray(item.style) ? item.style : [item.style];
+    const itemColors = item.color.filter((color) => color && color !== "none");
+
+    if (filters.season.length > 0 && !filters.season.some((season) => item.season.includes(season))) {
+        return false;
+    }
+
+    if (filters.style.length > 0 && !filters.style.some((style) => itemStyles.includes(style))) {
+        return false;
+    }
+
+    if (filters.type.length > 0 && !filters.type.includes(item.type)) {
+        return false;
+    }
+
+    if (filters.color.length > 0 && !filters.color.some((color) => itemColors.includes(color))) {
+        return false;
+    }
+
+    return true;
+}
+
 
 export default function WardrobePage() {
-    const currentRoom = useCurrentRoom();
-    const userId = localStorage.getItem("userId") || null;
-    const [allRooms, setAllRooms] = useState<string[]>([]);
+    const searchParams = useSearchParams();
+    const roomId = Number(searchParams.get("roomId") ?? 0);
+    const userId = useUserStore((state) => state.userId);
+    const [allRooms, setAllRooms] = useState<RoomInfo[]>([]);
+    const [roomItems, setRoomItems] = useState<ClothingItem[]>([]);
 
     // 編輯狀態集中在 hook，page 只負責組 UI 與 filter。
     const {
@@ -42,11 +74,12 @@ export default function WardrobePage() {
         moveSelectedItemsToRoom,
         handleAddItem,
     } = useWardrobeEditor(initialClothingItems);
-    const [filters, setFilters] = useState<ClothingFilters>(() => createClothingFilters(currentRoom));
+    const [filters, setFilters] = useState<ClothingFilters>(() => createClothingFilters());
     const [filteredItems, setFilteredItems] = useState<ClothingItem[]>([]);
     const [isMoveModalOpen, setIsMoveModalOpen] = useState(false);
-    const [roomOptions, setRoomOptions] = useState<string[]>([]);
+    const [roomOptions, setRoomOptions] = useState<RoomInfo[]>([]);
     const [selectedTargetRoom, setSelectedTargetRoom] = useState("");
+    const [loading, setLoading] = useState(true);
 
     async function handleOpenMoveModal() {
         handleMoveSelectedItems();
@@ -57,27 +90,60 @@ export default function WardrobePage() {
 
         setIsMoveModalOpen(true);
 
-        // 從 allRooms 拿房間列表，過濾掉當前房間
-        const availableRooms = allRooms.filter((room: string) => room !== currentRoom);
+        const availableRooms = allRooms.filter((room) => room.roomId !== roomId);
         setRoomOptions(availableRooms);
-        setSelectedTargetRoom(availableRooms[0] ?? "");
+        setSelectedTargetRoom(availableRooms[0] ? String(availableRooms[0].roomId) : "");
     }
-    // 頁面載入時取得所有房間
+    // 頁面載入時取得當前房間衣物與所有可移動房間
     useEffect(() => {
+        let isMounted = true;
+
         async function fetchRooms() {
-            if (!userId) {
-                setAllRooms([]);
+            setLoading(true);
+
+            if (!userId || !roomId) {
+                if (isMounted) {
+                    setAllRooms([]);
+                    setRoomItems([]);
+                    setLoading(false);
+                }
                 return;
             }
+
             try {
-                const roomList = await getUserRooms(userId);
-                setAllRooms(roomList);
+                const [roomList, items] = await Promise.all([getUserRooms(userId), getSpaceItems(roomId)]);
+
+                if (!isMounted) {
+                    return;
+                }
+
+                setAllRooms(
+                    roomList.map((room: any) => ({
+                        roomId: room.Space_ID,
+                        name: `${room.Space_Type}#${room.Space_ID}`,
+                        itemCount: room.Item_Count ?? 0,
+                        totalCapacity: room.Capacity ?? 0,
+                    }))
+                );
+                setRoomItems(items);
             } catch (error) {
-                setAllRooms([]);
+                if (isMounted) {
+                    setAllRooms([]);
+                    setRoomItems([]);
+                }
+            } finally {
+                if (isMounted) {
+                    setLoading(false);
+                }
             }
         }
-        fetchRooms();
-    }, [userId]);
+
+        void fetchRooms();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [userId, roomId]);
 
     function handleCloseMoveModal() {
         setIsMoveModalOpen(false);
@@ -94,21 +160,8 @@ export default function WardrobePage() {
     }
 
     useEffect(() => {
-        let isMounted = true;
-
-        async function loadFilteredItems() {
-            const nextItems = await getWardrobeFilteredClothingItems(filters);
-            if (isMounted) {
-                setFilteredItems(nextItems);
-            }
-        }
-
-        void loadFilteredItems();
-
-        return () => {
-            isMounted = false;
-        };
-    }, [filters]);
+        setFilteredItems(roomItems.filter((item) => matchesFilters(item, filters)));
+    }, [filters, roomItems]);
 
     return (
         <main className="h-[90%] overflow-y-auto scrollbar-hide bg-[#E2E2E2] text-black ">
@@ -125,10 +178,10 @@ export default function WardrobePage() {
             </section>
 
             <section className="w-full h-full p-6">
-                {/* 標題列：左邊是衣櫃名稱，右邊是編輯模式切換。 */}
+                {/* 標題列：左邊是目前房間，右邊是編輯模式切換。 */}
                 <div className="flex items-center h-[10%] gap-5">
                     <div className="flex h-full flex-1 items-center justify-center rounded-2xl border-2 border-black text-center text-3xl tracking-[0.18em]">
-                        {/* {wardrobeName} */}
+                        {roomId ? `Room ID: ${roomId}` : "尚未選擇房間"}
                     </div>
                     <EditModeToggleButton isEditMode={isEditMode} onToggle={toggleEditMode} />
                 </div>
@@ -142,22 +195,28 @@ export default function WardrobePage() {
                     />
                 ) : null}
 
-                <div className="mt-6 grid grid-cols-2 gap-x-8 gap-y-8">
-                    {filteredItems.map((item) => (
-                        <ItemCard
-                            key={item.id}
-                            name={item.name}
-                            color={item.color}
-                            season={item.season}
-                            type={item.type}
-                            style={item.style}
-                            imageUrl={item.imageUrl}
-                            editable={isEditMode}
-                            selected={selectedItemIds.includes(item.id)}
-                            onSelectToggle={() => toggleSelectedItem(item.id)}
-                        />
-                    ))}
-                </div>
+                {loading ? (
+                    <div className="mt-6 flex h-44 items-center justify-center">
+                        <span className="loading loading-spinner loading-lg"></span>
+                    </div>
+                ) : (
+                    <div className="mt-6 grid grid-cols-2 gap-x-8 gap-y-8">
+                        {filteredItems.map((item) => (
+                            <ItemCard
+                                key={`${item.id}-${item.name}`}
+                                name={item.name}
+                                color={item.color}
+                                season={item.season}
+                                type={item.type}
+                                style={item.style}
+                                imageUrl={item.imageUrl}
+                                editable={isEditMode}
+                                selected={selectedItemIds.includes(item.id)}
+                                onSelectToggle={() => toggleSelectedItem(item.id)}
+                            />
+                        ))}
+                    </div>
+                )}
                 {/* 下方是衣服卡片清單，會跟著 filter 與編輯選取狀態更新。 */}
             </section>
 
@@ -167,16 +226,16 @@ export default function WardrobePage() {
                         <div className="space-y-6">
                             {roomOptions.length > 0 ? (
                                 roomOptions.map((room) => {
-                                    const isSelected = selectedTargetRoom === room;
+                                    const isSelected = selectedTargetRoom === String(room.roomId);
 
                                     return (
                                         <button
-                                            key={room}
+                                            key={room.roomId}
                                             type="button"
-                                            onClick={() => setSelectedTargetRoom(room)}
+                                            onClick={() => setSelectedTargetRoom(String(room.roomId))}
                                             className={`btn h-18 min-h-0 w-full rounded-2xl border-0 bg-base-100 px-10 text-left text-3xl font-medium text-black hover:bg-base-200 ${isSelected ? "outline-4 -outline-offset-4 outline-black" : ""}`}
                                         >
-                                            {room}
+                                            {room.name}
                                         </button>
                                     );
                                 })
