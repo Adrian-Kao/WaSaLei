@@ -52,6 +52,8 @@ CREATE TABLE `history` (
   `Occasion` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `Photo` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `User_ID` int NOT NULL,
+  `Note` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `Time` time DEFAULT NULL,
   PRIMARY KEY (`History_ID`),
   KEY `User_ID` (`User_ID`),
   CONSTRAINT `history_ibfk_1` FOREIGN KEY (`User_ID`) REFERENCES `user` (`User_ID`) ON DELETE CASCADE
@@ -244,8 +246,10 @@ DROP TABLE IF EXISTS `space`;
 CREATE TABLE `space` (
   `Space_ID` int NOT NULL AUTO_INCREMENT,
   `Space_Type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `Capacity` int DEFAULT NULL,
+  `Space_Name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `User_ID` int NOT NULL,
+  `Capacity` int DEFAULT NULL,
+  `Used_Capacity` int DEFAULT NULL,
   PRIMARY KEY (`Space_ID`),
   KEY `User_ID` (`User_ID`),
   CONSTRAINT `space_ibfk_1` FOREIGN KEY (`User_ID`) REFERENCES `user` (`User_ID`) ON DELETE CASCADE
@@ -258,7 +262,7 @@ CREATE TABLE `space` (
 
 LOCK TABLES `space` WRITE;
 /*!40000 ALTER TABLE `space` DISABLE KEYS */;
-INSERT INTO `space` VALUES (1,'衣櫃',20,1),(2,'行李箱',40,1),(3,'衣櫃',20,1),(4,'行李箱',40,1),(5,'衣櫃',20,1),(6,'行李箱',40,1),(7,'衣櫃',20,1),(8,'行李箱',40,1),(9,'衣櫃',20,1),(10,'行李箱',40,1),(11,'衣櫃',20,1),(12,'行李箱',40,1),(13,'衣櫃',20,1),(14,'行李箱',40,1);
+INSERT INTO `space` VALUES (1,'衣櫃',NULL,1,20,NULL),(2,'行李箱',NULL,1,40,NULL),(3,'衣櫃',NULL,1,20,NULL),(4,'行李箱',NULL,1,40,NULL),(5,'衣櫃',NULL,1,20,NULL),(6,'行李箱',NULL,1,40,NULL),(7,'衣櫃',NULL,1,20,NULL),(8,'行李箱',NULL,1,40,NULL),(9,'衣櫃',NULL,1,20,NULL),(10,'行李箱',NULL,1,40,NULL),(11,'衣櫃',NULL,1,20,NULL),(12,'行李箱',NULL,1,40,NULL),(13,'衣櫃',NULL,1,20,NULL),(14,'行李箱',NULL,1,40,NULL);
 /*!40000 ALTER TABLE `space` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -354,4 +358,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-04-29 20:10:25
+-- Dump completed on 2026-05-08  9:46:19

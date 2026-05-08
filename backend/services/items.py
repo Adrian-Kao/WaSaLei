@@ -76,7 +76,7 @@ if __name__ == "__main__":
     mock_photo_filename = "preview_abcd1234.png"
     
     # 3. 呼叫我們改好的單純函數
-    status, msg = add_new_item(
+    status, msg = create_item_record(
         user_id=test_uid, 
         name=test_name, 
         space_id=test_sid, 
@@ -104,7 +104,7 @@ if __name__ == "__main__":
     mock_photo_filename = "preview_abcd1234.png"
     
     # 3. 呼叫我們改好的單純函數
-    status, msg = add_new_item(
+    status, msg = create_item_record(
         user_id=test_uid, 
         name=test_name, 
         space_id=test_sid, 
