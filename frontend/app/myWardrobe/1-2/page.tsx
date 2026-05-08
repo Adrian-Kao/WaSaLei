@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import ClothingFiltersPanel from "@/component/clothing-filters";
 import EditActionBar from "@/component/edit-action-bar";
@@ -56,6 +56,7 @@ function matchesFilters(item: ClothingItem, filters: ClothingFilters) {
 
 
 export default function WardrobePage() {
+    const router = useRouter();
     const searchParams = useSearchParams();
     const roomId = Number(searchParams.get("roomId") ?? 0);
     const userId = useUserStore((state) => state.userId);
@@ -162,6 +163,11 @@ export default function WardrobePage() {
         handleCloseMoveModal();
     }
 
+    function handleAddAndNavigate() {
+        handleAddItem();
+        router.push(`/myWardrobe/1-5?roomId=${roomId}`);
+    }
+
     useEffect(() => {
         setFilteredItems(roomItems.filter((item) => matchesFilters(item, filters)));
     }, [filters, roomItems]);
@@ -192,7 +198,7 @@ export default function WardrobePage() {
                 {isEditMode ? (
                     <EditActionBar
                         selectedCount={selectedItemIds.length}
-                        onAdd={handleAddItem}
+                        onAdd={handleAddAndNavigate}
                         onDelete={handleDeleteSelectedItems}
                         onMove={handleOpenMoveModal}
                     />
@@ -206,6 +212,7 @@ export default function WardrobePage() {
                     <div className="mt-6 grid grid-cols-2 gap-x-8 gap-y-8">
                         {filteredItems.map((item) => (
                             <ItemCard
+                                itemId={item.id}
                                 key={`${item.id}-${item.name}`}
                                 name={item.name}
                                 color={item.color}

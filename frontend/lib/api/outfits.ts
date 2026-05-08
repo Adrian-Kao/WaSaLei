@@ -1,8 +1,8 @@
 import { ClothingItem, Outfit } from "@/lib/types/outfit";
-import { getWardrobeClothingItems } from "@/lib/api/clothing";
+import { getSpaceItems } from "@/lib/api/clothing";
 
 // 統一 mock 資料
-const allItems: ClothingItem[] = getWardrobeClothingItems();
+const allItems: ClothingItem[] = getSpaceItems("");
 const mockOutfits: Outfit[] = [
   {
     id: 1,

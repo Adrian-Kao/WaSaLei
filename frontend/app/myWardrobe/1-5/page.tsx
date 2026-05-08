@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 type Offset = {
   x: number;
@@ -15,6 +16,10 @@ type DragState = {
 };
 
 export default function CameraCapturePage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const roomId = searchParams.get("roomId");
+
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const dragRef = useRef<DragState | null>(null);
@@ -231,6 +236,8 @@ export default function CameraCapturePage() {
 
       // TODO: 接上 API 時，將 outputFile 送出後端。
       console.log("1:1 圖片已準備好", outputFile);
+
+      router.push(roomId ? `/myWardrobe/1-2?roomId=${roomId}` : "/myWardrobe/1-2");
     } catch {}
   }
 

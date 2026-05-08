@@ -1,7 +1,9 @@
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { FiCheck, FiPlus, FiX } from "react-icons/fi";
 
 type ItemCardProps = {
+    itemId?: number | string;
     name: string;
     color: [string, string, string];
     season: string[];
@@ -12,6 +14,7 @@ type ItemCardProps = {
     editable?: boolean;
     selected?: boolean;
     onSelectToggle?: () => void;
+    detailPath?: string;
 };
 
 function normalizeColor(input: string) {
@@ -30,6 +33,7 @@ function normalizeList(value: string | string[]) {
 }
 
 export default function ItemCard({
+    itemId,
     name,
     color,
     season,
@@ -40,16 +44,49 @@ export default function ItemCard({
     editable = false,
     selected = false,
     onSelectToggle,
+    detailPath = "/myWardrobe/1-4",
 }: ItemCardProps) {
+    const router = useRouter();
     const colorSlots = color.map((slotColor) => normalizeColor(slotColor));
     const styles = normalizeList(style);
+    const normalizedItemId = Number(itemId);
+    const canNavigateToDetail = !editable && Number.isFinite(normalizedItemId) && normalizedItemId > 0;
+    const canToggleSelection = editable && typeof onSelectToggle === "function";
+
+    function handleCardClick() {
+        if (canToggleSelection) {
+            onSelectToggle();
+            return;
+        }
+
+        if (!canNavigateToDetail) {
+            return;
+        }
+
+        router.push(`${detailPath}?id=${normalizedItemId}`);
+    }
 
     return (
-        <div className={`relative w-full h-full card shadow-sm bg-base-200 ${selected ? "ring-2 ring-black" : ""}`}>
+        <div
+            className={`relative w-full h-full card shadow-sm bg-base-200 ${selected ? "ring-2 ring-black" : ""} ${canNavigateToDetail || canToggleSelection ? "cursor-pointer" : ""}`}
+            onClick={handleCardClick}
+            role={canNavigateToDetail || canToggleSelection ? "button" : undefined}
+            tabIndex={canNavigateToDetail || canToggleSelection ? 0 : undefined}
+            onKeyDown={(event) => {
+                if (!canNavigateToDetail && !canToggleSelection) return;
+                if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    handleCardClick();
+                }
+            }}
+        >
             {editable && onSelectToggle ? (
                 <button
                     type="button"
-                    onClick={onSelectToggle}
+                    onClick={(event) => {
+                        event.stopPropagation();
+                        onSelectToggle();
+                    }}
                     className={`absolute -right-2 -top-2 z-10 grid h-8 w-8 place-items-center rounded-full border-2 border-black bg-white ${selected ? "text-black" : "text-black"}`}
                     aria-label={selected ? "取消選取" : "選取衣服"}
                 >
