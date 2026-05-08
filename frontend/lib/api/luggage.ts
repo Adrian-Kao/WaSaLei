@@ -87,9 +87,16 @@ export async function getLuggageFilteredItems(filters: LuggageSpaceFilters) {
   return getWardrobeFilteredClothingItems(filters);
 }
 
-// export async function getLuggageRoomOptions(userId: string | number) {
-//   return getUserRooms(userId);
-// }
+type UserRoomDto = {
+  Space_ID: number;
+  Space_Name?: string | null;
+  Space_Type?: string;
+};
+
+export async function getLuggageRoomOptions(userId: string | number): Promise<string[]> {
+  const rooms = (await getUserRooms(userId)) as UserRoomDto[];
+  return rooms.map((room) => String(room.Space_ID));
+}
 
 export async function requestMoveLuggageItemsToRoom(itemIds: number[], targetRoom: string) {
   return requestMoveSelectedItemsToRoom(itemIds, targetRoom);

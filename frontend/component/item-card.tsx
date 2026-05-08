@@ -65,28 +65,31 @@ export default function ItemCard({
                     className="object-cover"
                 />
             </div>
-
-            <div className="mb-2 flex items-center justify-center gap-3 text-md leading-none ">
-                <span>{name}</span>
-                <div className="inline-flex overflow-hidden rounded-2xl border-2 border-black">
-                    {colorSlots.map((slotColor, index) => (
-                        <span
-                            key={`${name}-color-${index}`}
-                            aria-label={slotColor ? `color ${slotColor}` : "none color slot"}
-                            title={slotColor ?? "none"}
-                            className={`grid h-5 w-5 place-items-center border-l-2 border-black first:border-l-0 ${slotColor ? "" : "bg-white"}`}
-                            style={slotColor ? { backgroundColor: slotColor } : undefined}
-                        >
-                            {slotColor ? null : <FiX className="text-[10px] text-black" />}
-                        </span>
-                    ))}
+            <div className="flex flex-col items-center justify-center gap-2 px-2">
+                <div className="flex items-center justify-center text-md leading-none ">
+                    <div>{name}</div>
                 </div>
-            </div>
 
-            <div className=" px-2 flex flex-row flex-nowrap items-center justify-center gap-4 whitespace-nowrap text-sm ">
-                <span>{styles || "-"}</span>
-                <span>{season || "-"}</span>
-                <span>{type || "-"}</span>
+                <div className="flex flex-row items-center justify-around text-sm w-full">
+                    <div className="inline-flex overflow-hidden rounded-2xl border-2 border-black">
+                        {colorSlots.map((slotColor, index) => (
+                            <span
+                                key={`${name}-color-${index}`}
+                                aria-label={slotColor ? `color ${slotColor}` : "none color slot"}
+                                title={slotColor ?? "none"}
+                                className={`grid h-5 w-5 place-items-center border-l-2 border-black first:border-l-0 ${slotColor ? "" : "bg-white"}`}
+                                style={slotColor ? { backgroundColor: slotColor } : undefined}
+                            >
+                                {slotColor ? null : <FiX className="text-[10px] text-black" />}
+                            </span>
+                        ))}
+                    </div>
+                    <div>{styles || "-"}</div>
+                </div>
+                <div className="flex flex-row items-center justify-around   text-sm w-full">
+                    <div>{season || "-"}</div>
+                    <div>{type || "-"}</div>
+                </div>
             </div>
         </div>
     );

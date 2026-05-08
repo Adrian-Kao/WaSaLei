@@ -9,7 +9,6 @@ import EditModeToggleButton from "@/component/edit-mode-toggle-button";
 import { useWardrobeEditor } from "@/hooks/useWardrobeEditor";
 import ItemCard from "@/component/item-card";
 import {
-    getWardrobeClothingItems,
     getSpaceItems,
     getUserRooms
 } from "@/lib/api/clothing";
@@ -23,7 +22,7 @@ const typeOptions = ["上身長", "上身短", "下身長", "下身短", "配件
 const colorOptions = ["#2A3388", "#000000", "#FFFFFF", "#9CA3AF"];
 
 // const wardrobeName = getWardrobeName();
-const initialClothingItems = getWardrobeClothingItems();
+const initialClothingItems: ClothingItem[] = [];  // 本地篩選：初始為空，實際衣物在 fetchRooms 取得
 
 type RoomInfo = {
     roomId: number;
@@ -73,7 +72,11 @@ export default function WardrobePage() {
         handleMoveSelectedItems,
         moveSelectedItemsToRoom,
         handleAddItem,
-    } = useWardrobeEditor(initialClothingItems);
+    } = useWardrobeEditor(initialClothingItems, async () => {
+        if (!roomId) return;
+        const items = await getSpaceItems(roomId);
+        setRoomItems(items);
+    });
     const [filters, setFilters] = useState<ClothingFilters>(() => createClothingFilters());
     const [filteredItems, setFilteredItems] = useState<ClothingItem[]>([]);
     const [isMoveModalOpen, setIsMoveModalOpen] = useState(false);

@@ -3,7 +3,7 @@ import { useState } from "react";
 import { requestDeleteSelectedItems, requestMoveSelectedItemsToRoom } from "@/lib/api/clothing";
 import type { ClothingItem } from "@/lib/types/clothing";
 
-export function useWardrobeEditor(initialItems: ClothingItem[]) {
+export function useWardrobeEditor(initialItems: ClothingItem[], onRefetch?: () => Promise<void>) {
 	const [items, setItems] = useState(initialItems);
 	const [isEditMode, setIsEditMode] = useState(false);
 	const [selectedItemIds, setSelectedItemIds] = useState<number[]>([]);
@@ -29,13 +29,16 @@ export function useWardrobeEditor(initialItems: ClothingItem[]) {
 	}
 
 	// 目前先做最基本的刪除：直接從本地 items 移除。
-	function handleDeleteSelectedItems() {
+	async function handleDeleteSelectedItems() {
 		if (selectedItemIds.length === 0) {
 			return;
 		}
 
-		void requestDeleteSelectedItems(selectedItemIds);
-		setSelectedItemIds([]);
+		const { success } = await requestDeleteSelectedItems(selectedItemIds);
+		if (success) {
+			setSelectedItemIds([]);
+			await onRefetch?.();
+		}
 	}
 
 	// MOVE 先開啟 UI 流程，不直接改資料。
@@ -45,13 +48,16 @@ export function useWardrobeEditor(initialItems: ClothingItem[]) {
 		}
 	}
 
-	function moveSelectedItemsToRoom(targetRoom: string) {
+	async function moveSelectedItemsToRoom(targetRoom: string) {
 		if (selectedItemIds.length === 0 || !targetRoom) {
 			return;
 		}
 
-		void requestMoveSelectedItemsToRoom(selectedItemIds, targetRoom);
-		setSelectedItemIds([]);
+		const { success } = await requestMoveSelectedItemsToRoom(selectedItemIds, targetRoom);
+		if (success) {
+			setSelectedItemIds([]);
+			await onRefetch?.();
+		}
 	}
 
 	// ADD 先清空選取，後續可以改成開新增表單或導頁。
