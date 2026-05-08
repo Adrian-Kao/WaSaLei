@@ -10,7 +10,8 @@ from database import db
 VALID_SPACE_TYPES = ["衣櫃", "行李箱"]
 
 
-def add_space(user_id, space_type, capacity):
+# Create a storage space after validating type and capacity.
+def add_space(user_id, space_type, capacity, space_name=None):
     if not isinstance(capacity, int) or capacity <= 0:
         return False, "容量必須是正整數"
 
@@ -20,23 +21,23 @@ def add_space(user_id, space_type, capacity):
     if space_type not in VALID_SPACE_TYPES:
         return False, f"不支援的空間類型: {space_type}"
 
-    success = db.create_new_space(user_id, space_type, capacity)
+    success = db.create_new_space(user_id, space_type, capacity, space_name)
     if success:
         return True, f"成功新增空間: {space_type}, 容量: {capacity}"
     return False, "新增空間失敗"
 
-
+# Get all spaces for one user, optionally filtered by space type.
 def get_user_all_spaces(user_id, space_type=None):
     spaces = db.get_spaces_by_user_id(user_id)
     if space_type:
         spaces = [space for space in spaces if space.get("Space_Type") == space_type]
     return spaces
 
-
+# Return all space types allowed by this service.
 def get_predefined_space_types():
     return VALID_SPACE_TYPES
 
-
+# Get items in one space and format their attributes for frontend use.
 def get_formatted_items(space_id):
     raw_items = db.fetch_raw_items_by_space(space_id)
 
@@ -67,6 +68,24 @@ def get_formatted_items(space_id):
 
     return True, formatted_items
 
+# Get capacity, used count, remaining count, and full status for one space.
+def get_capacity_status(space_id):
+    status = db.get_space_capacity_status(space_id)
+    if status is None:
+        return False, "找不到指定空間"
+
+    return True, status
+
+# Update one space capacity after validating the new value.
+def update_capacity(space_id, capacity):
+    if not isinstance(capacity, int) or capacity <= 0:
+        return False, "容量必須是正整數"
+
+    return db.update_space_capacity(space_id, capacity)
+
+# Delete one space while keeping its items detached from any space.
+def remove_space(space_id):
+    return db.delete_space(space_id)
 
 if __name__ == "__main__":
     print("=== space.py local test ===")

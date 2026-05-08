@@ -8,6 +8,7 @@ sys.path.append(parent_dir)
 from database import db
 
 
+# Search wardrobe items and format database rows for list views.
 def search_wardrobe(user_id, keyword=None, space_id=None, type_id=None, season_ids=None, color_ids=None, style_ids=None):
     if season_ids is None:
         season_ids = []

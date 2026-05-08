@@ -18,6 +18,7 @@ CORS(app, origins="*")
 # Make sure WaSaLei/pictures/input|output|final exist when the server starts.
 ensure_picture_folders()
 
+# Return backend health status for quick API availability checks.
 @app.get("/")
 def health_check():
     return jsonify({"status": "ok", "success": True})
@@ -25,11 +26,13 @@ def health_check():
 # ==========================================
 # Static image access
 # ==========================================
+# Serve static image files from the project pictures directory.
 @app.get("/pictures/<path:filename>")
 def serve_picture(filename):
     return send_from_directory(PICTURES_DIR, filename)
 
 
+# Serve parsed output images for preview display.
 @app.route("/images/<path:filename>")
 def serve_image(filename):
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -45,6 +48,7 @@ def serve_image(filename):
 # ==========================================
 # 1. Auth
 # ==========================================
+# Handle user registration requests and create a new account.
 @app.post("/api/auth/register")
 def register_user():
     # silent = True : 預設情況下，如果前端傳過來的不是json會報錯，加上silent = True就只會回傳None
@@ -68,6 +72,7 @@ def register_user():
     except Exception as exc:
         return jsonify({"success": False, "status": "error", "message": "伺服器內部錯誤"}), 500
 
+# Handle user login requests and return user data on success.
 @app.post("/api/auth/login")
 def login_user():
     data = request.get_json(silent=True) or request.form.to_dict(flat=True)
@@ -91,6 +96,7 @@ def login_user():
 # ==========================================
 # 2. Space
 # ==========================================
+# Return the supported storage space types.
 @app.route("/api/space/predefined", methods=["GET"])
 def api_get_predefined_space_types():
     from services.space import get_predefined_space_types
@@ -98,6 +104,7 @@ def api_get_predefined_space_types():
     types = get_predefined_space_types()
     return jsonify({"status": "success", "success": True, "data": types}), 200
 
+# Create a new storage space with optional name and capacity.
 @app.route("/api/space", methods=["POST"])
 def api_add_space():
     from services.space import add_space
@@ -105,13 +112,15 @@ def api_add_space():
     data = request.get_json(silent=True) or request.form.to_dict(flat=True)
     user_id = data.get("user_id")
     space_type = data.get("space_type")
-    capacity = _optional_int(data, "capacity")
+    space_name = data.get("space_name")
+    capacity = _optional_int(data, "capacity") or 30
 
-    success, msg = add_space(user_id, space_type, capacity)
+    success, msg = add_space(user_id, space_type, capacity, space_name)
     if success:
         return jsonify({"status": "success", "success": True, "message": msg}), 201
     return jsonify({"status": "error", "success": False, "message": msg}), 400
 
+# Return all spaces for one user, optionally filtered by type.
 @app.route("/api/space/user/<int:user_id>", methods=["GET"])
 def api_get_user_all_spaces(user_id):
     from services.space import get_user_all_spaces
@@ -119,6 +128,7 @@ def api_get_user_all_spaces(user_id):
     spaces = get_user_all_spaces(user_id, space_type)
     return jsonify({"status": "success", "success": True, "data": spaces}), 200
 
+# Return all formatted clothing items inside one space.
 @app.route("/api/space/<int:space_id>/items", methods=["GET"])
 def api_get_space_items(space_id):
     from services.space import get_formatted_items
@@ -128,9 +138,72 @@ def api_get_space_items(space_id):
         return jsonify({"status": "success", "success": True, "data": result}), 200
     return jsonify({"status": "error", "success": False, "message": result}), 404
 
+# Return capacity status for one storage space.
+@app.get("/api/space/<int:space_id>/capacity")
+def api_get_space_capacity(space_id):
+    from services.space import get_capacity_status
+
+    success, result = get_capacity_status(space_id)
+
+    if success:
+        return jsonify({"success": True, "status": "success", "data": result}), 200
+
+    return jsonify({"success": False, "status": "error", "message": result}), 404
+
+# Update one space capacity while preventing invalid capacity values.
+@app.patch("/api/space/<int:space_id>/capacity")
+def api_update_space_capacity(space_id):
+    from services.space import update_capacity
+
+    data = request.get_json(silent=True) or request.form.to_dict(flat=True)
+
+    try:
+        capacity = _required_int(data, "capacity")
+    except ValueError as e:
+        return jsonify({"success": False, "status": "error", "message": str(e)}), 400
+
+    success, result = update_capacity(space_id, capacity)
+
+    if success:
+        return jsonify({"success": True, "status": "success", "message": result}), 200
+
+    return jsonify({"success": False, "status": "error", "message": result}), 400
+
+# Move one item to another space after capacity validation.
+@app.patch("/api/items/<int:item_id>/space")
+def api_move_item_space(item_id):
+    from services.items import move_item_space
+
+    data = request.get_json(silent=True) or request.form.to_dict(flat=True)
+
+    try:
+        target_space_id = _required_int(data, "space_id")
+    except ValueError as e:
+        return jsonify({"success": False, "status": "error", "message": str(e)}), 400
+
+    success, result = move_item_space(item_id, target_space_id)
+
+    if success:
+        return jsonify({"success": True, "status": "success", "message": result}), 200
+
+    return jsonify({"success": False, "status": "error", "message": result}), 400
+
+# Delete one space; related items are kept with Space_ID set to NULL.
+@app.delete("/api/space/<int:space_id>")
+def api_delete_space(space_id):
+    from services.space import remove_space
+
+    success, result = remove_space(space_id)
+
+    if success:
+        return jsonify({"success": True, "status": "success", "message": result}), 200
+
+    return jsonify({"success": False, "status": "error", "message": result}), 404
+
 # ==========================================
 # 3. Items
 # ==========================================
+# Return full detail for one clothing item.
 @app.get("/api/items/<int:item_id>")
 def api_get_item_detail(item_id):
     from services.items import get_item_detail
@@ -142,6 +215,7 @@ def api_get_item_detail(item_id):
 
     return jsonify({"success": False, "status": "error", "message": result}), 404
 
+# Update one clothing item and its multi-select attributes.
 @app.patch("/api/items/<int:item_id>")
 def api_update_item(item_id):
     from services.items import update_item_record
@@ -155,6 +229,7 @@ def api_update_item(item_id):
 
     return jsonify({"success": False, "status": "error", "message": result}), 400
 
+# Delete one clothing item and its relation rows.
 @app.delete("/api/items/<int:item_id>")
 def api_delete_item(item_id):
     from services.items import delete_item_record
@@ -166,6 +241,7 @@ def api_delete_item(item_id):
 
     return jsonify({"success": False, "status": "error", "message": result}), 404
 
+# Upload and parse one image in a backward-compatible single step.
 @app.post("/api/items/preview-image")
 def preview_image():
     file_storage = request.files.get("file") or request.files.get("image")
@@ -177,6 +253,7 @@ def preview_image():
     except Exception as exc:
         return jsonify({"success": False, "status": "error", "message": str(exc)}), 400
 
+# Confirm parsed image output and create the item record.
 @app.post("/api/items/confirm-image")
 def confirm_image():
     data = request.get_json(silent=True) or request.form.to_dict(flat=True)
@@ -198,6 +275,7 @@ def confirm_image():
 # ==========================================
 # 4. Search
 # ==========================================
+# Search wardrobe items with optional keyword and filter groups.
 @app.route("/api/search", methods=["GET", "POST"])
 def api_search_wardrobe():
     from services.search import search_wardrobe
@@ -225,6 +303,7 @@ def api_search_wardrobe():
 # ==========================================
 # 5. Current image input/output pipeline
 # ==========================================
+# Upload the current source image to pictures/input.
 @app.post("/api/images/upload-input")
 def upload_input_image():
     file_storage = request.files.get("file") or request.files.get("image")
@@ -235,6 +314,7 @@ def upload_input_image():
     except Exception as exc:
         return jsonify({"success": False, "status": "error", "message": str(exc)}), 400
 
+# Parse the current input image and write preview output.
 @app.post("/api/images/parse-input")
 def parse_input_image():
     data = request.get_json(silent=True) or request.form.to_dict(flat=True)
@@ -249,24 +329,29 @@ def parse_input_image():
 # ==========================================
 # Helpers
 # ==========================================
+# Convert a boolean success flag into a response status string.
 def _status(success):
     return "success" if success else "error"
 
+# Read a required request field or raise ValueError.
 def _required_value(data, key):
     value = data.get(key)
     if value is None or value == "":
         raise ValueError(f"{key} is required.")
     return value
 
+# Read a required request field and convert it to int.
 def _required_int(data, key):
     return int(_required_value(data, key))
 
+# Read an optional request field and convert it to int when present.
 def _optional_int(data, key):
     value = data.get(key)
     if value is None or value == "":
         return None
     return int(value)
 
+# Normalize a scalar, comma-separated string, or list into int list.
 def _int_list(value):
     if value is None or value == "":
         return []

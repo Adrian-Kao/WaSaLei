@@ -8,6 +8,7 @@ sys.path.append(parent_dir)
 from database import db
 
 
+# Register a new user after checking account uniqueness.
 def register(name, account, password):
     existing_user = db.get_user_by_account(account)
     if existing_user is not None:
@@ -19,6 +20,7 @@ def register(name, account, password):
     return False, "註冊失敗，請稍後再試"
 
 
+# Validate account credentials and return user data on success.
 def login(account, password):
     user = db.get_user_by_account(account)
 

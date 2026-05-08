@@ -216,6 +216,92 @@ Empty spaces return success with an empty array:
 }
 ```
 
+
+### GET `/api/space/<space_id>/capacity`
+
+Gets capacity status for one storage space.
+
+Example:
+
+```text
+GET /api/space/1/capacity
+```
+
+Success: `200`
+
+```json
+{
+  "success": true,
+  "status": "success",
+  "data": {
+    "Space_ID": 1,
+    "Space_Type": "??",
+    "Space_Name": "????",
+    "User_ID": 1,
+    "Capacity": 20,
+    "Used_Capacity": 8,
+    "Remaining_Capacity": 12,
+    "Is_Full": 0
+  }
+}
+```
+
+Not found: `404`
+
+### PATCH `/api/space/<space_id>/capacity`
+
+Updates the capacity of one storage space.
+
+Request:
+
+```json
+{
+  "capacity": 30
+}
+```
+
+Rules:
+
+- `capacity` must be a positive integer.
+- `capacity` cannot be smaller than the current used item count.
+
+Success: `200`
+
+```json
+{
+  "success": true,
+  "status": "success",
+  "message": "????????"
+}
+```
+
+### DELETE `/api/space/<space_id>`
+
+Deletes one storage space.
+
+Example:
+
+```text
+DELETE /api/space/1
+```
+
+Behavior:
+
+- The `item.Space_ID` foreign key uses `ON DELETE SET NULL`.
+- Items originally in this space are kept, but no longer belong to any space.
+
+Success: `200`
+
+```json
+{
+  "success": true,
+  "status": "success",
+  "message": "???????????????????????????"
+}
+```
+
+Not found: `404`
+
 ---
 
 ## Item APIs
@@ -316,6 +402,45 @@ Success: `200`
 ```
 
 Not found: `404`
+
+
+### PATCH `/api/items/<item_id>/space`
+
+Moves one item to another storage space.
+
+Request:
+
+```json
+{
+  "space_id": 2
+}
+```
+
+Rules:
+
+- `space_id` is required.
+- The target space must exist.
+- The target space must not be full.
+
+Success: `200`
+
+```json
+{
+  "success": true,
+  "status": "success",
+  "message": "??????"
+}
+```
+
+Error: `400`
+
+```json
+{
+  "success": false,
+  "status": "error",
+  "message": "???????????????"
+}
+```
 
 ### POST `/api/items/preview-image`
 
@@ -464,9 +589,13 @@ GET    /api/space/predefined              Get supported space types
 POST   /api/space                         Create space
 GET    /api/space/user/<user_id>          Get user spaces
 GET    /api/space/<space_id>/items        Get all items in one space
+GET    /api/space/<space_id>/capacity     Get space capacity status
+PATCH  /api/space/<space_id>/capacity     Update space capacity
+DELETE /api/space/<space_id>              Delete space
 
 GET    /api/items/<item_id>               Get item detail
 PATCH  /api/items/<item_id>               Update item
+PATCH  /api/items/<item_id>/space         Move item to another space
 DELETE /api/items/<item_id>               Delete item
 POST   /api/items/preview-image           Upload and parse image in one step
 POST   /api/items/confirm-image           Confirm parsed image and create item
@@ -477,3 +606,17 @@ POST   /api/search                        Search wardrobe items
 POST   /api/images/upload-input           Upload image to pictures/input
 POST   /api/images/parse-input            Parse current input image
 ```
+
+---
+
+## Capacity Notes
+
+Capacity is managed by counting current items in each space instead of trusting a manually maintained number.
+
+Recommended behavior:
+
+- New spaces start with `Used_Capacity = 0`.
+- Capacity status uses `COUNT(Item_ID)` to calculate `Used_Capacity`.
+- Creating an item should check whether the target space is full.
+- Moving an item should check whether the target space is full.
+- Deleting a space keeps its items, but sets their `Space_ID` to `NULL` through the database foreign key.

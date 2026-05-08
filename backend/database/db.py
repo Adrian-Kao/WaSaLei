@@ -69,22 +69,25 @@ def verify_login(account, password):
 # 3. 儲存空間功能 (Space) (對應space.py)
 # ==========================================
 # 為該使用者建立一個新空間
-def create_new_space(user_id, space_type, capacity = 30):
+def create_new_space(user_id, space_type, capacity=30, space_name=None):
     connection = get_connection()
 
     try:
         with connection.cursor() as cursor:
             sql = """
-                INSERT INTO `Space` (`Space_Type`, `Capacity`, `User_ID`) 
-                VALUES (%s, %s, %s)
+                INSERT INTO `Space` 
+                (`Space_Type`, `Capacity`, `Used_Capacity`, `User_ID`, `Space_Name`) 
+                VALUES (%s, %s, 0, %s, %s)
             """
-            cursor.execute(sql, (space_type, capacity, user_id))
+            cursor.execute(sql, (space_type, capacity, user_id, space_name))
             connection.commit()
             return True
+        
     except Exception as e:
         print(f"建立空間SQL錯誤: {e}")
         connection.rollback()
         return False
+    
     finally:
         connection.close()
 
@@ -93,12 +96,48 @@ def get_spaces_by_user_id(user_id):
     connection = get_connection()
     try:
         with connection.cursor() as cursor:
-            sql = "SELECT `Space_ID`, `Space_Name`, `Space_Type`, `Capacity`, `User_ID` FROM `Space` WHERE `User_ID` = %s"
+            sql = "SELECT `Space_ID`, `Space_Type`, `Capacity`, `User_ID` FROM `Space` WHERE `User_ID` = %s"
             cursor.execute(sql, (user_id,))
             return cursor.fetchall()
     except Exception as e:
         print(f"查詢空間時發生錯誤: {e}")
         return []
+    finally:
+        connection.close()
+
+# 查空間容量狀態
+def get_space_capacity_status(space_id):
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            sql = """
+                SELECT
+                    s.Space_ID,
+                    s.Space_Type,
+                    s.Space_Name,
+                    s.User_ID,
+                    s.Capacity,
+                    COUNT(i.Item_ID) AS Used_Capacity,
+                    GREATEST(s.Capacity - COUNT(i.Item_ID), 0) AS Remaining_Capacity,
+                    CASE
+                        WHEN COUNT(i.Item_ID) >= s.Capacity THEN 1
+                        ELSE 0
+                    END AS Is_Full
+                FROM `Space` s
+                LEFT JOIN `Item` i ON s.Space_ID = i.Space_ID
+                WHERE s.Space_ID = %s
+                GROUP BY 
+                    s.Space_ID,
+                    s.Space_Type,
+                    s.Space_Name,
+                    s.User_ID,
+                    s.Capacity
+            """
+            cursor.execute(sql, (space_id,))
+            return cursor.fetchone()
+    except Exception as e:
+        print(f"查詢空間容量狀態時發生錯誤: {e}")
+        return None
     finally:
         connection.close()
 
@@ -136,6 +175,91 @@ def fetch_raw_items_by_space(space_id):
     finally:
         connection.close()
 
+# 更新空間容量
+def update_space_capacity(space_id, new_capacity):
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            status = get_space_capacity_status(space_id)
+
+            if status is None:
+                return False, "找不到指定空間"
+            if new_capacity < status["Used_Capacity"]:
+                return False, f"新容量不能小於已使用容量 ({status['Used_Capacity']})"
+            
+            sql = """
+                UPDATE `Space` 
+                SET `Capacity` = %s 
+                WHERE `Space_ID` = %s
+            """
+
+            cursor.execute(sql, (new_capacity, space_id))
+            connection.commit()
+            return True, "空間容量更新成功"
+        
+    except Exception as e:
+        print(f"更新空間容量時發生錯誤: {e}")
+        connection.rollback()
+        return False, str(e)
+    finally:
+        connection.close()
+
+# 移動Item到另一個space
+def move_item_to_space(item_id, new_space_id):
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            status = get_space_capacity_status(new_space_id)
+            
+            if status is None:
+                return False, "找不到目標空間"
+            if status["Is_Full"]:
+                return False, "目標空間已滿，無法移動衣服"
+
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "UPDATE" "`Item` SET `Space_ID` = %s WHERE `Item_ID` = %s",
+                    (new_space_id, item_id)
+                )
+
+                if cursor.rowcount == 0:
+                    connection.rollback()
+                    return False, "找不到指定衣服，無法移動"
+            
+            connection.commit()
+            return True, "衣服移動成功"
+        
+    except Exception as e:
+        print(f"移動衣服時發生錯誤: {e}")
+        connection.rollback()
+        return False, str(e)
+    
+    finally:
+        connection.close()
+
+# 刪除空間
+def delete_space(space_id):
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("DELETE FROM `Space` WHERE `Space_ID` = %s", (space_id,))
+            affected_rows = cursor.rowcount
+
+        connection.commit()
+
+        if affected_rows == 0:
+            return False, "找不到指定空間"
+
+        return True, "刪除空間成功"
+
+    except Exception as e:
+        print(f"刪除空間時發生錯誤: {e}")
+        connection.rollback()
+        return False, str(e)
+
+    finally:
+        connection.close()
+    
 # ==========================================
 # 4. 衣服管理功能 (Item) (對應item.py)
 # ==========================================
