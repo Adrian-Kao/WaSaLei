@@ -244,7 +244,6 @@ def update_item(item_id, name=None, space_id=None, type_id=None, season_ids=None
             
             if fields:
                 sql = f"UPDATE `Item` SET {', '.join(fields)} WHERE Item_ID = %s"
-                params.append(item_id)
                 cursor.execute(sql, tuple(params + [item_id]))
 
             if season_ids is not None:
