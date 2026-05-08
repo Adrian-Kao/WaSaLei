@@ -1,54 +1,53 @@
 ﻿import sys
 import os
 
-# --- 尋路魔法：讓 Python 知道上一層資料夾 (backend) 的存在 ---
-# 這行的意思是：找到目前這個檔案的「上一層的上一層」，把它加進系統路徑裡
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
 
 from database import db
 
-# 註冊
+
 def register(name, account, password):
-    # 1. 檢查帳號是否已存在
     existing_user = db.get_user_by_account(account)
     if existing_user is not None:
         return False, "帳號已經存在，無法重複註冊"
-    
-    # 2. 寫入新會員資料
+
     success = db.insert_new_user(name, account, password)
     if success:
         return True, "註冊成功"
-    else:
-        return False, "註冊失敗，請稍後再試"
-    
-# 登入
+    return False, "註冊失敗，請稍後再試"
+
+
 def login(account, password):
     user = db.get_user_by_account(account)
 
     if user is None:
         return False, "找不到此帳號"
-    
-    if user['Password'] == password:
+
+    if user["Password"] == password:
         return True, user
-    
-    else:
-        return False, "登入失敗"
-    
-# ==========================================
-# 直接執行 python auth.py 來進行本機測試
-# ==========================================
+
+    return False, "登入失敗"
+
+
 if __name__ == "__main__":
-    print("=== 測試 auth.py 邏輯 ===")
-    
-    # 測試註冊
-    is_success, msg = register("測試", "test@example.com", "123456")
-    print(msg)
-    
-    # 測試登入
-    is_success, result = login("test@example.com", "123456")
-    if is_success:
-        print(f"登入成功！歡迎 {result['User_Name']}")
+    print("=== auth.py local test ===")
+
+    test_account = "test@example.com"
+    test_password = "123456"
+
+    print(f"Login test account: {test_account}")
+    success, result = login(test_account, test_password)
+
+    if success:
+        print("Login success")
+        print(f"User_ID: {result.get('User_ID')}")
+        print(f"User_Name: {result.get('User_Name')}")
+        print(f"Membership: {result.get('Membership')}")
     else:
+        print("Login failed")
         print(result)
+
+    print("\nRegister test is intentionally not run to avoid creating duplicate users.")
+    print("To test register manually, call: register('測試2', 'new@example.com', '123456')")

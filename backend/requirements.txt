@@ -1,14 +1,20 @@
 flask==3.0.2
 flask-cors==4.0.0
-mysql-connector-python==8.3.0
-pymysql
-python-dotenv
-opencv-python
-numpy
-scikit-learn
-Pillow
-torch
-torchvision
-rembg
-onnxruntime
-matplotlib
+pymysql==1.1.0
+python-dotenv==1.0.1
+werkzeug==3.0.1
+
+# Image parsing / color analysis
+opencv-python==4.9.0.80
+numpy==1.26.4
+scikit-learn==1.4.1.post1
+Pillow==10.2.0
+rembg==2.0.55
+onnxruntime==1.17.1
+matplotlib==3.8.3
+
+# Deep learning dependencies used by the image parsing module.
+# If installation fails on your machine, install torch/torchvision from:
+# https://pytorch.org/get-started/locally/
+torch==2.2.1
+torchvision==0.17.1

@@ -1,6 +1,4 @@
-# WaSaLei Backend API Docs
-
-Generated from current `backend/app.py`.
+﻿# WaSaLei Backend API Docs
 
 Base URL:
 
@@ -8,7 +6,7 @@ Base URL:
 http://127.0.0.1:5000
 ```
 
-Most API responses use this shape:
+Common response shape:
 
 ```json
 {
@@ -17,7 +15,7 @@ Most API responses use this shape:
 }
 ```
 
-On errors:
+Error response shape:
 
 ```json
 {
@@ -27,15 +25,7 @@ On errors:
 }
 ```
 
-Request body format:
-
-- JSON is supported for most endpoints.
-- Traditional form data is also supported for most POST endpoints.
-- File upload endpoints use `multipart/form-data`.
-
-ID list parameters:
-
-The backend helper `_int_list` accepts these formats:
+ID list fields such as `season_ids`, `color_ids`, and `style_ids` accept:
 
 ```json
 [1, 2, 3]
@@ -49,27 +39,13 @@ The backend helper `_int_list` accepts these formats:
 1
 ```
 
-It converts them into:
-
-```json
-[1, 2, 3]
-```
-
-Important ID-list fields:
-
-- `season_ids`
-- `color_ids`
-- `style_ids`
-
-For backward compatibility, some endpoints also accept old single-value names such as `season`, `season_id`, `color_id`, and `style_id`.
-
 ---
 
-## 1. Health Check
+## Health
 
 ### GET `/`
 
-Checks whether the Flask backend is running.
+Checks whether the backend is running.
 
 Response:
 
@@ -82,9 +58,7 @@ Response:
 
 ---
 
-## 2. Static Image Access
-
-These endpoints only serve existing image files. They do not upload images, parse images, or write database records.
+## Static Images
 
 ### GET `/pictures/<path:filename>`
 
@@ -98,11 +72,6 @@ GET /pictures/output/output.png
 GET /pictures/final/abc123.png
 ```
 
-Behavior:
-
-- Reads from `WaSaLei/pictures/<filename>`.
-- Useful for displaying input, output, or final images.
-
 ### GET `/images/<path:filename>`
 
 Serves image files from `pictures/output`.
@@ -113,56 +82,35 @@ Example:
 GET /images/output.png
 ```
 
-Behavior:
-
-- First checks `WaSaLei/pictures/output/<filename>`.
-- Falls back to `PICTURES_DIR / "output" / filename`.
-- Mainly used to display parsed preview images.
-
 ---
 
-## 3. Auth APIs
+## Auth APIs
 
 ### POST `/api/auth/register`
 
-Registers a new user.
-
-Request body:
+Request:
 
 ```json
 {
-  "name": "User Name",
+  "name": "測試",
   "account": "test@example.com",
   "password": "123456"
 }
 ```
 
-Required fields:
-
-- `name`
-- `account`
-- `password`
-
-Success response: `201`
+Success: `201`
 
 ```json
 {
   "success": true,
   "status": "success",
-  "message": "register success message"
+  "message": "註冊成功"
 }
 ```
 
-Error responses:
-
-- `400`: missing required field or registration failed
-- `500`: server error
-
 ### POST `/api/auth/login`
 
-Logs in an existing user.
-
-Request body:
+Request:
 
 ```json
 {
@@ -171,12 +119,7 @@ Request body:
 }
 ```
 
-Required fields:
-
-- `account`
-- `password`
-
-Success response: `200`
+Success: `200`
 
 ```json
 {
@@ -184,116 +127,55 @@ Success response: `200`
   "status": "success",
   "data": {
     "User_ID": 1,
-    "User_Name": "User Name",
-    "User_Account": "test@example.com",
-    "Membership": "free"
+    "User_Name": "測試",
+    "User_Account": "test@example.com"
   }
 }
 ```
 
-Login failure response currently returns `201`:
-
-```json
-{
-  "success": false,
-  "status": "error",
-  "message": "login failed message"
-}
-```
-
-Other error responses:
-
-- `400`: missing required field
-- `500`: server error
-
 ---
 
-## 4. Space APIs
+## Space APIs
 
 ### GET `/api/space/predefined`
 
-Returns predefined space types.
-
-Response:
+Returns supported space types.
 
 ```json
 {
   "status": "success",
   "success": true,
-  "data": ["space type 1", "space type 2"]
+  "data": ["衣櫃", "行李箱"]
 }
 ```
 
 ### POST `/api/space`
 
-Creates a new storage space for a user.
+Creates a storage space.
 
-Request body:
+Request:
 
 ```json
 {
   "user_id": 1,
-  "space_type": "space type",
-  "capacity": 30
+  "space_type": "衣櫃",
+  "capacity": 20
 }
 ```
 
-Fields:
+### GET `/api/space/user/<user_id>`
 
-- `user_id`: user ID
-- `space_type`: space type
-- `capacity`: optional integer; converted by `_optional_int`
+Gets all spaces for a user.
 
-Success response: `201`
-
-```json
-{
-  "status": "success",
-  "success": true,
-  "message": "space created message"
-}
-```
-
-Error response: `400`
-
-```json
-{
-  "status": "error",
-  "success": false,
-  "message": "error message"
-}
-```
-
-### GET `/api/space/user/<int:user_id>`
-
-Gets all spaces owned by a user.
-
-Example:
+Optional query:
 
 ```text
-GET /api/space/user/1
+?type=衣櫃
 ```
 
-Response:
+### GET `/api/space/<space_id>/items`
 
-```json
-{
-  "status": "success",
-  "success": true,
-  "data": [
-    {
-      "Space_ID": 1,
-      "Space_Type": "space type",
-      "Capacity": 30,
-      "User_ID": 1
-    }
-  ]
-}
-```
-
-### GET `/api/space/<int:space_id>/items`
-
-Gets formatted items inside a space.
+Gets all items in one space.
 
 Example:
 
@@ -301,267 +183,7 @@ Example:
 GET /api/space/1/items
 ```
 
-Success response: `200`
-
-```json
-{
-  "status": "success",
-  "success": true,
-  "data": [
-    {
-      "name": "item name",
-      "type": "shirt",
-      "seasons": ["spring", "summer"],
-      "styles": ["casual"],
-      "color1": "white",
-      "color2": null,
-      "color3": null,
-      "photo_url": "http://127.0.1:5000/images/output.png"
-    }
-  ]
-}
-```
-
-Error response: `404`
-
-```json
-{
-  "status": "error",
-  "success": false,
-  "message": "not found message"
-}
-```
-
----
-
-## 5. Item APIs
-
-### POST `/api/items`
-
-Creates a new item record directly.
-
-Request body:
-
-```json
-{
-  "user_id": 1,
-  "name": "white shirt",
-  "space_id": 1,
-  "type_id": 2,
-  "season_ids": [1, 2],
-  "color_ids": [1],
-  "style_ids": [3],
-  "photo_filename": "pictures/final/example.png"
-}
-```
-
-Fields:
-
-- `user_id`: user ID
-- `name`: item name
-- `space_id`: storage space ID
-- `type_id`: clothing type ID
-- `season_ids`: list of season IDs; preferred field
-- `season`: backward-compatible field for season IDs
-- `color_ids`: list of color IDs
-- `style_ids`: list of style IDs
-- `photo_filename`: optional stored image path or filename
-
-Success response: `201`
-
-```json
-{
-  "status": "success",
-  "success": true,
-  "message": "success message"
-}
-```
-
-Error responses:
-
-- `400`: invalid or missing data
-
-### POST `/api/items/preview-image`
-
-Backward-compatible one-step image preview API.
-
-This endpoint uploads one image and immediately parses it.
-
-Content type:
-
-```text
-multipart/form-data
-```
-
-Form fields:
-
-- `file` or `image`: required image file
-- `mode`: optional parsing mode; default is `garment`
-
-Flow:
-
-```text
-upload image
--> save to pictures/input
--> clear old input/output
--> parse current input image
--> write pictures/output/output.png
--> return preview path and detected colors
-```
-
-Success response:
-
-```json
-{
-  "success": true,
-  "status": "success",
-  "input_path": "pictures/input/input.jpg",
-  "preview_path": "pictures/output/output.png",
-  "preview_url": "/pictures/output/output.png",
-  "colors": []
-}
-```
-
-Error response: `400`
-
-```json
-{
-  "success": false,
-  "status": "error",
-  "message": "error message"
-}
-```
-
-### POST `/api/items/confirm-image`
-
-Confirms the current parsed output image as the final item image and writes the item into the database.
-
-Request body:
-
-```json
-{
-  "user_id": 1,
-  "name": "white shirt",
-  "space_id": 1,
-  "type_id": 2,
-  "season_ids": [1, 2],
-  "color_ids": [1],
-  "style_ids": [3]
-}
-```
-
-Required fields:
-
-- `user_id`
-- `name`
-
-Optional fields:
-
-- `space_id`
-- `type_id`
-- `season_ids`
-- `season`
-- `color_ids`
-- `style_ids`
-
-Flow:
-
-```text
-read pictures/output/output.png
--> copy to pictures/final/<uuid>.png
--> insert item into DB
--> insert Item_Season / Item_Color / Item_Style mappings
--> clear pictures/input and pictures/output
--> return item_id and final photo path
-```
-
-Success response:
-
-```json
-{
-  "success": true,
-  "status": "success",
-  "item_id": 123,
-  "photo_path": "pictures/final/abc123.png",
-  "photo_url": "/pictures/final/abc123.png"
-}
-```
-
-Error response: `400`
-
-```json
-{
-  "success": false,
-  "status": "error",
-  "message": "error message"
-}
-```
-
----
-
-## 6. Search API
-
-### GET or POST `/api/search`
-
-Searches wardrobe items by user and optional filters.
-
-GET example:
-
-```text
-GET /api/search?user_id=1&keyword=shirt&season_ids=1,2&color_ids=3
-```
-
-POST body example:
-
-```json
-{
-  "user_id": 1,
-  "keyword": "shirt",
-  "space_id": 1,
-  "type_id": 2,
-  "season_ids": [1, 2],
-  "color_ids": [3, 4],
-  "style_ids": [1]
-}
-```
-
-Required fields:
-
-- `user_id`
-
-Optional fields:
-
-- `keyword`
-- `space_id`
-- `type_id`
-- `season_ids`
-- `season_id`: backward-compatible single season ID
-- `color_ids`
-- `color_id`: backward-compatible single color ID
-- `style_ids`
-- `style_id`: backward-compatible single style ID
-
-Filter behavior:
-
-- Different filter groups are combined with `AND`.
-- Values inside the same ID list are matched with `IN (...)`, so they behave like `OR`.
-
-Example:
-
-```json
-{
-  "season_ids": [1, 2],
-  "color_ids": [3, 4]
-}
-```
-
-Means:
-
-```text
-(season is 1 OR 2) AND (color is 3 OR 4)
-```
-
-Success response: `200`
+Response:
 
 ```json
 {
@@ -570,52 +192,222 @@ Success response: `200`
   "data": [
     {
       "item_id": 1,
-      "name": "white shirt",
-      "type": "shirt",
-      "seasons": ["spring", "summer"],
-      "style": ["casual"],
-      "color1": "white",
+      "name": "純白短袖T恤",
+      "type": "上衣",
+      "seasons": ["春季", "夏季"],
+      "styles": ["休閒"],
+      "colors": ["白色"],
+      "color1": "白色",
       "color2": null,
       "color3": null,
-      "colors": ["white"],
-      "photo_url": "http://127.0.1:5000/images/example.png"
+      "photo_url": null
     }
   ]
 }
 ```
 
-Missing `user_id` response: `400`
+Empty spaces return success with an empty array:
 
 ```json
 {
-  "status": "error",
-  "success": false,
-  "message": "Missing user_id."
-}
-```
-
-Search failure response: `500`
-
-```json
-{
-  "status": "error",
-  "success": false,
-  "message": "search error message"
+  "status": "success",
+  "success": true,
+  "data": []
 }
 ```
 
 ---
 
-## 7. Current Image Input/Output Pipeline
+## Item APIs
 
-This is the newer split image workflow.
+### GET `/api/items/<item_id>`
+
+Gets one item detail, including type and many-to-many attributes.
+
+Example:
+
+```text
+GET /api/items/1
+```
+
+Success: `200`
+
+```json
+{
+  "success": true,
+  "status": "success",
+  "data": {
+    "item_id": 1,
+    "name": "純白短袖T恤",
+    "notes": "容易髒要注意",
+    "photo": null,
+    "photo_url": null,
+    "user_id": 1,
+    "space_id": 1,
+    "type_id": 1,
+    "type": "上衣",
+    "season_ids": [1, 2],
+    "seasons": ["春季", "夏季"],
+    "style_ids": [1],
+    "styles": ["休閒"],
+    "color_ids": [1],
+    "colors": ["白色"]
+  }
+}
+```
+
+Not found: `404`
+
+### PATCH `/api/items/<item_id>`
+
+Updates item basic fields and many-to-many attributes.
+
+Request can include any subset of these fields:
+
+```json
+{
+  "name": "黑色外套",
+  "notes": "冬天穿",
+  "space_id": 1,
+  "type_id": 3,
+  "season_ids": [3, 4],
+  "color_ids": [3],
+  "style_ids": [1, 2]
+}
+```
+
+Behavior:
+
+- Omitted fields are not changed.
+- If `season_ids`, `color_ids`, or `style_ids` are included, the old mappings are replaced.
+- Passing an empty array clears that mapping group.
+
+Success: `200`
+
+```json
+{
+  "success": true,
+  "status": "success",
+  "data": {
+    "item_id": 1,
+    "name": "黑色外套"
+  }
+}
+```
+
+### DELETE `/api/items/<item_id>`
+
+Deletes one item.
+
+Example:
+
+```text
+DELETE /api/items/1
+```
+
+Success: `200`
+
+```json
+{
+  "success": true,
+  "status": "success",
+  "message": "刪除衣服成功"
+}
+```
+
+Not found: `404`
+
+### POST `/api/items/preview-image`
+
+Backward-compatible one-step image preview API.
+
+Content type:
+
+```text
+multipart/form-data
+```
+
+Fields:
+
+- `file` or `image`: image file
+- `mode`: optional, default `garment`
+
+Flow:
+
+```text
+upload image -> save to pictures/input -> parse -> write pictures/output/output.png
+```
+
+### POST `/api/items/confirm-image`
+
+Confirms `pictures/output/output.png` as the final item image and creates the item record.
+
+Request:
+
+```json
+{
+  "user_id": 1,
+  "name": "白色襯衫",
+  "space_id": 1,
+  "type_id": 1,
+  "season_ids": [1, 2],
+  "color_ids": [1],
+  "style_ids": [1]
+}
+```
+
+Flow:
+
+```text
+copy pictures/output/output.png to pictures/final/<uuid>.png
+-> insert item
+-> insert item_season / item_color / item_style mappings
+-> clear pictures/input and pictures/output
+```
+
+---
+
+## Search API
+
+### GET or POST `/api/search`
+
+Searches wardrobe items by user and optional filters.
+
+GET example:
+
+```text
+GET /api/search?user_id=1&keyword=黑&space_id=1&season_ids=1,2
+```
+
+POST example:
+
+```json
+{
+  "user_id": 1,
+  "keyword": "黑",
+  "space_id": 1,
+  "type_id": 3,
+  "season_ids": [3, 4],
+  "color_ids": [3],
+  "style_ids": [1]
+}
+```
+
+Filter behavior:
+
+- Different groups are combined with `AND`.
+- Multiple ids inside the same group use `IN (...)`, so they behave like `OR`.
+
+---
+
+## Image Pipeline APIs
 
 Recommended frontend flow:
 
 ```text
 POST /api/images/upload-input
 -> POST /api/images/parse-input
--> display returned preview_url
+-> display preview_url
 -> POST /api/items/confirm-image
 ```
 
@@ -629,50 +421,15 @@ Content type:
 multipart/form-data
 ```
 
-Form fields:
+Fields:
 
-- `file` or `image`: required image file
-
-Flow:
-
-```text
-clear pictures/input
-clear pictures/output
-save uploaded image to pictures/input/input.<ext>
-```
-
-Success response:
-
-```json
-{
-  "success": true,
-  "status": "success",
-  "input_path": "pictures/input/input.jpg"
-}
-```
-
-Error response: `400`
-
-```json
-{
-  "success": false,
-  "status": "error",
-  "message": "error message"
-}
-```
-
-Supported file extensions:
-
-- `.jpg`
-- `.jpeg`
-- `.png`
-- `.webp`
+- `file` or `image`: image file
 
 ### POST `/api/images/parse-input`
 
 Parses the current image in `pictures/input`.
 
-Request body:
+Request:
 
 ```json
 {
@@ -680,25 +437,10 @@ Request body:
 }
 ```
 
-Fields:
-
-- `mode`: optional; default is `garment`
-
-Flow:
-
-```text
-read current image from pictures/input
--> run color_parsing
--> save result as pictures/output/output.png
--> return preview path and detected colors
-```
-
-Success response:
+Response includes:
 
 ```json
 {
-  "success": true,
-  "status": "success",
   "input_path": "pictures/input/input.jpg",
   "preview_path": "pictures/output/output.png",
   "preview_url": "/pictures/output/output.png",
@@ -706,52 +448,32 @@ Success response:
 }
 ```
 
-Error response: `400`
-
-```json
-{
-  "success": false,
-  "status": "error",
-  "message": "error message"
-}
-```
-
 ---
 
-## 8. Endpoint Summary
+## Endpoint Summary
 
 ```text
-GET  /                              Health check
+GET    /                                  Health check
+GET    /pictures/<path:filename>          Serve picture file
+GET    /images/<path:filename>            Serve output image file
 
-GET  /pictures/<path:filename>      Serve files from pictures/
-GET  /images/<path:filename>        Serve files from pictures/output/
+POST   /api/auth/register                 Register user
+POST   /api/auth/login                    Login user
 
-POST /api/auth/register             Register user
-POST /api/auth/login                Login user
+GET    /api/space/predefined              Get supported space types
+POST   /api/space                         Create space
+GET    /api/space/user/<user_id>          Get user spaces
+GET    /api/space/<space_id>/items        Get all items in one space
 
-GET  /api/space/predefined          Get predefined space types
-POST /api/space                     Add user space
-GET  /api/space/user/<user_id>      Get all spaces for user
-GET  /api/space/<space_id>/items    Get items in one space
+GET    /api/items/<item_id>               Get item detail
+PATCH  /api/items/<item_id>               Update item
+DELETE /api/items/<item_id>               Delete item
+POST   /api/items/preview-image           Upload and parse image in one step
+POST   /api/items/confirm-image           Confirm parsed image and create item
 
-POST /api/items                     Add item directly
-POST /api/items/preview-image       Upload and parse image in one step
-POST /api/items/confirm-image       Confirm parsed image and add DB item
+GET    /api/search                        Search wardrobe items
+POST   /api/search                        Search wardrobe items
 
-GET  /api/search                    Search wardrobe items
-POST /api/search                    Search wardrobe items
-
-POST /api/images/upload-input       Upload image to pictures/input
-POST /api/images/parse-input        Parse current input image
+POST   /api/images/upload-input           Upload image to pictures/input
+POST   /api/images/parse-input            Parse current input image
 ```
-
----
-
-## 9. Notes
-
-- `season_ids`, `color_ids`, and `style_ids` are list-based fields.
-- `season_ids` maps to the many-to-many `Item_Season` table.
-- `/api/items/preview-image` overlaps with `/api/images/upload-input` + `/api/images/parse-input`; it exists as a backward-compatible one-step endpoint.
-- Static image endpoints only serve files. They do not modify image state.
-- `/api/items/confirm-image` expects `pictures/output/output.png` to exist before it is called.
-- Login failure currently returns HTTP `201` in `app.py`; this is unusual, but documented here according to the current code.

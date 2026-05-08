@@ -1,4 +1,4 @@
-import sys
+﻿import sys
 import os
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -7,7 +7,7 @@ sys.path.append(parent_dir)
 
 from database import db
 
-# 複合條件搜尋衣服
+
 def search_wardrobe(user_id, keyword=None, space_id=None, type_id=None, season_ids=None, color_ids=None, style_ids=None):
     if season_ids is None:
         season_ids = []
@@ -28,70 +28,52 @@ def search_wardrobe(user_id, keyword=None, space_id=None, type_id=None, season_i
 
     if raw_items is None:
         return False, "搜尋時發生錯誤，請稍後再試"
-    
-    # 成功執行，但條件太嚴格，沒有找到衣服
-    if len(raw_items) == 0:
-        return True, [] 
 
-    # 成功找到衣服，開始格式化
     formatted_items = []
     for item in raw_items:
-        color_list = item['Colors'].split(',') if item['Colors'] else []
-        style_list = item['Styles'].split('、') if item['Styles'] else []
-        season_list = item['Seasons'].split('、') if item['Seasons'] else []
+        color_list = item["Colors"].split(",") if item["Colors"] else []
+        style_list = item["Styles"].split("、") if item["Styles"] else []
+        season_list = item["Seasons"].split("、") if item["Seasons"] else []
 
-        photo_filename = item.get('Photo')
-        photo_url = f"http://127.0.1:5000/images/{photo_filename}" if photo_filename else None
+        photo_filename = item.get("Photo")
+        photo_url = f"/{photo_filename}" if photo_filename else None
 
-        formatted_item = {
-            "item_id": item['Item_ID'],
-            "name" : item['Name'],
-            "type": item['Type'],
+        formatted_items.append({
+            "item_id": item["Item_ID"],
+            "name": item["Name"],
+            "type": item["Type"],
             "seasons": season_list,
-            "style": style_list,
+            "styles": style_list,
             "color1": color_list[0] if len(color_list) > 0 else None,
             "color2": color_list[1] if len(color_list) > 1 else None,
             "color3": color_list[2] if len(color_list) > 2 else None,
             "colors": color_list,
-            "photo_url": photo_url
-        }
-        formatted_items.append(formatted_item)
-    
+            "photo_url": photo_url,
+        })
+
     return True, formatted_items
 
-# ==========================================
-# 本機測試區塊
-# ==========================================
-if __name__ == "__main__":
-    print("=== 測試 search.py (多條件搜尋 + 多季節 + 圖片網址) ===")
-    test_uid = 1 
-    
-    print("\n--- 1. 測試：搜尋名稱包含 '黑' 的衣服 ---")
-    status, items = search_wardrobe(test_uid, keyword="黑")
-    if status and items:
-        for item in items:
-            seasons_str = "、".join(item['seasons']) if item['seasons'] else "無"
-            styles_str = "、".join(item['style']) if item['style'] else "無"
-            
-            print(f"[{item['item_id']}] {item['name']}")
-            print(f" ┣ 類型: {item['type']}")
-            print(f" ┣ 季節: {seasons_str}")
-            print(f" ┣ 風格: {styles_str}")
-            print(f" ┣ 顏色: {item['color1']} (所有顏色: {item['colors']})")
-            print(f" ┗ 圖片: {item['photo_url']}")
-    else:
-        print("沒有找到衣服或發生錯誤")
 
-    print("\n--- 2. 測試：搜尋 '夏季(Season_ID=2)' 且 包含 '藍色(Color_ID=2)' 的衣服 ---")
-    status, items = search_wardrobe(test_uid, season_id=2, color_id=2)
-    if status and items:
-        for item in items:
-            seasons_str = "、".join(item['seasons']) if item['seasons'] else "無"
-            
-            print(f"[{item['item_id']}] {item['name']}")
-            print(f" ┣ 類型: {item['type']}")
-            print(f" ┣ 季節: {seasons_str}")
-            print(f" ┣ 顏色: {item['color1']}")
-            print(f" ┗ 圖片: {item['photo_url']}")
-    else:
-        print("沒有找到衣服或發生錯誤")
+if __name__ == "__main__":
+    print("=== search.py local test ===")
+
+    test_user_id = 1
+
+    cases = [
+        ("All user items", {"user_id": test_user_id}),
+        ("Keyword search", {"user_id": test_user_id, "keyword": "黑"}),
+        ("Filter by space", {"user_id": test_user_id, "space_id": 1}),
+        ("Filter by type", {"user_id": test_user_id, "type_id": 1}),
+        ("Filter by multi-select ids", {"user_id": test_user_id, "season_ids": [1, 2], "color_ids": [1, 3], "style_ids": [1]}),
+    ]
+
+    for title, kwargs in cases:
+        print(f"\n--- {title} ---")
+        success, items = search_wardrobe(**kwargs)
+        print("success:", success)
+        print("count:", len(items) if success else 0)
+        if success:
+            for item in items[:5]:
+                print(f"[{item['item_id']}] {item['name']} | type={item['type']} | seasons={item['seasons']} | colors={item['colors']}")
+        else:
+            print(items)

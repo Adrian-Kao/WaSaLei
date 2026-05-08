@@ -1,4 +1,4 @@
-import sys
+﻿import sys
 import os
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -9,97 +9,89 @@ from database import db
 
 VALID_SPACE_TYPES = ["衣櫃", "行李箱"]
 
-# 新增儲衣空間
+
 def add_space(user_id, space_type, capacity):
     if not isinstance(capacity, int) or capacity <= 0:
         return False, "容量必須是正整數"
-    
-    if not space_type.strip():
+
+    if not str(space_type or "").strip():
         return False, "空間類型不能為空"
-    
+
     if space_type not in VALID_SPACE_TYPES:
-        return False, f"無效的空間類型: {space_type}"
-    
+        return False, f"不支援的空間類型: {space_type}"
+
     success = db.create_new_space(user_id, space_type, capacity)
     if success:
-        return True, f"成功建立儲衣空間 {space_type}，容量:{capacity}件"
-    else:
-        return False, "建立儲衣空間失敗"
-    
-# 取得該用戶的所有空間，若有 type 則過濾
+        return True, f"成功新增空間: {space_type}, 容量: {capacity}"
+    return False, "新增空間失敗"
+
+
 def get_user_all_spaces(user_id, space_type=None):
     spaces = db.get_spaces_by_user_id(user_id)
     if space_type:
-        spaces = [s for s in spaces if s.get("Space_Type") == space_type]
+        spaces = [space for space in spaces if space.get("Space_Type") == space_type]
     return spaces
 
-# 給前端抓選項
+
 def get_predefined_space_types():
     return VALID_SPACE_TYPES
 
-# 獲取空間內的衣服並格式化
-def get_formatted_items(space_id):
-    # 回傳格式 : name, type, season, style, color1, color2, color3
 
+def get_formatted_items(space_id):
     raw_items = db.fetch_raw_items_by_space(space_id)
 
     if not raw_items:
-        return False, "這個空間沒有衣服"
-    
+        return True, []
+
     formatted_items = []
     for item in raw_items:
-        # 顏色拆分
-        color_list = item['Colors'].split(',') if item['Colors'] else []
-        style_list = item['Styles'].split('、') if item['Styles'] else []
-        season_list = item['Seasons'].split('、') if item['Seasons'] else []
+        color_list = item["Colors"].split(",") if item["Colors"] else []
+        style_list = item["Styles"].split("、") if item["Styles"] else []
+        season_list = item["Seasons"].split("、") if item["Seasons"] else []
 
-        photo_filename = item.get('Photo')
-        photo_url = f"http://127.0.1:5000/images/{photo_filename}" if photo_filename else None
+        photo_filename = item.get("Photo")
+        photo_url = f"/{photo_filename}" if photo_filename else None
 
-        # 組成格式
-        formatted_item = {
-            "name" : item['Name'],
-            "type": item['Type'],
+        formatted_items.append({
+            "item_id": item["Item_ID"],
+            "name": item["Name"],
+            "type": item["Type"],
             "seasons": season_list,
             "styles": style_list,
+            "colors": color_list,
             "color1": color_list[0] if len(color_list) > 0 else None,
             "color2": color_list[1] if len(color_list) > 1 else None,
             "color3": color_list[2] if len(color_list) > 2 else None,
-            "photo_url": photo_url
-        }
-        formatted_items.append(formatted_item)
-    
+            "photo_url": photo_url,
+        })
+
     return True, formatted_items
 
-# ==========================================
-# 本機測試區塊
-# ==========================================
-if __name__ == "__main__":
-    print("=== 測試 space.py (允許重複類型) ===")
-    test_uid = 1 
-    
-    print(add_space(test_uid, "衣櫃", 20)[1])
-    print(add_space(test_uid, "行李箱", 40)[1])
-    print(add_space(test_uid, "你啊罵", 40)[1])
-    
-    all_s = get_user_all_spaces(test_uid)
-    print(f"\n目前用戶 {test_uid} 的空間清單：")
-    for s in all_s:
-        # 這裡印出 Space_ID，用來區分不同的「宿舍」
-        print(f"ID: {s['Space_ID']} | 類型: {s['Space_Type']} | 容量: {s['Capacity']}")
 
-    print("\n--- 測試獲取空間內的衣服 ---")
-    TEST_SPACE_ID = 1  # 假設測試查詢 Space_ID 為 1 的空間
-    
-    is_success, result = get_formatted_items(TEST_SPACE_ID)
-    
-    if is_success:
-        print(f"成功撈到資料！共 {len(result)} 件衣服：")
-        for item in result:
-            print(f"衣服名稱: {item['name']}")
-            print(f"   - 基本資訊: 類型({item['type']}) | 季節({item['seasons']}) | 風格({item['styles']})")
-            print(f"   - 顏色拆解: 1.{item['color1']} / 2.{item['color2']} / 3.{item['color3']}")
-            print("-" * 30)
+if __name__ == "__main__":
+    print("=== space.py local test ===")
+
+    test_user_id = 1
+    test_space_id = 1
+
+    print("Predefined space types:")
+    print(get_predefined_space_types())
+
+    print(f"\nSpaces for user_id={test_user_id}:")
+    spaces = get_user_all_spaces(test_user_id)
+    print("count:", len(spaces))
+    for space in spaces[:10]:
+        print(space)
+
+    print(f"\nItems in space_id={test_space_id}:")
+    success, items = get_formatted_items(test_space_id)
+    print("success:", success)
+    print("count:", len(items) if success else 0)
+    if success:
+        for item in items[:10]:
+            print(f"[{item['item_id']}] {item['name']} | type={item['type']} | seasons={item['seasons']} | colors={item['colors']}")
     else:
-        # 如果空間裡沒衣服，或是資料庫還沒建資料，就會印出這裡的訊息
-        print(f"{result}")
+        print(items)
+
+    print("\nAdd space test is intentionally not run to avoid creating duplicate spaces.")
+    print("To test manually, call: add_space(1, '衣櫃', 20)")

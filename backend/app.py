@@ -131,6 +131,41 @@ def api_get_space_items(space_id):
 # ==========================================
 # 3. Items
 # ==========================================
+@app.get("/api/items/<int:item_id>")
+def api_get_item_detail(item_id):
+    from services.items import get_item_detail
+
+    success, result = get_item_detail(item_id)
+
+    if success:
+        return jsonify({"success": True, "status": "success", "data": result}), 200
+
+    return jsonify({"success": False, "status": "error", "message": result}), 404
+
+@app.patch("/api/items/<int:item_id>")
+def api_update_item(item_id):
+    from services.items import update_item_record
+
+    data = request.get_json(silent=True) or request.form.to_dict(flat=True)
+
+    success, result = update_item_record(item_id, data)
+
+    if success:
+        return jsonify({"success": True, "status": "success", "data": result}), 200
+
+    return jsonify({"success": False, "status": "error", "message": result}), 400
+
+@app.delete("/api/items/<int:item_id>")
+def api_delete_item(item_id):
+    from services.items import delete_item_record
+
+    success, result = delete_item_record(item_id)
+
+    if success:
+        return jsonify({"success": True, "status": "success", "message": result}), 200
+
+    return jsonify({"success": False, "status": "error", "message": result}), 404
+
 @app.post("/api/items/preview-image")
 def preview_image():
     file_storage = request.files.get("file") or request.files.get("image")
