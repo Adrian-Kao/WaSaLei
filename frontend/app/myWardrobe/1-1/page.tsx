@@ -3,7 +3,7 @@
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUserStore} from "@/store/store";
-import { getUserRooms } from "@/lib/api/clothing";
+import { getUserRooms, type UserRoom } from "@/lib/api/clothing";
 
 type RoomInfo = {
   roomId: number;
@@ -31,9 +31,9 @@ export default function MyWardrobePage() {
         const roomList = await getUserRooms(userId);
         // roomList 應為 [{ Space_ID, Space_Type, Capacity, ... }]
         // console.log("Fetched rooms:", roomList);
-        const roomsWithInfo = roomList.map((room: any) => ({
+        const roomsWithInfo = roomList.map((room: UserRoom) => ({
           roomId: room.Space_ID,
-          name: room.Space_Name,
+          name: room.Space_Name ?? `衣櫃 ${room.Space_ID}`,
           itemCount: room.Item_Count ?? 0, // 若後端有回傳 Item_Count
           totalCapacity: room.Capacity ?? 0,
         }));
