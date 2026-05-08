@@ -93,7 +93,7 @@ def get_spaces_by_user_id(user_id):
     connection = get_connection()
     try:
         with connection.cursor() as cursor:
-            sql = "SELECT `Space_ID`, `Space_Type`, `Capacity`, `User_ID` FROM `Space` WHERE `User_ID` = %s"
+            sql = "SELECT `Space_ID`, `Space_Name`, `Space_Type`, `Capacity`, `User_ID` FROM `Space` WHERE `User_ID` = %s"
             cursor.execute(sql, (user_id,))
             return cursor.fetchall()
     except Exception as e:
