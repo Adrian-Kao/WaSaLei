@@ -232,7 +232,7 @@ CREATE TABLE `season` (
 
 LOCK TABLES `season` WRITE;
 /*!40000 ALTER TABLE `season` DISABLE KEYS */;
-INSERT INTO `season` VALUES (4,'冬季'),(5,'四季皆宜'),(2,'夏季'),(1,'春季'),(3,'秋季');
+INSERT INTO `season` VALUES (1,'春'),(2,'夏'),(3,'秋'),(4,'冬');
 /*!40000 ALTER TABLE `season` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -287,7 +287,7 @@ CREATE TABLE `style` (
 
 LOCK TABLES `style` WRITE;
 /*!40000 ALTER TABLE `style` DISABLE KEYS */;
-INSERT INTO `style` VALUES (1,'休閒'),(4,'居家'),(2,'正式'),(5,'派對'),(3,'運動');
+INSERT INTO `style` VALUES (1,'運動'),(2,'正式'),(3,'日常'),(4,'社交'),(5,'其他');
 /*!40000 ALTER TABLE `style` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -303,7 +303,7 @@ CREATE TABLE `type` (
   `Type_Name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   PRIMARY KEY (`Type_ID`),
   UNIQUE KEY `Type_Name` (`Type_Name`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -312,7 +312,7 @@ CREATE TABLE `type` (
 
 LOCK TABLES `type` WRITE;
 /*!40000 ALTER TABLE `type` DISABLE KEYS */;
-INSERT INTO `type` VALUES (1,'上衣'),(3,'外套'),(4,'裙子'),(2,'褲子'),(6,'配件'),(5,'鞋子');
+INSERT INTO `type` VALUES (1,'上身長'),(2,'上身短'),(3,'下身長'),(4,'下身短'),(5,'配件'),(6,'鞋類'),(7,'其他');
 /*!40000 ALTER TABLE `type` ENABLE KEYS */;
 UNLOCK TABLES;
 
