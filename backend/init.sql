@@ -1,109 +1,86 @@
--- MySQL dump 10.13  Distrib 8.0.18, for Win64 (x86_64)
---
--- Host: localhost    Database: digital_wardrobe
--- ------------------------------------------------------
--- Server version	8.0.44
+-- WaSaLei fake database seed
+-- Database: digital_wardrobe
+-- Charset: utf8mb4
+-- Login examples:
+--   demo@example.com / password123
+--   premium@example.com / password123
+--   traveler@example.com / password123
 
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!50503 SET NAMES utf8mb4 */;
-/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
-/*!40103 SET TIME_ZONE='+00:00' */;
-/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
-/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
-/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
-/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+CREATE DATABASE IF NOT EXISTS `digital_wardrobe`
+  DEFAULT CHARACTER SET utf8mb4
+  DEFAULT COLLATE utf8mb4_unicode_ci;
 
---
--- Table structure for table `color`
---
+USE `digital_wardrobe`;
 
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
+
+DROP TABLE IF EXISTS `history_outfit`;
+DROP TABLE IF EXISTS `history`;
+DROP TABLE IF EXISTS `item_style`;
+DROP TABLE IF EXISTS `item_season`;
+DROP TABLE IF EXISTS `item_color`;
+DROP TABLE IF EXISTS `item`;
+DROP TABLE IF EXISTS `space`;
+DROP TABLE IF EXISTS `style`;
+DROP TABLE IF EXISTS `season`;
 DROP TABLE IF EXISTS `color`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+DROP TABLE IF EXISTS `type`;
+DROP TABLE IF EXISTS `user`;
+
+SET FOREIGN_KEY_CHECKS = 1;
+
+CREATE TABLE `user` (
+  `User_ID` int NOT NULL AUTO_INCREMENT,
+  `User_Name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `User_Account` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `Password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `Membership` enum('free','premium') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'free',
+  `Member_Date` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`User_ID`),
+  UNIQUE KEY `User_Account` (`User_Account`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `type` (
+  `Type_ID` int NOT NULL AUTO_INCREMENT,
+  `Type_Name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  PRIMARY KEY (`Type_ID`),
+  UNIQUE KEY `Type_Name` (`Type_Name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE `color` (
   `Color_ID` int NOT NULL AUTO_INCREMENT,
   `Color_Name` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   PRIMARY KEY (`Color_ID`),
   UNIQUE KEY `Color_Name` (`Color_Name`)
-) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Dumping data for table `color`
---
+CREATE TABLE `season` (
+  `Season_ID` int NOT NULL AUTO_INCREMENT,
+  `Season_Name` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  PRIMARY KEY (`Season_ID`),
+  UNIQUE KEY `Season_Name` (`Season_Name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-LOCK TABLES `color` WRITE;
-/*!40000 ALTER TABLE `color` DISABLE KEYS */;
-INSERT INTO `color` VALUES (9,'卡其色'),(10,'棕色'),(6,'橘色'),(2,'灰色'),(1,'白色'),(8,'米色'),(5,'粉紅色'),(4,'紅色'),(14,'紫色'),(11,'綠色'),(12,'藍綠色'),(13,'藍色'),(7,'黃色'),(3,'黑色');
-/*!40000 ALTER TABLE `color` ENABLE KEYS */;
-UNLOCK TABLES;
+CREATE TABLE `style` (
+  `Style_ID` int NOT NULL AUTO_INCREMENT,
+  `Style_Name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  PRIMARY KEY (`Style_ID`),
+  UNIQUE KEY `Style_Name` (`Style_Name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Table structure for table `history`
---
-
-DROP TABLE IF EXISTS `history`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `history` (
-  `History_ID` int NOT NULL AUTO_INCREMENT,
-  `Occasion` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `Photo` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+CREATE TABLE `space` (
+  `Space_ID` int NOT NULL AUTO_INCREMENT,
+  `Space_Type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `Space_Name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `User_ID` int NOT NULL,
-  `Note` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `Time` time DEFAULT NULL,
-  PRIMARY KEY (`History_ID`),
+  `Capacity` int DEFAULT NULL,
+  `Used_Capacity` int DEFAULT NULL,
+  PRIMARY KEY (`Space_ID`),
   KEY `User_ID` (`User_ID`),
-  CONSTRAINT `history_ibfk_1` FOREIGN KEY (`User_ID`) REFERENCES `user` (`User_ID`) ON DELETE CASCADE
+  CONSTRAINT `space_ibfk_1` FOREIGN KEY (`User_ID`) REFERENCES `user` (`User_ID`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `history`
---
-
-LOCK TABLES `history` WRITE;
-/*!40000 ALTER TABLE `history` DISABLE KEYS */;
-/*!40000 ALTER TABLE `history` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `history_outfit`
---
-
-DROP TABLE IF EXISTS `history_outfit`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `history_outfit` (
-  `Outfit_ID` int NOT NULL AUTO_INCREMENT,
-  `History_ID` int NOT NULL,
-  `Item_ID` int NOT NULL,
-  PRIMARY KEY (`Outfit_ID`),
-  KEY `History_ID` (`History_ID`),
-  KEY `Item_ID` (`Item_ID`),
-  CONSTRAINT `history_outfit_ibfk_1` FOREIGN KEY (`History_ID`) REFERENCES `history` (`History_ID`) ON DELETE CASCADE,
-  CONSTRAINT `history_outfit_ibfk_2` FOREIGN KEY (`Item_ID`) REFERENCES `item` (`Item_ID`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `history_outfit`
---
-
-LOCK TABLES `history_outfit` WRITE;
-/*!40000 ALTER TABLE `history_outfit` DISABLE KEYS */;
-/*!40000 ALTER TABLE `history_outfit` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `item`
---
-
-DROP TABLE IF EXISTS `item`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `item` (
   `Item_ID` int NOT NULL AUTO_INCREMENT,
   `Name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -119,26 +96,8 @@ CREATE TABLE `item` (
   CONSTRAINT `item_ibfk_1` FOREIGN KEY (`User_ID`) REFERENCES `user` (`User_ID`) ON DELETE CASCADE,
   CONSTRAINT `item_ibfk_2` FOREIGN KEY (`Space_ID`) REFERENCES `space` (`Space_ID`) ON DELETE SET NULL,
   CONSTRAINT `item_ibfk_3` FOREIGN KEY (`Type_ID`) REFERENCES `type` (`Type_ID`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Dumping data for table `item`
---
-
-LOCK TABLES `item` WRITE;
-/*!40000 ALTER TABLE `item` DISABLE KEYS */;
-INSERT INTO `item` VALUES (1,'純白短袖T恤','容易髒要注意',NULL,1,1,1),(2,'深藍色直筒牛仔褲','微彈性很舒服',NULL,1,1,2),(3,'黑色西裝外套','面試與正式場合穿',NULL,1,1,3),(4,'灰色百褶裙','材質偏厚',NULL,1,1,4),(5,'白色基本款帆布鞋','底有點硬',NULL,1,1,5),(6,'紅色保暖毛帽','去雪地玩買的',NULL,1,1,6),(7,'黃色碎花洋裝','去海邊度假穿',NULL,1,2,4),(8,'軍綠色多口袋工裝褲','',NULL,1,2,2),(9,'黑色高領羊毛衣','很保暖但需乾洗',NULL,1,1,1),(10,'卡其色防風風衣','防潑水材質',NULL,1,1,3),(11,'深灰寬鬆運動棉褲','當睡褲很舒服',NULL,1,1,2),(12,'白色長袖抗皺襯衫','上班必備',NULL,1,1,1),(13,'黑色亮面皮鞋','搭配西裝',NULL,1,1,5),(14,'藍白紅格紋法蘭絨襯衫','休閒百搭',NULL,1,2,1),(15,'黑色真皮皮帶','五金容易刮傷',NULL,1,1,6),(16,'粉色柔軟針織衫','洗過有點縮水',NULL,1,1,1),(17,'淺藍色牛仔短褲','超級涼爽',NULL,1,2,2),(18,'黑色長版連帽羽絨外套','寒流來才穿得到',NULL,1,1,3),(19,'白色運動長襪','消耗品',NULL,1,1,6),(20,'黑色漆皮包鞋','跟高5公分',NULL,1,1,5),(21,'防潑水機能衝鋒衣',NULL,'uploads/f7f7cadfc5e94490a0ea9963a4954e05.jpg',1,1,2);
-/*!40000 ALTER TABLE `item` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `item_color`
---
-
-DROP TABLE IF EXISTS `item_color`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `item_color` (
   `Item_ID` int NOT NULL,
   `Color_ID` int NOT NULL,
@@ -147,24 +106,7 @@ CREATE TABLE `item_color` (
   CONSTRAINT `item_color_ibfk_1` FOREIGN KEY (`Item_ID`) REFERENCES `item` (`Item_ID`) ON DELETE CASCADE,
   CONSTRAINT `item_color_ibfk_2` FOREIGN KEY (`Color_ID`) REFERENCES `color` (`Color_ID`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `item_color`
---
-
-LOCK TABLES `item_color` WRITE;
-/*!40000 ALTER TABLE `item_color` DISABLE KEYS */;
-/*!40000 ALTER TABLE `item_color` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `item_season`
---
-
-DROP TABLE IF EXISTS `item_season`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `item_season` (
   `Item_ID` int NOT NULL,
   `Season_ID` int NOT NULL,
@@ -173,24 +115,7 @@ CREATE TABLE `item_season` (
   CONSTRAINT `item_season_ibfk_1` FOREIGN KEY (`Item_ID`) REFERENCES `item` (`Item_ID`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `item_season_ibfk_2` FOREIGN KEY (`Season_ID`) REFERENCES `season` (`Season_ID`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `item_season`
---
-
-LOCK TABLES `item_season` WRITE;
-/*!40000 ALTER TABLE `item_season` DISABLE KEYS */;
-/*!40000 ALTER TABLE `item_season` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `item_style`
---
-
-DROP TABLE IF EXISTS `item_style`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `item_style` (
   `Item_ID` int NOT NULL,
   `Style_ID` int NOT NULL,
@@ -199,163 +124,193 @@ CREATE TABLE `item_style` (
   CONSTRAINT `item_style_ibfk_1` FOREIGN KEY (`Item_ID`) REFERENCES `item` (`Item_ID`) ON DELETE CASCADE,
   CONSTRAINT `item_style_ibfk_2` FOREIGN KEY (`Style_ID`) REFERENCES `style` (`Style_ID`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `item_style`
---
-
-LOCK TABLES `item_style` WRITE;
-/*!40000 ALTER TABLE `item_style` DISABLE KEYS */;
-INSERT INTO `item_style` VALUES (1,1),(11,1),(14,1),(3,2),(21,2),(11,3),(1,4),(11,4),(21,4);
-/*!40000 ALTER TABLE `item_style` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `season`
---
-
-DROP TABLE IF EXISTS `season`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `season` (
-  `Season_ID` int NOT NULL AUTO_INCREMENT,
-  `Season_Name` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL,
-  PRIMARY KEY (`Season_ID`),
-  UNIQUE KEY `Season_Name` (`Season_Name`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `season`
---
-
-LOCK TABLES `season` WRITE;
-/*!40000 ALTER TABLE `season` DISABLE KEYS */;
-INSERT INTO `season` VALUES (1,'春'),(2,'夏'),(3,'秋'),(4,'冬');
-/*!40000 ALTER TABLE `season` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `space`
---
-
-DROP TABLE IF EXISTS `space`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `space` (
-  `Space_ID` int NOT NULL AUTO_INCREMENT,
-  `Space_Type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `Space_Name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+CREATE TABLE `history` (
+  `History_ID` int NOT NULL AUTO_INCREMENT,
+  `Occasion` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `Photo` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `User_ID` int NOT NULL,
-  `Capacity` int DEFAULT NULL,
-  `Used_Capacity` int DEFAULT NULL,
-  PRIMARY KEY (`Space_ID`),
+  `Note` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `Time` time DEFAULT NULL,
+  PRIMARY KEY (`History_ID`),
   KEY `User_ID` (`User_ID`),
-  CONSTRAINT `space_ibfk_1` FOREIGN KEY (`User_ID`) REFERENCES `user` (`User_ID`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+  CONSTRAINT `history_ibfk_1` FOREIGN KEY (`User_ID`) REFERENCES `user` (`User_ID`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Dumping data for table `space`
---
+CREATE TABLE `history_outfit` (
+  `Outfit_ID` int NOT NULL AUTO_INCREMENT,
+  `History_ID` int NOT NULL,
+  `Item_ID` int NOT NULL,
+  PRIMARY KEY (`Outfit_ID`),
+  KEY `History_ID` (`History_ID`),
+  KEY `Item_ID` (`Item_ID`),
+  CONSTRAINT `history_outfit_ibfk_1` FOREIGN KEY (`History_ID`) REFERENCES `history` (`History_ID`) ON DELETE CASCADE,
+  CONSTRAINT `history_outfit_ibfk_2` FOREIGN KEY (`Item_ID`) REFERENCES `item` (`Item_ID`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-LOCK TABLES `space` WRITE;
-/*!40000 ALTER TABLE `space` DISABLE KEYS */;
-INSERT INTO `space` VALUES (1,'衣櫃',NULL,1,20,NULL),(2,'行李箱',NULL,1,40,NULL),(3,'衣櫃',NULL,1,20,NULL),(4,'行李箱',NULL,1,40,NULL),(5,'衣櫃',NULL,1,20,NULL),(6,'行李箱',NULL,1,40,NULL),(7,'衣櫃',NULL,1,20,NULL),(8,'行李箱',NULL,1,40,NULL),(9,'衣櫃',NULL,1,20,NULL),(10,'行李箱',NULL,1,40,NULL),(11,'衣櫃',NULL,1,20,NULL),(12,'行李箱',NULL,1,40,NULL),(13,'衣櫃',NULL,1,20,NULL),(14,'行李箱',NULL,1,40,NULL);
-/*!40000 ALTER TABLE `space` ENABLE KEYS */;
-UNLOCK TABLES;
+-- Users
+INSERT INTO `user` (`User_ID`, `User_Name`, `User_Account`, `Password`, `Membership`, `Member_Date`) VALUES
+(1, '林小衣', 'demo@example.com', 'password123', 'free', '2026-05-01 09:00:00'),
+(2, '陳穿搭', 'premium@example.com', 'password123', 'premium', '2026-05-02 10:30:00'),
+(3, '旅行愛好者', 'traveler@example.com', 'password123', 'free', '2026-05-03 14:15:00');
 
---
--- Table structure for table `style`
---
+-- Clothing categories
+INSERT INTO `type` (`Type_ID`, `Type_Name`) VALUES
+(1, '上身長'),
+(2, '上身短'),
+(3, '下身長'),
+(4, '下身短'),
+(5, '配件'),
+(6, '鞋類'),
+(7, '其他');
 
-DROP TABLE IF EXISTS `style`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `style` (
-  `Style_ID` int NOT NULL AUTO_INCREMENT,
-  `Style_Name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  PRIMARY KEY (`Style_ID`),
-  UNIQUE KEY `Style_Name` (`Style_Name`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+-- Seasons
+INSERT INTO `season` (`Season_ID`, `Season_Name`) VALUES
+(1, '春'),
+(2, '夏'),
+(3, '秋'),
+(4, '冬');
 
---
--- Dumping data for table `style`
---
+-- Styles
+INSERT INTO `style` (`Style_ID`, `Style_Name`) VALUES
+(1, '運動'),
+(2, '正式'),
+(3, '社交'),
+(4, '日常'),
+(5, '其他');
 
-LOCK TABLES `style` WRITE;
-/*!40000 ALTER TABLE `style` DISABLE KEYS */;
-INSERT INTO `style` VALUES (1,'運動'),(2,'正式'),(3,'日常'),(4,'社交'),(5,'其他');
-/*!40000 ALTER TABLE `style` ENABLE KEYS */;
-UNLOCK TABLES;
+-- Colors supported by backend/color_parsing/services/color_mapper_lab.py
+INSERT INTO `color` (`Color_ID`, `Color_Name`) VALUES
+(1, '白色'),
+(2, '灰色'),
+(3, '黑色'),
+(4, '紅色'),
+(5, '粉紅色'),
+(6, '橘色'),
+(7, '黃色'),
+(8, '米色'),
+(9, '卡其色'),
+(10, '棕色'),
+(11, '綠色'),
+(12, '藍綠色'),
+(13, '藍色'),
+(14, '紫色');
 
---
--- Table structure for table `type`
---
+-- Storage spaces
+INSERT INTO `space` (`Space_ID`, `Space_Type`, `Space_Name`, `User_ID`, `Capacity`, `Used_Capacity`) VALUES
+(1, '衣櫃', '主臥衣櫃', 1, 20, 8),
+(2, '衣櫃', '外套與正式服', 1, 10, 3),
+(3, '行李箱', '週末小旅行', 1, 8, 2),
+(4, '衣櫃', '運動衣物櫃', 2, 15, 3),
+(5, '衣櫃', '日常穿搭櫃', 2, 18, 1),
+(6, '行李箱', '出差行李箱', 3, 12, 1);
 
-DROP TABLE IF EXISTS `type`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `type` (
-  `Type_ID` int NOT NULL AUTO_INCREMENT,
-  `Type_Name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  PRIMARY KEY (`Type_ID`),
-  UNIQUE KEY `Type_Name` (`Type_Name`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+-- Items
+INSERT INTO `item` (`Item_ID`, `Name`, `Notes`, `Photo`, `User_ID`, `Space_ID`, `Type_ID`) VALUES
+(1, '白色棉質長袖襯衫', '可搭西裝或牛仔褲。', 'uploads/demo_white_shirt.jpg', 1, 1, 1),
+(2, '黑色短袖 T 恤', '日常百搭款。', 'uploads/demo_black_tshirt.jpg', 1, 1, 2),
+(3, '藍色牛仔長褲', '直筒版型。', 'uploads/demo_blue_jeans.jpg', 1, 1, 3),
+(4, '卡其短褲', '夏天與旅行適合。', 'uploads/demo_khaki_shorts.jpg', 1, 1, 4),
+(5, '棕色皮帶', '正式與日常皆可用。', 'uploads/demo_brown_belt.jpg', 1, 1, 5),
+(6, '白色休閒鞋', '舒適好走。', 'uploads/demo_white_sneakers.jpg', 1, 1, 6),
+(7, '灰色連帽外套', '春秋外搭。', 'uploads/demo_gray_hoodie.jpg', 1, 1, 1),
+(8, '粉紅色短袖上衣', '明亮社交穿搭。', 'uploads/demo_pink_top.jpg', 1, 1, 2),
+(9, '黑色西裝外套', '正式場合使用。', 'uploads/demo_black_blazer.jpg', 1, 2, 1),
+(10, '黑色西裝長褲', '搭配西裝外套。', 'uploads/demo_black_slacks.jpg', 1, 2, 3),
+(11, '紫色領帶', '正式穿搭點綴。', 'uploads/demo_purple_tie.jpg', 1, 2, 5),
+(12, '綠色薄外套', '旅行備用外套。', 'uploads/demo_green_jacket.jpg', 1, 3, 1),
+(13, '藍綠色運動短褲', '適合健身與跑步。', 'uploads/demo_teal_sport_shorts.jpg', 1, 3, 4),
+(14, '紅色運動背心', '高強度訓練用。', 'uploads/demo_red_tank.jpg', 2, 4, 2),
+(15, '黑色運動長褲', '訓練與通勤都可穿。', 'uploads/demo_black_joggers.jpg', 2, 4, 3),
+(16, '橘色跑鞋', '跑步日專用。', 'uploads/demo_orange_running_shoes.jpg', 2, 4, 6),
+(17, '米色針織衫', '日常溫柔色系。', 'uploads/demo_beige_knit.jpg', 2, 5, 1),
+(18, '黃色雨衣', '出差與旅行備用。', 'uploads/demo_yellow_raincoat.jpg', 3, 6, 7);
 
---
--- Dumping data for table `type`
---
+-- Item colors, including multi-color items
+INSERT INTO `item_color` (`Item_ID`, `Color_ID`) VALUES
+(1, 1),
+(2, 3),
+(3, 13),
+(4, 9),
+(5, 10),
+(6, 1), (6, 2),
+(7, 2),
+(8, 5),
+(9, 3),
+(10, 3),
+(11, 14),
+(12, 11),
+(13, 12),
+(14, 4),
+(15, 3),
+(16, 6), (16, 3),
+(17, 8),
+(18, 7);
 
-LOCK TABLES `type` WRITE;
-/*!40000 ALTER TABLE `type` DISABLE KEYS */;
-INSERT INTO `type` VALUES (1,'上身長'),(2,'上身短'),(3,'下身長'),(4,'下身短'),(5,'配件'),(6,'鞋類'),(7,'其他');
-/*!40000 ALTER TABLE `type` ENABLE KEYS */;
-UNLOCK TABLES;
+-- Item seasons, demonstrating multi-select season support
+INSERT INTO `item_season` (`Item_ID`, `Season_ID`) VALUES
+(1, 1), (1, 3),
+(2, 1), (2, 2), (2, 3),
+(3, 1), (3, 2), (3, 3), (3, 4),
+(4, 2),
+(5, 1), (5, 2), (5, 3), (5, 4),
+(6, 1), (6, 2), (6, 3),
+(7, 1), (7, 3),
+(8, 2),
+(9, 3), (9, 4),
+(10, 3), (10, 4),
+(11, 1), (11, 3), (11, 4),
+(12, 1), (12, 3),
+(13, 2),
+(14, 2),
+(15, 1), (15, 3), (15, 4),
+(16, 1), (16, 2), (16, 3),
+(17, 3), (17, 4),
+(18, 1), (18, 2), (18, 3);
 
---
--- Table structure for table `user`
---
+-- Item styles, also many-to-many
+INSERT INTO `item_style` (`Item_ID`, `Style_ID`) VALUES
+(1, 2), (1, 4),
+(2, 4),
+(3, 4),
+(4, 4),
+(5, 2), (5, 4),
+(6, 1), (6, 4),
+(7, 1), (7, 4),
+(8, 3), (8, 4),
+(9, 2),
+(10, 2),
+(11, 2), (11, 3),
+(12, 4),
+(13, 1),
+(14, 1),
+(15, 1), (15, 4),
+(16, 1),
+(17, 4),
+(18, 5);
 
-DROP TABLE IF EXISTS `user`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `user` (
-  `User_ID` int NOT NULL AUTO_INCREMENT,
-  `User_Name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `User_Account` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `Password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `Membership` enum('free','premium') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'free',
-  `Member_Date` datetime DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`User_ID`),
-  UNIQUE KEY `User_Account` (`User_Account`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+-- Outfit history records
+INSERT INTO `history` (`History_ID`, `Occasion`, `Photo`, `User_ID`, `Note`, `Time`) VALUES
+(1, '上班會議', 'uploads/history_work_meeting.jpg', 1, '正式但不要太沉重。', '08:30:00'),
+(2, '週末咖啡廳', 'uploads/history_weekend_cafe.jpg', 1, '舒適日常穿搭。', '14:00:00'),
+(3, '短途旅行', 'uploads/history_weekend_trip.jpg', 1, '行李箱內的輕便組合。', '09:15:00'),
+(4, '健身房', 'uploads/history_gym.jpg', 2, '運動訓練穿搭。', '18:45:00'),
+(5, '出差雨天', 'uploads/history_business_rain.jpg', 3, '雨天備用穿搭。', '07:50:00');
 
---
--- Dumping data for table `user`
---
-
-LOCK TABLES `user` WRITE;
-/*!40000 ALTER TABLE `user` DISABLE KEYS */;
-INSERT INTO `user` VALUES (1,'測試','test@example.com','123456','free','2026-04-09 11:07:36');
-/*!40000 ALTER TABLE `user` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Dumping routines for database 'digital_wardrobe'
---
-/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
-
-/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
-/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
-/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
-
--- Dump completed on 2026-05-08  9:46:19
+-- Outfit items inside each history entry
+INSERT INTO `history_outfit` (`Outfit_ID`, `History_ID`, `Item_ID`) VALUES
+(1, 1, 1),
+(2, 1, 9),
+(3, 1, 10),
+(4, 1, 11),
+(5, 2, 2),
+(6, 2, 3),
+(7, 2, 6),
+(8, 3, 12),
+(9, 3, 13),
+(10, 3, 6),
+(11, 4, 14),
+(12, 4, 15),
+(13, 4, 16),
+(14, 5, 18),
+(15, 5, 17);
