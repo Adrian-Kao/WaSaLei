@@ -30,9 +30,10 @@ export default function MyWardrobePage() {
         }
         const roomList = await getUserRooms(userId);
         // roomList 應為 [{ Space_ID, Space_Type, Capacity, ... }]
+        // console.log("Fetched rooms:", roomList);
         const roomsWithInfo = roomList.map((room: any) => ({
           roomId: room.Space_ID,
-          name: room.Space_Type + (room.Space_ID ? `#${room.Space_ID}` : ""),
+          name: room.Space_Name,
           itemCount: room.Item_Count ?? 0, // 若後端有回傳 Item_Count
           totalCapacity: room.Capacity ?? 0,
         }));
@@ -70,7 +71,7 @@ export default function MyWardrobePage() {
                 onClick={() => handleRoomClick(room.roomId)}
                 className="btn relative h-25 w-full rounded-2xl border-0 bg-base-100 text-black hover:bg-base-200 transition-colors"
               >
-                <div className="text-center text-3xl">Room ID: {room.roomId}</div>
+                <div className="text-center text-3xl">{room.name}</div>
                 <div className="absolute bottom-3 right-4 text-2xl">{room.itemCount}/{room.totalCapacity}</div>
               </button>
             ))}

@@ -120,7 +120,7 @@ export default function WardrobePage() {
                 setAllRooms(
                     roomList.map((room: any) => ({
                         roomId: room.Space_ID,
-                        name: `${room.Space_Type}#${room.Space_ID}`,
+                        name: room.Space_Name || `沒抓到房間名`,
                         itemCount: room.Item_Count ?? 0,
                         totalCapacity: room.Capacity ?? 0,
                     }))
@@ -181,7 +181,7 @@ export default function WardrobePage() {
                 {/* 標題列：左邊是目前房間，右邊是編輯模式切換。 */}
                 <div className="flex items-center h-[10%] gap-5">
                     <div className="flex h-full flex-1 items-center justify-center rounded-2xl border-2 border-black text-center text-3xl tracking-[0.18em]">
-                        {roomId ? `Room ID: ${roomId}` : "尚未選擇房間"}
+                        {allRooms.find(room => room.roomId === roomId)?.name ?? "尚未選擇房間"}
                     </div>
                     <EditModeToggleButton isEditMode={isEditMode} onToggle={toggleEditMode} />
                 </div>
