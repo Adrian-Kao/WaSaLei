@@ -10,8 +10,13 @@ def get_best_k(pixels):
     return 2                     # 純色
 
 def analyze_colors(image, mask, k=3, min_ratio=0.05):
+
+    ### 避免去背邊緣的半透明/殘留背景污染顏色
+    kernel = np.ones((3, 3), np.uint8)
+    mask = cv2.erode(mask, kernel, iterations=1)
+    
     # 1. 套 mask
-    pixels = image[mask > 250]
+    pixels = image[mask > 200]
 
     if len(pixels) < 5:
         return [{"color": None, "percent": None}] *3
@@ -21,12 +26,24 @@ def analyze_colors(image, mask, k=3, min_ratio=0.05):
     pixels_sampled = pixels[np.random.choice(len(pixels), sample_size, replace=False)]
     dynamic_k = get_best_k(pixels_sampled)
 
-    debug_img = pixels_sampled[:10000].reshape(100, 100, 3).astype(np.uint8)
-    cv2.imwrite("debug_kmeans_input.jpg", cv2.cvtColor(debug_img, cv2.COLOR_RGB2BGR))
+    ### debug 用圖片
+    if len(pixels_sampled) >= 10000:
+        debug_img = pixels_sampled[:10000].reshape(100, 100, 3).astype(np.uint8)
+
+        cv2.imwrite(
+            "debug_kmeans_input.jpg",
+            cv2.cvtColor(debug_img, cv2.COLOR_RGB2BGR)
+        )
+
+    ### 在LAB做KMeans
+    pixels_lab = cv2.cvtColor(
+        pixels.reshape(-1, 1, 3).astype(np.uint8),
+        cv2.COLOR_RGB2LAB
+    ).reshape(-1, 3)
 
     # 3. KMeans
     kmeans = MiniBatchKMeans(n_clusters=dynamic_k, n_init="auto", random_state=42)
-    kmeans.fit(pixels)
+    kmeans.fit(pixels_lab)
 
     centers = kmeans.cluster_centers_
     labels = kmeans.labels_

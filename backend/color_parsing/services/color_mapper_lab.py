@@ -1,12 +1,26 @@
 import cv2
 import numpy as np
 
-def map_color_lab(rgb):
+def map_color_lab(lab_pixel):
     min_dist = float('inf')
     best_name = "未知"
-    
-    rgb_pixel = np.float32([[rgb]]) / 255.0
-    lab_pixel = cv2.cvtColor(rgb_pixel, cv2.COLOR_RGB2Lab)[0][0]
+
+    L,a,b = lab_pixel
+
+    ### 白 / 灰 / 黑 低彩度色先判
+    chroma = np.sqrt(a * a + b * b)
+
+    ### 白色
+    if L > 80 and chroma < 10:
+        return "白色"
+
+    ### 黑色
+    if L < 20:
+        return "黑色"
+
+    ### 灰色
+    if chroma < 8:
+        return "灰色"
 
     # 3. 調整權重 (加強對色調 a, b 的敏感度)
     # 人眼對顏色的「種類」比「明暗」敏感，所以我們把 a, b 的權重調高
@@ -21,19 +35,36 @@ def map_color_lab(rgb):
             
     return best_name
 
-COLOR_LIBRARY_LAB = {
-    "白色": [100, 0, 0],
-    "灰色": [50, 0, 0],
+COLOR_LIBRARY_RGB = {
+    "白色": [255, 255, 255],
+    "灰色": [128, 128, 128],
     "黑色": [0, 0, 0],
-    "紅色": [50, 75, 60],
-    "粉紅色": [80, 25, 10],
-    "橘色": [65, 45, 70],
-    "黃色": [90, -5, 85],
-    "米色": [90, 2, 15],
-    "卡其色": [75, 5, 25],
-    "棕色": [30, 20, 30],
-    "綠色": [50, -60, 45],
-    "藍綠色": [50, -40, -15],
-    "藍色": [30, 15, -60],
-    "紫色": [35, 65, -55]
+
+    "紅色": [220, 20, 60],
+    "粉紅色": [255, 182, 193],
+    "橘色": [255, 165, 0],
+    "黃色": [255, 215, 0],
+
+    "米色": [245, 245, 220],
+    "卡其色": [195, 176, 145],
+    "棕色": [139, 69, 19],
+
+    "綠色": [34, 139, 34],
+    "藍綠色": [0, 128, 128],
+    "藍色": [30, 144, 255],
+    "紫色": [138, 43, 226],
 }
+
+COLOR_LIBRARY_LAB = {}
+
+for name, rgb in COLOR_LIBRARY_RGB.items():
+
+    rgb_np = np.uint8([[rgb]])
+
+    ### OpenCV 的 LAB 轉換統一使用 RGB
+    lab = cv2.cvtColor(
+        rgb_np,
+        cv2.COLOR_RGB2LAB
+    )[0][0]
+
+    COLOR_LIBRARY_LAB[name] = lab

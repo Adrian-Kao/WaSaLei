@@ -80,7 +80,12 @@ def read_image(image_path):
     image_bytes = np.fromfile(image_path, dtype=np.uint8)
     if len(image_bytes) == 0:
         return None
-    return cv2.imdecode(image_bytes, cv2.IMREAD_COLOR)
+    image = cv2.imdecode(image_bytes, cv2.IMREAD_COLOR)
+
+    if image is not None:
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+    return image
 
 def save_to_final(output_image_path):
     if output_image_path is None:
