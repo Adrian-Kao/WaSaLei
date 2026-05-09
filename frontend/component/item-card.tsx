@@ -1,6 +1,9 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { FiCheck, FiPlus, FiX } from "react-icons/fi";
+import { FiCheck, FiPlus } from "react-icons/fi";
+import { useEffect, useState } from "react";
+import { normalizeColorToHex } from "@/lib/constants/color-map";
+import ColorStrip from "@/component/color-strip";
 
 type ItemCardProps = {
     itemId?: number | string;
@@ -18,14 +21,7 @@ type ItemCardProps = {
 };
 
 function normalizeColor(input: string) {
-    if (input === "none") {
-        return null;
-    }
-
-    const value = input.trim();
-    const withHash = value.startsWith("#") ? value : `#${value}`;
-    const isValidHex = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(withHash);
-    return isValidHex ? withHash : null;
+    return normalizeColorToHex(input);
 }
 
 function normalizeList(value: string | string[]) {
@@ -47,11 +43,16 @@ export default function ItemCard({
     detailPath = "/myWardrobe/1-4",
 }: ItemCardProps) {
     const router = useRouter();
+    const [imageSrc, setImageSrc] = useState(imageUrl || "/1.webp");
     const colorSlots = color.map((slotColor) => normalizeColor(slotColor));
     const styles = normalizeList(style);
     const normalizedItemId = Number(itemId);
     const canNavigateToDetail = !editable && Number.isFinite(normalizedItemId) && normalizedItemId > 0;
     const canToggleSelection = editable && typeof onSelectToggle === "function";
+
+    useEffect(() => {
+        setImageSrc(imageUrl || "/1.webp");
+    }, [imageUrl]);
 
     function handleCardClick() {
         if (canToggleSelection) {
@@ -95,11 +96,12 @@ export default function ItemCard({
             ) : null}
             <div className="relative mb-3 aspect-square w-full overflow-hidden rounded-md">
                 <Image
-                    src={imageUrl}
+                    src={imageSrc}
                     alt={imageAlt ?? name}
                     fill
                     sizes="(max-width: 768px) 70vw, 320px"
                     className="object-cover"
+                    onError={() => setImageSrc("/1.webp")}
                 />
             </div>
             <div className="flex flex-col items-center justify-center gap-2 px-2">
@@ -108,19 +110,7 @@ export default function ItemCard({
                 </div>
 
                 <div className="flex flex-row items-center justify-around text-sm w-full">
-                    <div className="inline-flex overflow-hidden rounded-2xl border-2 border-black">
-                        {colorSlots.map((slotColor, index) => (
-                            <span
-                                key={`${name}-color-${index}`}
-                                aria-label={slotColor ? `color ${slotColor}` : "none color slot"}
-                                title={slotColor ?? "none"}
-                                className={`grid h-5 w-5 place-items-center border-l-2 border-black first:border-l-0 ${slotColor ? "" : "bg-white"}`}
-                                style={slotColor ? { backgroundColor: slotColor } : undefined}
-                            >
-                                {slotColor ? null : <FiX className="text-[10px] text-black" />}
-                            </span>
-                        ))}
-                    </div>
+                    <ColorStrip colors={colorSlots} />
                     <div>{styles || "-"}</div>
                 </div>
                 <div className="flex flex-row items-center justify-around   text-sm w-full">

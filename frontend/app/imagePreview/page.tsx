@@ -1,6 +1,7 @@
 "use client";
 
 import { ChangeEvent, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ImagePlus, Loader2, Play, Upload } from "lucide-react";
 
 //API
@@ -10,10 +11,14 @@ import {
   ParsedColor,
   uploadInputImage,
 } from "@/lib/api/image-preview";
+import { useCreateItemStore } from "@/store/store";
 
 type StepState = "idle" | "uploading" | "uploaded" | "parsing" | "parsed" | "error";
 
 export default function ImagePreviewPage() {
+  const router = useRouter();
+  const setPipelineResult = useCreateItemStore((state) => state.setPipelineResult);
+
   const [file, setFile] = useState<File | null>(null);
   const [localPreview, setLocalPreview] = useState<string | null>(null);
   const [inputPath, setInputPath] = useState<string | null>(null);
@@ -93,44 +98,26 @@ export default function ImagePreviewPage() {
   }
 
   async function handleConfirm() {
-    //防止output為空
+    // 防止尚未完成解析就切頁。
     if (!outputUrl) return;
 
     setIsSaving(true);
     setSavedMessage("");
 
-    try {
-      const response = await fetch(
-        "http://127.0.0.1:5000/api/items/confirm-image",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({}), //僅觸發copy
-        }
-      );
+    const normalizedColors = colors
+      .map((item) => item.color ?? "")
+      .map((color) => color.trim())
+      .filter((color) => color.length > 0);
 
-      const result = await response.json();
+    setPipelineResult({
+      imageUrl: outputUrl,
+      inputPath: inputPath ?? "",
+      detectedColors: normalizedColors,
+    });
 
-      if (!result.success) {
-        throw new Error(result.message || "Save failed");
-      }
-
-      setSavedMessage("已儲存 ✔");
-
-      // 3 秒後自動消失
-      setTimeout(() => {
-        setSavedMessage("");
-      }, 3000);
-    } catch (err: any) {
-      setSavedMessage(err.message || "儲存失敗");
-      setTimeout(() => {
-        setSavedMessage("");
-      }, 3000);
-    } finally {
-      setIsSaving(false);
-    }
+    setSavedMessage("已帶入建立頁面 ✔");
+    setIsSaving(false);
+    router.push("/myWardrobe/createItem");
   }
 
   return (

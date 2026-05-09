@@ -1,4 +1,5 @@
 import type { ClothingItem, ItemHistory } from "@/lib/types/clothing";
+import { normalizeColorToHex } from "@/lib/constants/color-map";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:5000";
 
@@ -29,6 +30,10 @@ export type ClothingItemDetail = ClothingItem & {
   note?: string;
 };
 
+function toColorSlot(value?: string | null) {
+  return normalizeColorToHex(value) ?? "none";
+}
+
 // 串接後端 API 取得該使用者所有 type 為「衣櫃」的空間名稱
 export async function getUserRooms(userId: string | number): Promise<UserRoom[]> {
   if (!userId) return [];
@@ -39,6 +44,7 @@ export async function getUserRooms(userId: string | number): Promise<UserRoom[]>
   if (!data.success || !Array.isArray(data.data)) return [];
 
   return (data.data as UserRoom[]).filter((s) => s.Space_Type === "衣櫃");
+
 }
 
 type BackendSpaceItem = {
@@ -66,7 +72,7 @@ export async function getSpaceItems(spaceId: string | number): Promise<ClothingI
   return (data.data as BackendSpaceItem[]).map((item, index) => ({
     id: item.item_id ?? index + 1,
     name: item.name,
-    color: [item.color1 ?? "none", item.color2 ?? "none", item.color3 ?? "none"],
+    color: [toColorSlot(item.color1), toColorSlot(item.color2), toColorSlot(item.color3)],
     season: item.seasons ?? [],
     type: item.type,
     style: item.styles ?? [],
@@ -75,7 +81,7 @@ export async function getSpaceItems(spaceId: string | number): Promise<ClothingI
 }
 
 function toColorTuple(colors?: string[]): [string, string, string] {
-  return [colors?.[0] ?? "none", colors?.[1] ?? "none", colors?.[2] ?? "none"];
+  return [toColorSlot(colors?.[0]), toColorSlot(colors?.[1]), toColorSlot(colors?.[2])];
 }
 
 function toAbsolutePhotoUrl(photoUrl?: string | null, photo?: string | null): string {
@@ -111,6 +117,73 @@ export async function getItemById(itemId: number): Promise<ClothingItemDetail | 
 export async function getItemHistory(itemId: number): Promise<ItemHistory[]> {
   void itemId;
   return [];
+}
+
+export type CreateItemPayload = {
+  user_id: string | number;
+  name: string;
+  space_id: string | number;
+  type_id: number;
+  season_ids: number[];
+  color_ids: number[];
+  style_ids: number[];
+};
+
+export async function createItem(
+  payload: CreateItemPayload
+): Promise<ClothingItemDetail | null> {
+  const res = await fetch(`${API_BASE_URL}/api/items/confirm-image`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) return null;
+  const data = await res.json();
+  if (!data.success || !data.data) return null;
+  const item = data.data as BackendItemDetail;
+  return {
+    id: item.item_id,
+    name: item.name,
+    color: toColorTuple(item.colors),
+    season: item.seasons ?? [],
+    type: item.type ?? "其他",
+    style: item.styles ?? [],
+    imageUrl: toAbsolutePhotoUrl(item.photo_url, item.photo),
+    note: item.notes ?? "",
+  };
+}
+
+export type UpdateItemPayload = {
+  name?: string;
+  notes?: string;
+  type_id?: number;
+  season_ids?: number[];
+  style_ids?: number[];
+};
+
+export async function updateItem(
+  itemId: number,
+  payload: UpdateItemPayload
+): Promise<ClothingItemDetail | null> {
+  const res = await fetch(`${API_BASE_URL}/api/items/${itemId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) return null;
+  const data = await res.json();
+  if (!data.success || !data.data) return null;
+  const item = data.data as BackendItemDetail;
+  return {
+    id: item.item_id,
+    name: item.name,
+    color: toColorTuple(item.colors),
+    season: item.seasons ?? [],
+    type: item.type ?? "其他",
+    style: item.styles ?? [],
+    imageUrl: toAbsolutePhotoUrl(item.photo_url, item.photo),
+    note: item.notes ?? "",
+  };
 }
 
 

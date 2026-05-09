@@ -4,13 +4,18 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import ItemCard from "@/component/item-card";
-import { getItemById, getItemHistory, type ClothingItemDetail } from "@/lib/api/clothing";
+import ColorStrip from "@/component/color-strip";
+import { getItemById, getItemHistory, updateItem, type ClothingItemDetail } from "@/lib/api/clothing";
 import type { ItemHistory } from "@/lib/types/clothing";
 import { FiEdit2 } from "react-icons/fi";
 
 const seasonOptions = ["春", "夏", "秋", "冬"];
 const styleOptions = ["運動", "正式", "日常", "社交", "其他"];
 const typeOptions = ["上身長", "上身短", "下身長", "下身短", "配件", "鞋類", "其他"];
+
+const SEASON_ID: Record<string, number> = { 春: 1, 夏: 2, 秋: 3, 冬: 4 };
+const STYLE_ID: Record<string, number> = { 運動: 1, 正式: 2, 日常: 3, 社交: 4, 其他: 5 };
+const TYPE_ID: Record<string, number> = { 上身長: 1, 上身短: 2, 下身長: 3, 下身短: 4, 配件: 5, 鞋類: 6, 其他: 7 };
 
 type EditableItemDraft = {
   name: string;
@@ -44,6 +49,8 @@ export default function ItemDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isEditMode, setIsEditMode] = useState(false);
   const [draft, setDraft] = useState<EditableItemDraft | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [detailImageSrc, setDetailImageSrc] = useState("/1.webp");
 
   useEffect(() => {
     if (!item) {
@@ -52,6 +59,7 @@ export default function ItemDetailPage() {
     }
 
     setDraft(createDraftFromItem(item));
+    setDetailImageSrc(item.imageUrl || "/1.webp");
   }, [item]);
 
   function toggleDraftArrayField(field: "season" | "style", value: string) {
@@ -83,21 +91,28 @@ export default function ItemDetailPage() {
     setDraft((previous) => (previous ? { ...previous, [field]: value } : previous));
   }
 
-  function handleSaveDraft() {
-    if (!item || !draft) {
+  async function handleSaveDraft() {
+    if (!item || !draft || !itemId) {
       setIsEditMode(false);
       return;
     }
 
-    setItem({
-      ...item,
-      name: draft.name.trim() || item.name,
-      season: draft.season,
-      style: draft.style,
-      type: draft.type,
-      note: draft.note,
-    });
-    setIsEditMode(false);
+    setIsSaving(true);
+    try {
+      const updated = await updateItem(itemId, {
+        name: draft.name.trim() || item.name,
+        notes: draft.note,
+        type_id: TYPE_ID[draft.type],
+        season_ids: draft.season.map((s) => SEASON_ID[s]).filter(Boolean),
+        style_ids: draft.style.map((s) => STYLE_ID[s]).filter(Boolean),
+      });
+      if (updated) {
+        setItem(updated);
+      }
+    } finally {
+      setIsSaving(false);
+      setIsEditMode(false);
+    }
   }
 
   function handleEditButtonClick() {
@@ -106,7 +121,7 @@ export default function ItemDetailPage() {
       return;
     }
 
-    handleSaveDraft();
+    void handleSaveDraft();
   }
 
   useEffect(() => {
@@ -176,105 +191,119 @@ export default function ItemDetailPage() {
             <button
               type="button"
               onClick={handleEditButtonClick}
+              disabled={isSaving}
               className="btn btn-sm btn-ghost gap-2"
               aria-label={isEditMode ? "離開編輯模式" : "進入編輯模式"}
             >
-              <FiEdit2 className="text-lg" />
-              {isEditMode ? "完成" : "編輯"}
+              {isSaving ? (
+                <span className="loading loading-spinner loading-xs" />
+              ) : (
+                <FiEdit2 className="text-lg" />
+              )}
+              {isSaving ? "儲存中" : isEditMode ? "完成" : "編輯"}
             </button>
           </div>
 
           {isEditMode && draft ? (
-            <div className="card w-full rounded-3xl border border-base-300 bg-base-200 p-4 shadow-sm">
+            <div className="card w-full rounded-3xl border border-base-300 bg-base-200 shadow-sm">
+
               <div className="relative mb-4 aspect-square w-full overflow-hidden rounded-2xl bg-base-100">
                 <Image
-                  src={item.imageUrl}
+                  src={detailImageSrc}
                   alt={item.name}
                   fill
                   sizes="(max-width: 768px) 70vw, 320px"
                   className="object-cover"
+                  onError={() => setDetailImageSrc("/1.webp")}
                 />
               </div>
-
-              <div className="mb-4">
-                <label className="mb-2 block text-sm font-medium">名稱</label>
-                <input
-                  type="text"
-                  value={draft.name}
-                  onChange={(event) => updateDraftField("name", event.target.value)}
-                  className="input input-bordered w-full"
-                  aria-label="衣服名稱"
-                />
-              </div>
-
-              <div className="mb-4">
-                <div className="mb-2 block text-sm font-medium">季節（可多選）</div>
-                <div className="flex flex-wrap gap-2">
-                  {seasonOptions.map((option) => {
-                    const isSelected = draft.season.includes(option);
-
-                    return (
-                      <button
-                        key={option}
-                        type="button"
-                        onClick={() => toggleSeasonOption(option)}
-                        className={`btn btn-sm rounded-full ${isSelected ? "btn-primary" : "btn-outline"}`}
-                      >
-                        {option}
-                      </button>
-                    );
-                  })}
+              <div className="p-4">
+                {/* 顏色顯示（不可編輯） */}
+                <div className="mb-4">
+                  <label className="mb-2 block text-sm font-medium">顏色</label>
+                  <ColorStrip colors={item.color} />
                 </div>
-              </div>
 
-              <div className="mb-4">
-                <div className="mb-2 block text-sm font-medium">Style（可多選）</div>
-                <div className="flex flex-wrap gap-2">
-                  {styleOptions.map((option) => {
-                    const isSelected = draft.style.includes(option);
-
-                    return (
-                      <button
-                        key={option}
-                        type="button"
-                        onClick={() => toggleStyleOption(option)}
-                        className={`btn btn-sm rounded-full ${isSelected ? "btn-primary" : "btn-outline"}`}
-                      >
-                        {option}
-                      </button>
-                    );
-                  })}
+                <div className="mb-4">
+                  <label className="mb-2 block text-sm font-medium">名稱</label>
+                  <input
+                    type="text"
+                    value={draft.name}
+                    onChange={(event) => updateDraftField("name", event.target.value)}
+                    className="input input-bordered w-full"
+                    aria-label="衣服名稱"
+                  />
                 </div>
-              </div>
 
-              <div className="mb-4">
-                <div className="mb-2 block text-sm font-medium">Type（單選）</div>
-                <div className="flex flex-wrap gap-2">
-                  {typeOptions.map((option) => {
-                    const isSelected = draft.type === option;
+                <div className="mb-4">
+                  <div className="mb-2 block text-sm font-medium">季節（可多選）</div>
+                  <div className="flex flex-wrap gap-2">
+                    {seasonOptions.map((option) => {
+                      const isSelected = draft.season.includes(option);
 
-                    return (
-                      <button
-                        key={option}
-                        type="button"
-                        onClick={() => updateDraftField("type", option)}
-                        className={`btn btn-sm rounded-full ${isSelected ? "btn-primary" : "btn-outline"}`}
-                      >
-                        {option}
-                      </button>
-                    );
-                  })}
+                      return (
+                        <button
+                          key={option}
+                          type="button"
+                          onClick={() => toggleSeasonOption(option)}
+                          className={`btn btn-sm rounded-full ${isSelected ? "btn-primary" : "btn-outline"}`}
+                        >
+                          {option}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
 
-              <div className="mb-5">
-                <label className="mb-2 block text-sm font-medium">Note</label>
-                <textarea
-                  value={draft.note}
-                  onChange={(event) => updateDraftField("note", event.target.value)}
-                  className="textarea textarea-bordered h-24 w-full"
-                  aria-label="衣服筆記"
-                />
+                <div className="mb-4">
+                  <div className="mb-2 block text-sm font-medium">Style（可多選）</div>
+                  <div className="flex flex-wrap gap-2">
+                    {styleOptions.map((option) => {
+                      const isSelected = draft.style.includes(option);
+
+                      return (
+                        <button
+                          key={option}
+                          type="button"
+                          onClick={() => toggleStyleOption(option)}
+                          className={`btn btn-sm rounded-full ${isSelected ? "btn-primary" : "btn-outline"}`}
+                        >
+                          {option}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <div className="mb-2 block text-sm font-medium">Type（單選）</div>
+                  <div className="flex flex-wrap gap-2">
+                    {typeOptions.map((option) => {
+                      const isSelected = draft.type === option;
+
+                      return (
+                        <button
+                          key={option}
+                          type="button"
+                          onClick={() => updateDraftField("type", option)}
+                          className={`btn btn-sm rounded-full ${isSelected ? "btn-primary" : "btn-outline"}`}
+                        >
+                          {option}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="mb-5">
+                  <label className="mb-2 block text-sm font-medium">Note</label>
+                  <textarea
+                    value={draft.note}
+                    onChange={(event) => updateDraftField("note", event.target.value)}
+                    className="textarea textarea-bordered h-24 w-full"
+                    aria-label="衣服筆記"
+                  />
+                </div>
               </div>
             </div>
           ) : (

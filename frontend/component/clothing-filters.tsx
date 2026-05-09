@@ -92,6 +92,8 @@ export default function ClothingFilters({
         </span>
     );
 
+    const formatColorValueLabel = (option: SelectOption) => option.label;
+
     const roomSelectOptions = normalizeOptions(roomOptions);
 
     return (
@@ -178,8 +180,7 @@ export default function ClothingFilters({
                         placeholder="全部"
                         styles={selectStyles}
                         noOptionsMessage={() => "沒有選項"}
-                        formatOptionLabel={formatColorOptionLabel}
-                    />
+                        formatOptionLabel={formatColorOptionLabel}                        formatOptionValue={formatColorValueLabel}                    />
                 </div>
             </div>
         </div>

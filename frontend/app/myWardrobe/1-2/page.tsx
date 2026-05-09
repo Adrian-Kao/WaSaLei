@@ -12,6 +12,7 @@ import {
     getSpaceItems,
     getUserRooms
 } from "@/lib/api/clothing";
+import { FIXED_COLORS } from "@/lib/constants/color-map";
 import { createClothingFilters, type ClothingFilters, type ClothingItem } from "@/lib/types/clothing";
 import { useUserStore } from "@/store/store";
 
@@ -19,7 +20,7 @@ import { useUserStore } from "@/store/store";
 const seasonOptions = ["春", "夏", "秋", "冬"];
 const styleOptions = ["運動", "正式", "日常", "社交", "其他"];
 const typeOptions = ["上身長", "上身短", "下身長", "下身短", "配件", "鞋類", "其他"];
-const colorOptions = ["#2A3388", "#000000", "#FFFFFF", "#9CA3AF"];
+const colorOptions = FIXED_COLORS.map((color) => color.hex);
 
 // const wardrobeName = getWardrobeName();
 const initialClothingItems: ClothingItem[] = [];  // 本地篩選：初始為空，實際衣物在 fetchRooms 取得
