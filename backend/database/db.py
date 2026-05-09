@@ -114,12 +114,14 @@ def create_new_space(user_id, space_type, capacity=30, space_name=None):
             """
             cursor.execute(sql, (space_type, capacity, user_id, space_name))
             connection.commit()
-            return True
+            # 返回新建立的 Space_ID
+            space_id = cursor.lastrowid
+            return True, space_id
         
     except Exception as e:
         print(f"建立空間SQL錯誤: {e}")
         connection.rollback()
-        return False
+        return False, None
     
     finally:
         connection.close()

@@ -143,10 +143,19 @@ def api_add_space():
     space_name = data.get("space_name")
     capacity = _optional_int(data, "capacity") or 30
 
-    success, msg = add_space(user_id, space_type, capacity, space_name)
+    success, space_id, msg = add_space(user_id, space_type, capacity, space_name)
     if success:
-        return jsonify({"status": "success", "success": True, "message": msg}), 201
-    return jsonify({"status": "error", "success": False, "message": msg}), 400
+        return jsonify({
+            "status": "success",
+            "success": True,
+            "spaceId": space_id,
+            "message": msg
+        }), 201
+    return jsonify({
+        "status": "error",
+        "success": False,
+        "message": msg
+    }), 400
 
 # Return all spaces for one user, optionally filtered by type.
 @app.route("/api/space/user/<int:user_id>", methods=["GET"])

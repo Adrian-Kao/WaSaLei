@@ -13,18 +13,18 @@ VALID_SPACE_TYPES = ["衣櫃", "行李箱"]
 # Create a storage space after validating type and capacity.
 def add_space(user_id, space_type, capacity, space_name=None):
     if not isinstance(capacity, int) or capacity <= 0:
-        return False, "容量必須是正整數"
+        return False, None, "容量必須是正整數"
 
     if not str(space_type or "").strip():
-        return False, "空間類型不能為空"
+        return False, None, "空間類型不能為空"
 
     if space_type not in VALID_SPACE_TYPES:
-        return False, f"不支援的空間類型: {space_type}"
+        return False, None, f"不支援的空間類型: {space_type}"
 
-    success = db.create_new_space(user_id, space_type, capacity, space_name)
+    success, space_id = db.create_new_space(user_id, space_type, capacity, space_name)
     if success:
-        return True, f"成功新增空間: {space_type}, 容量: {capacity}"
-    return False, "新增空間失敗"
+        return True, space_id, f"成功新增空間: {space_type}, 容量: {capacity}"
+    return False, None, "新增空間失敗"
 
 # Get all spaces for one user, optionally filtered by space type.
 def get_user_all_spaces(user_id, space_type=None):
