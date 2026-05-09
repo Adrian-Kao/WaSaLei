@@ -75,6 +75,20 @@ def delete_item_record(item_id):
 def move_item_space(item_id, target_space_id):
     return db.move_item_to_space(item_id, target_space_id)
 
+# 查詢與該item有關的歷史穿搭
+def
+
+
+
+
+
+
+
+
+
+# ==========================================
+# Helper
+# ==========================================
 # Convert one database item row into frontend-friendly JSON.
 def _format_item_detail(item):
     photo = item.get("Photo")

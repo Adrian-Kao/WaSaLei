@@ -49,7 +49,7 @@ def serve_image(filename):
 # 1. Auth
 # ==========================================
 # 註冊
-# @app.post("/api/auth/register")
+@app.post("/api/auth/register")
 def register_user():
     # silent = True : 預設情況下，如果前端傳過來的不是json會報錯，加上silent = True就只會回傳None
     # 若左邊失敗了，就會嘗試讀傳統的Form data

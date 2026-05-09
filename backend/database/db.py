@@ -457,6 +457,30 @@ def delete_item(item_id):
     finally:
         connection.close()
 
+# 查詢與該item有關的歷史穿搭
+def get_outfits_by_item(item_id):
+    connection = get_connection()
+
+    try:
+        with connection.cursor() as cursor:
+            sql = """
+                SELECT 
+                    h.History_ID
+                    h.Photo
+                    h.Time,
+                    h.Occasion
+                FROM `history_outfit` ho
+                JOIN `history` h ON ho.History_ID = h.History_ID
+                JOIN `item` i ON ho.Item_ID = i.Item_ID
+                WHERE i.Item_ID = %s
+                ORDER BY h.History_ID DESC
+            """
+            cursor.execute(sql, (item_id,))
+            return cursor.fetchall()
+        
+    finally:
+        connection.close()
+
 # ==========================================
 # 5. 搜尋與篩選 (對應search.py)
 # ==========================================
