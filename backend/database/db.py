@@ -465,19 +465,18 @@ def get_outfits_by_item(item_id):
         with connection.cursor() as cursor:
             sql = """
                 SELECT 
-                    h.History_ID
-                    h.Photo
-                    h.Time,
+                    h.History_ID,
+                    h.Photo,
+                    h.Worn_Date,
                     h.Occasion
-                FROM `history_outfit` ho
-                JOIN `history` h ON ho.History_ID = h.History_ID
-                JOIN `item` i ON ho.Item_ID = i.Item_ID
-                WHERE i.Item_ID = %s
+                FROM history_outfit ho
+                JOIN history h ON ho.History_ID = h.History_ID
+                WHERE ho.Item_ID = %s
                 ORDER BY h.History_ID DESC
             """
             cursor.execute(sql, (item_id,))
             return cursor.fetchall()
-        
+            
     finally:
         connection.close()
 
@@ -595,7 +594,7 @@ def get_outfits_by_user_id(user_id, occasion=None):
                     h.Photo,
                     h.User_ID,
                     h.Note,
-                    h.Time,
+                    h.Worn_Date,
                     GROUP_CONCAT(DISTINCT ho.Item_ID ORDER BY ho.Item_ID SEPARATOR ',') AS Item_IDs
                 FROM `History` h
                 LEFT JOIN `History_Outfit` ho ON h.History_ID = ho.History_ID
@@ -635,7 +634,7 @@ def get_outfit_by_id(history_id):
                     h.Photo,
                     h.User_ID,
                     h.Note,
-                    h.Time,
+                    h.Worn_Date,
                     i.Item_ID,
                     i.Name,
                     i.Photo AS Item_Photo,
@@ -677,7 +676,7 @@ def get_outfit_by_id(history_id):
         connection.close()
 
 # 新增outfit
-def create_outfit(user_id, occasion=None, photo=None, note=None, time=None, item_ids=None):
+def create_outfit(user_id, occasion=None, photo=None, note=None, worn_date=None, item_ids=None):
     connection = get_connection()
 
     if item_ids is None:
@@ -686,10 +685,10 @@ def create_outfit(user_id, occasion=None, photo=None, note=None, time=None, item
     try:
         with connection.cursor() as cursor:
             sql = """
-                INSERT INTO `History` (`Occasion`, `Photo`, `User_ID`, `Note`, `Time`)
+                INSERT INTO `History` (`Occasion`, `Photo`, `User_ID`, `Note`, `Worn_Date`)
                 VALUES (%s, %s, %s, %s, %s)
             """
-            cursor.execute(sql, (occasion, photo, user_id, note, time))
+            cursor.execute(sql, (occasion, photo, user_id, note, worn_date))
             history_id = cursor.lastrowid
 
             if item_ids:
@@ -711,7 +710,7 @@ def create_outfit(user_id, occasion=None, photo=None, note=None, time=None, item
         connection.close()
 
 # 更新outfit
-def update_outfit(history_id, occasion=None, photo=None, note=None, time=None, item_ids=None):
+def update_outfit(history_id, occasion=None, photo=None, note=None, worn_date=None, item_ids=None):
     connection = get_connection()
 
     try:
@@ -731,9 +730,9 @@ def update_outfit(history_id, occasion=None, photo=None, note=None, time=None, i
                 fields.append("Note = %s")
                 params.append(note)
 
-            if time is not None:
-                fields.append("Time = %s")
-                params.append(time)
+            if worn_date is not None:
+                fields.append("Worn_Date = %s")
+                params.append(worn_date)
 
             if fields:
                 sql = f"""

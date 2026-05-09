@@ -131,7 +131,7 @@ CREATE TABLE `history` (
   `Photo` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `User_ID` int NOT NULL,
   `Note` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `Time` time DEFAULT NULL,
+  `Worn_Date` date DEFAULT NULL,
   PRIMARY KEY (`History_ID`),
   KEY `User_ID` (`User_ID`),
   CONSTRAINT `history_ibfk_1` FOREIGN KEY (`User_ID`) REFERENCES `user` (`User_ID`) ON DELETE CASCADE
@@ -290,12 +290,12 @@ INSERT INTO `item_style` (`Item_ID`, `Style_ID`) VALUES
 (18, 5);
 
 -- Outfit history records
-INSERT INTO `history` (`History_ID`, `Occasion`, `Photo`, `User_ID`, `Note`, `Time`) VALUES
-(1, '上班會議', 'uploads/history_work_meeting.jpg', 1, '正式但不要太沉重。', '08:30:00'),
-(2, '週末咖啡廳', 'uploads/history_weekend_cafe.jpg', 1, '舒適日常穿搭。', '14:00:00'),
-(3, '短途旅行', 'uploads/history_weekend_trip.jpg', 1, '行李箱內的輕便組合。', '09:15:00'),
-(4, '健身房', 'uploads/history_gym.jpg', 2, '運動訓練穿搭。', '18:45:00'),
-(5, '出差雨天', 'uploads/history_business_rain.jpg', 3, '雨天備用穿搭。', '07:50:00');
+INSERT INTO `history` (`History_ID`, `Occasion`, `Photo`, `User_ID`, `Note`, `Worn_Date`) VALUES
+(1, '上班會議', 'uploads/history_work_meeting.jpg', 1, '正式但不要太沉重。', '2026-05-01'),
+(2, '週末咖啡廳', 'uploads/history_weekend_cafe.jpg', 1, '舒適日常穿搭。', '2026-05-02'),
+(3, '短途旅行', 'uploads/history_weekend_trip.jpg', 1, '行李箱內的輕便組合。', '2026-05-03'),
+(4, '健身房', 'uploads/history_gym.jpg', 2, '運動訓練穿搭。', '2026-05-04'),
+(5, '出差雨天', 'uploads/history_business_rain.jpg', 3, '雨天備用穿搭。', '2026-05-05');
 
 -- Outfit items inside each history entry
 INSERT INTO `history_outfit` (`Outfit_ID`, `History_ID`, `Item_ID`) VALUES

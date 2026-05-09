@@ -1,4 +1,4 @@
-﻿import os
+import os
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 
@@ -31,7 +31,6 @@ def health_check():
 def serve_picture(filename):
     return send_from_directory(PICTURES_DIR, filename)
 
-
 # Serve parsed output images for preview display.
 @app.route("/images/<path:filename>")
 def serve_image(filename):
@@ -43,7 +42,6 @@ def serve_image(filename):
 
     # Fallback for the current project structure.
     return send_from_directory(PICTURES_DIR / "output", filename)
-
 
 # ==========================================
 # 1. Auth
@@ -109,7 +107,6 @@ def api_change_password(user_id):
         return jsonify({"success": True, "status": "success"}), 200
     
     return jsonify({"success": False, "status": "error", "message": msg}), 400
-
 
 # 取得用戶名稱(透過id)
 def api_get_user_name(user_id):
@@ -308,6 +305,17 @@ def confirm_image():
         return jsonify({"success": True, "status": "success", **result})
     except Exception as exc:
         return jsonify({"success": False, "status": "error", "message": str(exc)}), 400
+
+@app.get("/api/items/<int:item_id>/outfits")
+def api_get_outfits_by_item(item_id):
+    from services.items import getOutfitsByItem
+
+    success, result = getOutfitsByItem(item_id)
+
+    if success:
+        return jsonify({"success": True, "status": "success", "data": result}), 200
+    
+    return jsonify({"success": False, "status": "error", "message": result}), 404
 
 # ==========================================
 # 4. Outfits / History

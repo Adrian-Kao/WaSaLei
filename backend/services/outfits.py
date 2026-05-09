@@ -15,7 +15,7 @@ def get_user_outfits(user_id, occasion=None):
     return [
         {
             "id": row.get("History_ID"),
-            "wornDate": _format_time(row.get("Time")),
+            "wornDate": _format_date(row.get("Worn_Date")),
             "photo": _to_photo_url(row.get("Photo")),
             "note": row.get("Note") or "",
             "occasion": row.get("Occasion") or "",
@@ -35,7 +35,7 @@ def get_outfit_detail(history_id):
 
     outfit = {
         "id": first.get("History_ID"),
-        "wornDate": _format_time(first.get("Time")),
+        "wornDate": _format_date(first.get("Worn_Date")),
         "photo": _to_photo_url(first.get("Photo")),
         "note": first.get("Note") or "",
         "occasion": first.get("Occasion") or "",
@@ -71,7 +71,7 @@ def create_outfit_record(data):
         occasion=data.get("occasion"),
         photo=data.get("photo"),
         note=data.get("note"),
-        time=data.get("time"),
+        worn_date=data.get("wornDate") or data.get("worn_date") or data.get("date"),
         item_ids=item_ids,
     )
 
@@ -91,7 +91,7 @@ def update_outfit_record(history_id, data):
         occasion=data.get("occasion") if "occasion" in data else None,
         photo=data.get("photo") if "photo" in data else None,
         note=data.get("note") if "note" in data else None,
-        time=data.get("time") if "time" in data else None,
+        worn_date=(data.get("wornDate") or data.get("worn_date") or data.get("date")) if ("wornDate" in data or "worn_date" in data or "date" in data) else None,
         item_ids=item_ids,
     )
 
@@ -155,12 +155,16 @@ def _to_photo_url(photo):
 
     return f"/{photo}"
 
-# Current database only has Time, not Date, so return HH:MM:SS as display value.
-def _format_time(value):
+# Format a database DATE value for frontend wornDate display.
+def _format_date(value):
     if value is None:
         return ""
 
     return str(value)
+
+# ==========================================
+# 本機測試
+# ==========================================
 if __name__ == "__main__":
     print("=== outfits.py local test ===")
 
@@ -189,7 +193,7 @@ if __name__ == "__main__":
             "user_id": test_user_id,
             "occasion": "local test",
             "note": "Created by outfits.py local test.",
-            "time": "12:00:00",
+            "wornDate": "2026-05-09",
             "item_ids": [1, 2],
         })
         print("success:", success)

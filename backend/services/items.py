@@ -1,4 +1,4 @@
-﻿import sys
+import sys
 import os
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -76,15 +76,21 @@ def move_item_space(item_id, target_space_id):
     return db.move_item_to_space(item_id, target_space_id)
 
 # 查詢與該item有關的歷史穿搭
-def
+def getOutfitsByItem(item_id):
+    rows = db.get_outfits_by_item(item_id)
 
+    result = []
 
+    for row in rows:
+        photo = row.get("Photo")
 
+        result.append({
+            "imageUrl": f"/{photo}" if photo else None,
+            "wornDate": str(row.get("Worn_Date")) if row.get("Worn_Date") else None,
+            "occasion": row.get("Occasion")
+        })
 
-
-
-
-
+    return True, result
 
 # ==========================================
 # Helper
