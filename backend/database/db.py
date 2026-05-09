@@ -31,6 +31,22 @@ def get_user_by_account(account):
     finally:
         connection.close()
 
+# 透過ID尋找user
+def get_user_by_id(user_id):
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            sql = """
+                SELECT User_ID, User_Name, User_Account, Password, Membership, Member_Date
+                FROM `User`
+                WHERE User_ID = %s
+            """
+            cursor.execute(sql, (user_id,))
+            return cursor.fetchone()
+    
+    finally:
+        connection.close()
+
 # 建立user
 def insert_new_user(name, account, password):
     """(內部工具) 純粹把新資料寫進資料庫"""
@@ -65,6 +81,23 @@ def verify_login(account, password):
         print("密碼錯誤")
         return None
     
+# 更新密碼
+def update_user_password(user_id, new_password):
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            sql = """
+                UPDATE `User`
+                SET `Password` = %s
+                WHERE `User_ID` = %s 
+            """
+            cursor.execute(sql, (new_password, user_id))
+            connection.commit()
+            return cursor.rowcount > 0
+    
+    finally:
+        connection.close()
+
 # ==========================================
 # 3. 儲存空間功能 (Space) (對應space.py)
 # ==========================================

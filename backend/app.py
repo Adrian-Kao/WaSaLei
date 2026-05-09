@@ -48,8 +48,8 @@ def serve_image(filename):
 # ==========================================
 # 1. Auth
 # ==========================================
-# Handle user registration requests and create a new account.
-@app.post("/api/auth/register")
+# 註冊
+# @app.post("/api/auth/register")
 def register_user():
     # silent = True : 預設情況下，如果前端傳過來的不是json會報錯，加上silent = True就只會回傳None
     # 若左邊失敗了，就會嘗試讀傳統的Form data
@@ -72,7 +72,7 @@ def register_user():
     except Exception as exc:
         return jsonify({"success": False, "status": "error", "message": "伺服器內部錯誤"}), 500
 
-# Handle user login requests and return user data on success.
+# 登入
 @app.post("/api/auth/login")
 def login_user():
     data = request.get_json(silent=True) or request.form.to_dict(flat=True)
@@ -92,6 +92,34 @@ def login_user():
         return jsonify({"success": False, "status": "error", "message": str(e)}), 400
     except Exception as exc:
         return jsonify({"success": False, "status": "error", "message": "伺服器內部錯誤"}), 500
+
+# 修改密碼
+@app.patch("/api/auth/<int:user_id>/password")
+def api_change_password(user_id):
+    from services.auth import changePassword
+
+    data = request.get_json(silent=True) or request.form.to_dict(flat=True)
+
+    old_password = data.get("oldPassword")
+    new_password = data.get("newPassword")
+
+    success, msg = changePassword(user_id, old_password, new_password)
+
+    if success:
+        return jsonify({"success": True, "status": "success"}), 200
+    
+    return jsonify({"success": False, "status": "error", "message": msg}), 400
+
+
+# 取得用戶名稱(透過id)
+def api_get_user_name(user_id):
+    from services.auth import getUserName
+
+    success, result = getUserName(user_id)
+
+    if success:
+        return jsonify({"success": True, "status": "success", "name":result}), 200
+    return jsonify({"success": False, "status": "error", "message": result}), 404
 
 # ==========================================
 # 2. Space
