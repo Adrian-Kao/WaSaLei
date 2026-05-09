@@ -519,3 +519,268 @@ def search_items(user_id, keyword=None, space_id=None, type_id=None, season_ids=
         return None
     finally:
         connection.close()
+
+# ==========================================
+# 6. 搜尋與篩選 (對應Outfits.py)
+# ==========================================
+# 查詢某個使用者的所有歷史穿搭(可用長和過濾)
+def get_outfits_by_user_id(user_id, occasion=None):
+    connection = get_connection()
+
+    try:
+        with connection.cursor() as cursor:
+            sql = """
+                SELECT
+                    h.History_ID,
+                    h.Occasion,
+                    h.Photo,
+                    h.User_ID,
+                    h.Note,
+                    h.Time,
+                    GROUP_CONCAT(DISTINCT ho.Item_ID ORDER BY ho.Item_ID SEPARATOR ',') AS Item_IDs
+                FROM `History` h
+                LEFT JOIN `History_Outfit` ho ON h.History_ID = ho.History_ID
+                WHERE h.User_ID = %s
+            """
+            params = [user_id]
+
+            if occasion and occasion != "all":
+                sql += " AND h.Occasion = %s"
+                params.append(occasion)
+
+            sql += """
+                GROUP BY h.History_ID
+                ORDER BY h.History_ID DESC
+            """
+
+            cursor.execute(sql, tuple(params))
+            return cursor.fetchall()
+
+    except Exception as e:
+        print(f"Get outfits error: {e}")
+        return []
+
+    finally:
+        connection.close()
+
+# 查詢某個歷史穿搭的詳細資料
+def get_outfit_by_id(history_id):
+    connection = get_connection()
+
+    try:
+        with connection.cursor() as cursor:
+            sql = """
+                SELECT
+                    h.History_ID,
+                    h.Occasion,
+                    h.Photo,
+                    h.User_ID,
+                    h.Note,
+                    h.Time,
+                    i.Item_ID,
+                    i.Name,
+                    i.Photo AS Item_Photo,
+                    i.Type_ID,
+                    t.Type_Name AS Type,
+                    GROUP_CONCAT(DISTINCT se.Season_ID ORDER BY se.Season_ID SEPARATOR ',') AS Season_IDs,
+                    GROUP_CONCAT(DISTINCT se.Season_Name ORDER BY se.Season_ID SEPARATOR ',') AS Seasons,
+                    GROUP_CONCAT(DISTINCT st.Style_ID ORDER BY st.Style_ID SEPARATOR ',') AS Style_IDs,
+                    GROUP_CONCAT(DISTINCT st.Style_Name ORDER BY st.Style_ID SEPARATOR ',') AS Styles,
+                    GROUP_CONCAT(DISTINCT c.Color_ID ORDER BY c.Color_ID SEPARATOR ',') AS Color_IDs,
+                    GROUP_CONCAT(DISTINCT c.Color_Name ORDER BY c.Color_ID SEPARATOR ',') AS Colors
+                FROM `History` h
+                LEFT JOIN `History_Outfit` ho ON h.History_ID = ho.History_ID
+                LEFT JOIN `Item` i ON ho.Item_ID = i.Item_ID
+                LEFT JOIN `Type` t ON i.Type_ID = t.Type_ID
+                LEFT JOIN `Item_Season` ise ON i.Item_ID = ise.Item_ID
+                LEFT JOIN `Season` se ON ise.Season_ID = se.Season_ID
+                LEFT JOIN `Item_Style` isty ON i.Item_ID = isty.Item_ID
+                LEFT JOIN `Style` st ON isty.Style_ID = st.Style_ID
+                LEFT JOIN `Item_Color` ic ON i.Item_ID = ic.Item_ID
+                LEFT JOIN `Color` c ON ic.Color_ID = c.Color_ID
+                WHERE h.History_ID = %s
+                GROUP BY h.History_ID, i.Item_ID
+            """
+
+            cursor.execute(sql, (history_id,))
+            rows = cursor.fetchall()
+
+            if not rows:
+                return None
+
+            return rows
+
+    except Exception as e:
+        print(f"Get outfit detail error: {e}")
+        return None
+
+    finally:
+        connection.close()
+
+# 新增outfit
+def create_outfit(user_id, occasion=None, photo=None, note=None, time=None, item_ids=None):
+    connection = get_connection()
+
+    if item_ids is None:
+        item_ids = []
+
+    try:
+        with connection.cursor() as cursor:
+            sql = """
+                INSERT INTO `History` (`Occasion`, `Photo`, `User_ID`, `Note`, `Time`)
+                VALUES (%s, %s, %s, %s, %s)
+            """
+            cursor.execute(sql, (occasion, photo, user_id, note, time))
+            history_id = cursor.lastrowid
+
+            if item_ids:
+                sql_items = """
+                    INSERT INTO `History_Outfit` (`History_ID`, `Item_ID`)
+                    VALUES (%s, %s)
+                """
+                cursor.executemany(sql_items, [(history_id, item_id) for item_id in item_ids])
+
+        connection.commit()
+        return True, history_id
+
+    except Exception as e:
+        print(f"Create outfit error: {e}")
+        connection.rollback()
+        return False, str(e)
+
+    finally:
+        connection.close()
+
+# 更新outfit
+def update_outfit(history_id, occasion=None, photo=None, note=None, time=None, item_ids=None):
+    connection = get_connection()
+
+    try:
+        with connection.cursor() as cursor:
+            fields = []
+            params = []
+
+            if occasion is not None:
+                fields.append("Occasion = %s")
+                params.append(occasion)
+
+            if photo is not None:
+                fields.append("Photo = %s")
+                params.append(photo)
+
+            if note is not None:
+                fields.append("Note = %s")
+                params.append(note)
+
+            if time is not None:
+                fields.append("Time = %s")
+                params.append(time)
+
+            if fields:
+                sql = f"""
+                    UPDATE `History`
+                    SET {", ".join(fields)}
+                    WHERE `History_ID` = %s
+                """
+                params.append(history_id)
+                cursor.execute(sql, tuple(params))
+
+            if item_ids is not None:
+                cursor.execute(
+                    "DELETE FROM `History_Outfit` WHERE `History_ID` = %s",
+                    (history_id,)
+                )
+
+                if item_ids:
+                    sql_items = """
+                        INSERT INTO `History_Outfit` (`History_ID`, `Item_ID`)
+                        VALUES (%s, %s)
+                    """
+                    cursor.executemany(sql_items, [(history_id, item_id) for item_id in item_ids])
+
+        connection.commit()
+        return True, "更新穿搭紀錄成功"
+
+    except Exception as e:
+        print(f"Update outfit error: {e}")
+        connection.rollback()
+        return False, str(e)
+
+    finally:
+        connection.close()
+
+# 刪除outfit
+def delete_outfit(history_id):
+    connection = get_connection()
+
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "DELETE FROM `History` WHERE `History_ID` = %s",
+                (history_id,)
+            )
+            affected_rows = cursor.rowcount
+
+        connection.commit()
+
+        if affected_rows == 0:
+            return False, "找不到指定穿搭紀錄"
+
+        return True, "刪除穿搭紀錄成功"
+
+    except Exception as e:
+        print(f"Delete outfit error: {e}")
+        connection.rollback()
+        return False, str(e)
+
+    finally:
+        connection.close()
+
+# 取得使用者的場合選項
+def get_outfit_occasion_options(user_id):
+    connection = get_connection()
+
+    try:
+        with connection.cursor() as cursor:
+            sql = """
+                SELECT DISTINCT Occasion
+                FROM `History`
+                WHERE `User_ID` = %s
+                  AND Occasion IS NOT NULL
+                  AND Occasion != ''
+                ORDER BY Occasion
+            """
+            cursor.execute(sql, (user_id,))
+            rows = cursor.fetchall()
+
+            return [row["Occasion"] for row in rows]
+
+    except Exception as e:
+        print(f"Get occasion options error: {e}")
+        return []
+
+    finally:
+        connection.close()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

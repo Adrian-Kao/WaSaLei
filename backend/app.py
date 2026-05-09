@@ -273,7 +273,139 @@ def confirm_image():
         return jsonify({"success": False, "status": "error", "message": str(exc)}), 400
 
 # ==========================================
-# 4. Search
+# 4. Outfits / History
+# ==========================================
+# Return occasion options for outfit filter dropdown.
+@app.get("/api/outfits/occasion-options")
+def api_get_outfit_occasion_options():
+    from services.outfits import get_occasion_options
+
+    user_id = request.args.get("user_id")
+
+    if not user_id:
+        return jsonify({
+            "success": False,
+            "status": "error",
+            "message": "Missing user_id."
+        }), 400
+
+    options = get_occasion_options(user_id)
+
+    return jsonify({
+        "success": True,
+        "status": "success",
+        "data": options
+    }), 200
+
+# Return all outfit history records for one user.
+@app.get("/api/outfits")
+def api_get_outfits():
+    from services.outfits import get_user_outfits
+
+    user_id = request.args.get("user_id")
+    occasion = request.args.get("occasion")
+
+    if not user_id:
+        return jsonify({
+            "success": False,
+            "status": "error",
+            "message": "Missing user_id."
+        }), 400
+
+    outfits = get_user_outfits(user_id, occasion)
+
+    return jsonify({
+        "success": True,
+        "status": "success",
+        "data": outfits
+    }), 200
+
+# Return one outfit history record with item details.
+@app.get("/api/outfits/<int:history_id>")
+def api_get_outfit_detail(history_id):
+    from services.outfits import get_outfit_detail
+
+    success, result = get_outfit_detail(history_id)
+
+    if success:
+        return jsonify({
+            "success": True,
+            "status": "success",
+            "data": result
+        }), 200
+
+    return jsonify({
+        "success": False,
+        "status": "error",
+        "message": result
+    }), 404
+
+# Create one outfit history record.
+@app.post("/api/outfits")
+def api_create_outfit():
+    from services.outfits import create_outfit_record
+
+    data = request.get_json(silent=True) or request.form.to_dict(flat=True)
+
+    success, result = create_outfit_record(data)
+
+    if success:
+        return jsonify({
+            "success": True,
+            "status": "success",
+            "data": result
+        }), 201
+
+    return jsonify({
+        "success": False,
+        "status": "error",
+        "message": result
+    }), 400
+
+# Update one outfit history record.
+@app.patch("/api/outfits/<int:history_id>")
+def api_update_outfit(history_id):
+    from services.outfits import update_outfit_record
+
+    data = request.get_json(silent=True) or request.form.to_dict(flat=True)
+
+    success, result = update_outfit_record(history_id, data)
+
+    if success:
+        return jsonify({
+            "success": True,
+            "status": "success",
+            "data": result
+        }), 200
+
+    return jsonify({
+        "success": False,
+        "status": "error",
+        "message": result
+    }), 400
+
+# Delete one outfit history record.
+@app.delete("/api/outfits/<int:history_id>")
+def api_delete_outfit(history_id):
+    from services.outfits import delete_outfit_record
+
+    success, result = delete_outfit_record(history_id)
+
+    if success:
+        return jsonify({
+            "success": True,
+            "status": "success",
+            "message": result
+        }), 200
+
+    return jsonify({
+        "success": False,
+        "status": "error",
+        "message": result
+    }), 404
+
+# ==========================================
+# 5. Search
 # ==========================================
 # Search wardrobe items with optional keyword and filter groups.
 @app.route("/api/search", methods=["GET", "POST"])
@@ -301,7 +433,7 @@ def api_search_wardrobe():
     return jsonify({"status": "error", "success": False, "message": result}), 500
 
 # ==========================================
-# 5. Current image input/output pipeline
+# 6. Current image input/output pipeline
 # ==========================================
 # Upload the current source image to pictures/input.
 @app.post("/api/images/upload-input")

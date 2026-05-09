@@ -1,4 +1,4 @@
-﻿# WaSaLei Backend API Docs
+# WaSaLei Backend API Docs
 
 Base URL:
 
@@ -492,6 +492,155 @@ copy pictures/output/output.png to pictures/final/<uuid>.png
 
 ---
 
+## Outfit / History APIs
+
+### GET `/api/outfits/occasion-options`
+
+Returns occasion options for the outfit filter dropdown.
+
+Query:
+
+```text
+?user_id=1
+```
+
+Success: `200`
+
+```json
+{
+  "success": true,
+  "status": "success",
+  "data": ["all", "上班會議", "週末咖啡廳"]
+}
+```
+
+### GET `/api/outfits`
+
+Gets all outfit history records for one user.
+
+Query:
+
+```text
+?user_id=1
+?user_id=1&occasion=上班會議
+```
+
+Success: `200`
+
+```json
+{
+  "success": true,
+  "status": "success",
+  "data": [
+    {
+      "id": 1,
+      "wornDate": "08:30:00",
+      "photo": "/uploads/history_work_meeting.jpg",
+      "note": "正式但不要太沉重。",
+      "occasion": "上班會議",
+      "item_ids": [1, 9, 10]
+    }
+  ]
+}
+```
+
+### GET `/api/outfits/<history_id>`
+
+Gets one outfit history record with item details.
+
+Example:
+
+```text
+GET /api/outfits/1
+```
+
+Success: `200`
+
+```json
+{
+  "success": true,
+  "status": "success",
+  "data": {
+    "id": 1,
+    "wornDate": "08:30:00",
+    "photo": "/uploads/history_work_meeting.jpg",
+    "note": "正式但不要太沉重。",
+    "occasion": "上班會議",
+    "items": [
+      {
+        "id": 1,
+        "name": "白色棉質長袖襯衫",
+        "color": ["白色", "none", "none"],
+        "season": ["春", "秋"],
+        "type": "上身長",
+        "style": ["正式", "日常"],
+        "imageUrl": "/uploads/demo_white_shirt.jpg"
+      }
+    ]
+  }
+}
+```
+
+Not found: `404`
+
+### POST `/api/outfits`
+
+Creates one outfit history record and attaches selected item ids.
+
+Request:
+
+```json
+{
+  "user_id": 1,
+  "occasion": "上班會議",
+  "photo": "uploads/history_work_meeting.jpg",
+  "note": "正式但不要太沉重。",
+  "time": "08:30:00",
+  "item_ids": [1, 9, 10]
+}
+```
+
+Success: `201`
+
+### PATCH `/api/outfits/<history_id>`
+
+Updates one outfit history record. Omitted fields are not changed.
+If `item_ids` is included, old outfit item mappings are replaced.
+
+Request:
+
+```json
+{
+  "occasion": "週末咖啡廳",
+  "note": "舒適日常穿搭。",
+  "time": "14:00:00",
+  "item_ids": [2, 3, 6]
+}
+```
+
+Success: `200`
+
+### DELETE `/api/outfits/<history_id>`
+
+Deletes one outfit history record. Rows in `history_outfit` are removed by cascade.
+
+Example:
+
+```text
+DELETE /api/outfits/1
+```
+
+Success: `200`
+
+```json
+{
+  "success": true,
+  "status": "success",
+  "message": "刪除穿搭紀錄成功"
+}
+```
+
+---
 ## Search API
 
 ### GET or POST `/api/search`
@@ -600,6 +749,12 @@ DELETE /api/items/<item_id>               Delete item
 POST   /api/items/preview-image           Upload and parse image in one step
 POST   /api/items/confirm-image           Confirm parsed image and create item
 
+GET    /api/outfits/occasion-options    Get outfit occasion options
+GET    /api/outfits                     Get user outfit history records
+GET    /api/outfits/<history_id>        Get outfit detail
+POST   /api/outfits                     Create outfit history record
+PATCH  /api/outfits/<history_id>        Update outfit history record
+DELETE /api/outfits/<history_id>        Delete outfit history record
 GET    /api/search                        Search wardrobe items
 POST   /api/search                        Search wardrobe items
 
