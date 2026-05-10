@@ -131,7 +131,30 @@ def get_spaces_by_user_id(user_id):
     connection = get_connection()
     try:
         with connection.cursor() as cursor:
-            sql = "SELECT `Space_ID`, `Space_Type`, `Space_Name`, `Capacity`, `User_ID` FROM `Space` WHERE `User_ID` = %s"
+            sql = """
+                SELECT 
+                    s.Space_ID,
+                    s.Space_Type,
+                    s.Space_Name,
+                    s.Capacity,
+                    s.User_ID,
+                    COUNT(i.Item_ID) AS Used_Capacity,
+                    GREATEST(s.Capacity - COUNT(i.Item_ID), 0) AS Remaining_Capacity,
+                    CASE
+                        WHEN COUNT(i.Item_ID) >= s.Capacity THEN 1
+                        ELSE 0
+                    END AS Is_Full
+                FROM `Spacd` s
+                LEFT JOIN `Item` i ON s.Space_ID = i.Space_ID
+                WHERE s.User_ID = %s
+                GROUP BY
+                    s.Space_ID,
+                    S.Space_Type,
+                    s.Space_Name,
+                    s.Capacity,
+                    s.User_ID
+                ORDER BY s.Space_ID
+            """
             cursor.execute(sql, (user_id,))
             return cursor.fetchall()
     except Exception as e:
