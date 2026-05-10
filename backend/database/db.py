@@ -295,6 +295,91 @@ def move_item_to_space(item_id, new_space_id):
     finally:
         connection.close()
 
+# 複製Item到另一個space
+def copy_item_to_space(item_id, to_space_id):
+    connection = get_connection()
+
+    try:
+        with connection.cursor as cursor:
+            status = get_space_capacity_status(to_space_id)
+
+            if status is None:
+                return False, "找不到目標空間"
+            # python 中 如果在if-else 中放入數字 會被當成布林值(0以外是True)
+            if status["Is_Full"]:
+                return False, "目標空間容量已滿"
+            
+            cursor.execute(
+                """
+                SELECT
+                    User_ID,
+                    Name,
+                    Notes,
+                    Photo,
+                    Type_ID
+                FROM `Item`
+                WHERE Item_ID = %s
+            """, (item_id,))
+
+            item = cursor.fetchone()
+
+            if not item:
+                return False, "找不到指定衣物"
+            
+            cursor.execute(
+                """
+                INSERT INTO `Item`
+                (`User_ID`, `Name`, `Notes`, `Photo`, `Space_ID`, `Type_ID`)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (
+                item["User_ID"],
+                item["Name"],
+                item["Notes"],
+                item["Photo"],
+                to_space_id,
+                item["Type_ID"]
+            ))
+
+            new_item_id = cursor.lastrowid
+
+            cursor.execute("""
+                INSERT INTO `Item_Season` (`Item_ID`, `Season_ID`)
+                SELECT %s, Season_ID
+                FROM `Item_Season`
+                WHERE Item_ID = %s
+            """, (new_item_id, item_id)
+            )
+
+            cursor.execute("""
+                INSERT INTO `Item_Color` (`Item_ID`, `Color_ID`)
+                SELECT %s, Color_ID
+                FROM `Item_Color`
+                WHERE Item_ID = %s
+            """, (new_item_id, item_id)
+            )
+
+            cursor.execute("""
+                INSERT INTO `Item_Style` (`Item_ID`, `Style_ID`)
+                SELECT %s, Style_ID
+                FROM `Item_Style`
+                WHERE Item_ID = %s
+            """, (new_item_id, item_id)
+            )
+
+        connection.commit()
+        
+        return True, {
+            "item_id": new_item_id,
+            "message": "複製到空間成功"
+        }
+
+    except Exception as e:
+        connection.rollback()
+        return False, str(e)
+    
+    finally:
+        connection.close()
+
 # 刪除空間
 def delete_space(space_id):
     connection = get_connection()

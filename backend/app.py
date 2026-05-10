@@ -1,4 +1,4 @@
-import os
+﻿import os
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 
@@ -316,6 +316,39 @@ def api_get_outfits_by_item(item_id):
         return jsonify({"success": True, "status": "success", "data": result}), 200
     
     return jsonify({"success": False, "status": "error", "message": result}), 404
+
+# 移動或複製衣物到行李箱
+@app.post("/api/luggage/items/transfet")
+def api_move_or_copy_item_to_luggage():
+    from services.items import move_or_copy_item_to_luggage
+
+    data = request.get_json(silent=True) or request.form.to_dict(flat=True)
+
+    try:
+        item_id = _required_int(data, "item_id")
+        to_space_id = _required_int(data, "to_space_id")
+        mode = _required_int(data, "mode")
+
+        from_space_id = data.get("from_space_id")
+        if from_space_id is not None and from_space_id != "":
+            from_space_id = int(from_space_id)
+        else:
+            from_space_id = None
+
+    except ValueError as e:
+        return jsonify({"success": False, "status": "error", "message": str(e)}), 400
+    
+    success, result = move_or_copy_item_to_luggage(
+        item_id=item_id,
+        from_space_id=from_space_id,
+        to_space_id=to_space_id,
+        mode=mode
+    )
+
+    if success:
+        return jsonify({"success": True, "status": "success", "date": result}), 200
+    
+    return jsonify({"success": False, "status": "error", "message": result}), 400
 
 # ==========================================
 # 4. Outfits / History

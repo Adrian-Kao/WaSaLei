@@ -8,7 +8,7 @@ sys.path.append(parent_dir)
 from database import db
 
 
-# Create an item record after normalizing attributes and checking capacity.
+# 新增item
 def create_item_record(user_id, name, space_id, type_id, season_ids, color_ids=None, style_ids=None, photo_path=None):
     color_ids = _normalize_id_list(color_ids)
     style_ids = _normalize_id_list(style_ids)
@@ -36,7 +36,7 @@ def create_item_record(user_id, name, space_id, type_id, season_ids, color_ids=N
         photo_path,
     )
 
-# Get one item detail and format it for API responses.
+# 查詢item
 def get_item_detail(item_id):
     item = db.get_item_by_id(item_id)
 
@@ -45,7 +45,7 @@ def get_item_detail(item_id):
 
     return True, _format_item_detail(item)
 
-# Update one item and replace provided multi-select relation groups.
+# 更新item
 def update_item_record(item_id, data):
     season_ids = _normalize_id_list(data.get("season_ids")) if "season_ids" in data else None
     color_ids = _normalize_id_list(data.get("color_ids")) if "color_ids" in data else None
@@ -67,11 +67,11 @@ def update_item_record(item_id, data):
 
     return get_item_detail(item_id)
 
-# Delete one item; relation rows are removed by database cascades.
+# 刪除item
 def delete_item_record(item_id):
     return db.delete_item(item_id)
 
-# Move one item to a target space with capacity validation in db layer.
+# 移動item
 def move_item_space(item_id, target_space_id):
     return db.move_item_to_space(item_id, target_space_id)
 
@@ -91,6 +91,35 @@ def getOutfitsByItem(item_id):
         })
 
     return True, result
+
+# 移動或複製到空間
+def move_or_copy_item_to_luggage(item_id, from_space_id, to_space_id, mode):
+    if mode not in ["move", "copy"]:
+        return False, "mode 必須是 move 或 copy"
+    
+    item = get_item_detail(item_id)
+
+    if not item:
+        return False, "找不到指定衣物"
+    
+    if from_space_id is not None and int(item.get("Space_ID") or 0) != int(from_space_id):
+        return False, "衣物不在指定來源空間內"
+    
+    target_status = db.get_space_capacity_status(to_space_id)
+
+    if target_status is None:
+        return False, "找不到目標空間"
+    
+    if target_status.get("Is_Full"):
+        return False, "目標空間容量已滿"
+    
+    if target_status.get("Space_Type") != "行李箱":
+        return False, "目標空間不是行李箱"
+    
+    if mode == "move":
+        return db.move_item_to_space(item_id, to_space_id)
+    
+    return db.copy_item_to_space(item_id, to_space_id)
 
 # ==========================================
 # Helper
