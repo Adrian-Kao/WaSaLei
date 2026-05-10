@@ -1,4 +1,4 @@
-# WaSaLei Backend API Docs
+﻿# WaSaLei 後端 API 文件
 
 Base URL:
 
@@ -6,7 +6,11 @@ Base URL:
 http://127.0.0.1:5000
 ```
 
-Common response shape:
+---
+
+## 通用回應格式
+
+成功：
 
 ```json
 {
@@ -15,17 +19,17 @@ Common response shape:
 }
 ```
 
-Error response shape:
+失敗：
 
 ```json
 {
   "success": false,
   "status": "error",
-  "message": "error message"
+  "message": "錯誤訊息"
 }
 ```
 
-ID list fields such as `season_ids`, `color_ids`, and `style_ids` accept:
+`season_ids`、`color_ids`、`style_ids` 這類多選欄位可接受：
 
 ```json
 [1, 2, 3]
@@ -41,13 +45,13 @@ ID list fields such as `season_ids`, `color_ids`, and `style_ids` accept:
 
 ---
 
-## Health
+## 健康檢查
 
 ### GET `/`
 
-Checks whether the backend is running.
+確認後端伺服器是否正常運行。
 
-Response:
+回應：
 
 ```json
 {
@@ -58,13 +62,13 @@ Response:
 
 ---
 
-## Static Images
+## 靜態圖片
 
 ### GET `/pictures/<path:filename>`
 
-Serves files from the project-level `pictures` directory.
+讀取專案 `pictures` 資料夾中的圖片。
 
-Examples:
+範例：
 
 ```text
 GET /pictures/input/input.jpg
@@ -74,9 +78,9 @@ GET /pictures/final/abc123.png
 
 ### GET `/images/<path:filename>`
 
-Serves image files from `pictures/output`.
+讀取 `pictures/output` 中的圖片，主要給圖片辨識預覽使用。
 
-Example:
+範例：
 
 ```text
 GET /images/output.png
@@ -84,21 +88,23 @@ GET /images/output.png
 
 ---
 
-## Auth APIs
+## Auth APIs / 使用者驗證
 
 ### POST `/api/auth/register`
 
-Request:
+註冊新使用者。
+
+請求內容：
 
 ```json
 {
-  "name": "測試",
+  "name": "測試使用者",
   "account": "test@example.com",
   "password": "123456"
 }
 ```
 
-Success: `201`
+成功：`201`
 
 ```json
 {
@@ -108,9 +114,21 @@ Success: `201`
 }
 ```
 
+失敗：`400`
+
+```json
+{
+  "success": false,
+  "status": "error",
+  "message": "帳號已存在"
+}
+```
+
 ### POST `/api/auth/login`
 
-Request:
+使用帳號與密碼登入。
+
+請求內容：
 
 ```json
 {
@@ -119,7 +137,7 @@ Request:
 }
 ```
 
-Success: `200`
+成功：`200`
 
 ```json
 {
@@ -127,107 +145,176 @@ Success: `200`
   "status": "success",
   "data": {
     "User_ID": 1,
-    "User_Name": "測試",
+    "User_Name": "測試使用者",
     "User_Account": "test@example.com"
   }
 }
 ```
 
----
+### PATCH `/api/auth/<user_id>/password`
 
-## Space APIs
+修改指定使用者密碼。
 
-### GET `/api/space/predefined`
-
-Returns supported space types.
+請求內容：
 
 ```json
 {
-  "status": "success",
+  "oldPassword": "123456",
+  "newPassword": "new123456"
+}
+```
+
+成功：`200`
+
+```json
+{
   "success": true,
+  "status": "success"
+}
+```
+
+失敗：`400`
+
+```json
+{
+  "success": false,
+  "status": "error",
+  "message": "舊密碼錯誤"
+}
+```
+
+注意：目前程式中 `api_get_user_name(user_id)` 尚未掛上 route decorator，因此「取得用戶名稱 API」還不能被 HTTP 呼叫。
+
+---
+
+## Space APIs / 空間與容量
+
+### GET `/api/space/predefined`
+
+取得系統支援的空間類型。
+
+成功：`200`
+
+```json
+{
+  "success": true,
+  "status": "success",
   "data": ["衣櫃", "行李箱"]
 }
 ```
 
 ### POST `/api/space`
 
-Creates a storage space.
+建立新的空間，例如衣櫃或行李箱。
 
-Request:
+請求內容：
 
 ```json
 {
   "user_id": 1,
   "space_type": "衣櫃",
+  "space_name": "主臥衣櫃",
   "capacity": 20
+}
+```
+
+成功：`201`
+
+```json
+{
+  "success": true,
+  "status": "success",
+  "spaceId": 1,
+  "message": "新增空間成功"
 }
 ```
 
 ### GET `/api/space/user/<user_id>`
 
-Gets all spaces for a user.
+取得指定使用者的所有空間。
 
-Optional query:
+可選 query：
 
 ```text
 ?type=衣櫃
+?type=行李箱
 ```
 
-### GET `/api/space/<space_id>/items`
-
-Gets all items in one space.
-
-Example:
-
-```text
-GET /api/space/1/items
-```
-
-Response:
+成功：`200`
 
 ```json
 {
-  "status": "success",
   "success": true,
+  "status": "success",
   "data": [
     {
-      "item_id": 1,
-      "name": "純白短袖T恤",
-      "type": "上衣",
-      "seasons": ["春季", "夏季"],
-      "styles": ["休閒"],
-      "colors": ["白色"],
-      "color1": "白色",
-      "color2": null,
-      "color3": null,
-      "photo_url": null
+      "Space_ID": 1,
+      "Space_Type": "衣櫃",
+      "Space_Name": "主臥衣櫃",
+      "Capacity": 20,
+      "User_ID": 1,
+      "Used_Capacity": 8,
+      "Remaining_Capacity": 12,
+      "Is_Full": 0
     }
   ]
 }
 ```
 
-Empty spaces return success with an empty array:
+### GET `/api/space/<space_id>/items`
+
+取得指定空間中的所有衣物。
+
+範例：
+
+```text
+GET /api/space/1/items
+```
+
+成功：`200`
 
 ```json
 {
-  "status": "success",
   "success": true,
+  "status": "success",
+  "data": [
+    {
+      "item_id": 1,
+      "name": "白色棉質長袖襯衫",
+      "type": "上身長",
+      "seasons": ["春", "秋"],
+      "styles": ["正式", "日常"],
+      "colors": ["白色"],
+      "color1": "白色",
+      "color2": null,
+      "color3": null,
+      "photo_url": "/uploads/demo_white_shirt.jpg"
+    }
+  ]
+}
+```
+
+空間內沒有衣物時：
+
+```json
+{
+  "success": true,
+  "status": "success",
   "data": []
 }
 ```
 
-
 ### GET `/api/space/<space_id>/capacity`
 
-Gets capacity status for one storage space.
+取得指定空間的容量狀態。
 
-Example:
+範例：
 
 ```text
 GET /api/space/1/capacity
 ```
 
-Success: `200`
+成功：`200`
 
 ```json
 {
@@ -235,8 +322,8 @@ Success: `200`
   "status": "success",
   "data": {
     "Space_ID": 1,
-    "Space_Type": "??",
-    "Space_Name": "????",
+    "Space_Type": "衣櫃",
+    "Space_Name": "主臥衣櫃",
     "User_ID": 1,
     "Capacity": 20,
     "Used_Capacity": 8,
@@ -246,13 +333,13 @@ Success: `200`
 }
 ```
 
-Not found: `404`
+找不到空間：`404`
 
 ### PATCH `/api/space/<space_id>/capacity`
 
-Updates the capacity of one storage space.
+修改指定空間容量。
 
-Request:
+請求內容：
 
 ```json
 {
@@ -260,63 +347,61 @@ Request:
 }
 ```
 
-Rules:
+規則：
 
-- `capacity` must be a positive integer.
-- `capacity` cannot be smaller than the current used item count.
+- `capacity` 必須是正整數。
+- `capacity` 不能小於目前空間中的衣物數量。
 
-Success: `200`
+成功：`200`
 
 ```json
 {
   "success": true,
   "status": "success",
-  "message": "????????"
+  "message": "空間容量更新成功"
 }
 ```
 
 ### DELETE `/api/space/<space_id>`
 
-Deletes one storage space.
+刪除指定空間。
 
-Example:
+範例：
 
 ```text
 DELETE /api/space/1
 ```
 
-Behavior:
+行為：
 
-- The `item.Space_ID` foreign key uses `ON DELETE SET NULL`.
-- Items originally in this space are kept, but no longer belong to any space.
+- `item.Space_ID` 外鍵使用 `ON DELETE SET NULL`。
+- 刪除空間後，原本在該空間的衣物會保留，但 `Space_ID` 會變成 `NULL`。
 
-Success: `200`
+成功：`200`
 
 ```json
 {
   "success": true,
   "status": "success",
-  "message": "???????????????????????????"
+  "message": "刪除空間成功"
 }
 ```
 
-Not found: `404`
-
 ---
 
-## Item APIs
+## Item APIs / 衣物
 
 ### GET `/api/items/<item_id>`
 
-Gets one item detail, including type and many-to-many attributes.
+取得單一衣物詳細資料，包含分類、季節、顏色、風格等多對多資料。
 
-Example:
+範例：
 
 ```text
 GET /api/items/1
 ```
 
-Success: `200`
+成功：`200`
 
 ```json
 {
@@ -324,51 +409,51 @@ Success: `200`
   "status": "success",
   "data": {
     "item_id": 1,
-    "name": "純白短袖T恤",
-    "notes": "容易髒要注意",
-    "photo": null,
-    "photo_url": null,
+    "name": "白色棉質長袖襯衫",
+    "notes": "可搭西裝或牛仔褲。",
+    "photo": "uploads/demo_white_shirt.jpg",
+    "photo_url": "/uploads/demo_white_shirt.jpg",
     "user_id": 1,
     "space_id": 1,
     "type_id": 1,
-    "type": "上衣",
-    "season_ids": [1, 2],
-    "seasons": ["春季", "夏季"],
-    "style_ids": [1],
-    "styles": ["休閒"],
+    "type": "上身長",
+    "season_ids": [1, 3],
+    "seasons": ["春", "秋"],
+    "style_ids": [2, 4],
+    "styles": ["正式", "日常"],
     "color_ids": [1],
     "colors": ["白色"]
   }
 }
 ```
 
-Not found: `404`
+找不到衣物：`404`
 
 ### PATCH `/api/items/<item_id>`
 
-Updates item basic fields and many-to-many attributes.
+修改衣物基本資料與多選屬性。
 
-Request can include any subset of these fields:
+請求內容可包含任意子集：
 
 ```json
 {
   "name": "黑色外套",
   "notes": "冬天穿",
   "space_id": 1,
-  "type_id": 3,
+  "type_id": 1,
   "season_ids": [3, 4],
   "color_ids": [3],
-  "style_ids": [1, 2]
+  "style_ids": [2, 4]
 }
 ```
 
-Behavior:
+行為：
 
-- Omitted fields are not changed.
-- If `season_ids`, `color_ids`, or `style_ids` are included, the old mappings are replaced.
-- Passing an empty array clears that mapping group.
+- 未傳入的欄位不會被修改。
+- 如果傳入 `season_ids`、`color_ids`、`style_ids`，會用新陣列取代原本關聯。
+- 傳入空陣列會清空該類關聯。
 
-Success: `200`
+成功：`200`
 
 ```json
 {
@@ -383,47 +468,71 @@ Success: `200`
 
 ### DELETE `/api/items/<item_id>`
 
-Deletes one item.
+刪除指定衣物。
 
-Example:
+範例：
 
 ```text
 DELETE /api/items/1
 ```
 
-Success: `200`
+成功：`200`
 
 ```json
 {
   "success": true,
   "status": "success",
-  "message": "刪除衣服成功"
+  "message": "刪除衣物成功"
 }
 ```
 
-Not found: `404`
+### PATCH `/api/items/<item_id>/space`
 
+將衣物移動到另一個空間。
 
+請求內容：
+
+```json
+{
+  "space_id": 2
+}
+```
+
+規則：
+
+- `space_id` 必填。
+- 目標空間必須存在。
+- 目標空間不可已滿。
+
+成功：`200`
+
+```json
+{
+  "success": true,
+  "status": "success",
+  "message": "衣物移動成功"
+}
+```
 
 ### GET `/api/items/<item_id>/outfits`
 
-Gets outfit history records related to one item.
+取得與指定衣物有關的歷史穿搭紀錄。
 
-This endpoint uses only the existing tables:
+此 API 只使用現有資料表：
 
 ```text
 history_outfit -> history
 ```
 
-There is no `outfit` table in this project.
+專案目前沒有 `outfit` 表。
 
-Example:
+範例：
 
 ```text
 GET /api/items/1/outfits
 ```
 
-Success: `200`
+成功：`200`
 
 ```json
 {
@@ -439,7 +548,7 @@ Success: `200`
 }
 ```
 
-Empty result:
+沒有相關穿搭時：
 
 ```json
 {
@@ -448,70 +557,33 @@ Empty result:
   "data": []
 }
 ```
-### PATCH `/api/items/<item_id>/space`
-
-Moves one item to another storage space.
-
-Request:
-
-```json
-{
-  "space_id": 2
-}
-```
-
-Rules:
-
-- `space_id` is required.
-- The target space must exist.
-- The target space must not be full.
-
-Success: `200`
-
-```json
-{
-  "success": true,
-  "status": "success",
-  "message": "??????"
-}
-```
-
-Error: `400`
-
-```json
-{
-  "success": false,
-  "status": "error",
-  "message": "???????????????"
-}
-```
 
 ### POST `/api/items/preview-image`
 
-Backward-compatible one-step image preview API.
+上傳單張圖片並立即執行圖片解析。這是相容舊流程的一步式 API。
 
-Content type:
+Content-Type:
 
 ```text
 multipart/form-data
 ```
 
-Fields:
+欄位：
 
-- `file` or `image`: image file
-- `mode`: optional, default `garment`
+- `file` 或 `image`：圖片檔案。
+- `mode`：選填，預設 `garment`。
 
-Flow:
+流程：
 
 ```text
-upload image -> save to pictures/input -> parse -> write pictures/output/output.png
+上傳圖片 -> 儲存到 pictures/input -> 解析 -> 產生 pictures/output/output.png
 ```
 
 ### POST `/api/items/confirm-image`
 
-Confirms `pictures/output/output.png` as the final item image and creates the item record.
+確認目前 `pictures/output/output.png` 為最終衣物圖片，並建立衣物資料。
 
-Request:
+請求內容：
 
 ```json
 {
@@ -521,28 +593,107 @@ Request:
   "type_id": 1,
   "season_ids": [1, 2],
   "color_ids": [1],
-  "style_ids": [1]
+  "style_ids": [4]
 }
 ```
 
-Flow:
+流程：
 
 ```text
-copy pictures/output/output.png to pictures/final/<uuid>.png
--> insert item
--> insert item_season / item_color / item_style mappings
--> clear pictures/input and pictures/output
+複製 pictures/output/output.png 到 pictures/final/<uuid>.png
+-> 新增 item
+-> 新增 item_season / item_color / item_style 關聯
+-> 清空 pictures/input 和 pictures/output
 ```
 
 ---
 
-## Outfit / History APIs
+## Luggage APIs / 行李箱
 
-Outfit history dates use `wornDate` in `YYYY-MM-DD` format. The database column is `history.Worn_Date`.
+### POST `/api/luggage/items/transfet`
+
+將指定衣物移動或複製到指定行李箱空間。
+
+注意：目前 `app.py` 實際 route 是 `/api/luggage/items/transfet`，看起來像拼字錯誤。建議後續把程式改成 `/api/luggage/items/transfer`，文件再同步調整。
+
+此 API 預期給前端 function `moveOrCopyItemToLuggage({ itemId, fromSpaceId, toSpaceId, mode })` 使用。
+
+請求內容：
+
+```json
+{
+  "item_id": 1,
+  "from_space_id": 1,
+  "to_space_id": 3,
+  "mode": "move"
+}
+```
+
+目前後端程式使用 snake_case 欄位：
+
+- `item_id`：要處理的衣物 ID。
+- `from_space_id`：來源空間 ID，可用來確認衣物目前是否真的在該空間。
+- `to_space_id`：目標行李箱空間 ID。
+- `mode`：應為 `move` 或 `copy`。
+
+預期行為：
+
+- `mode = "move"`：更新原本那筆 `item.Space_ID`，把衣物移到目標行李箱。
+- `mode = "copy"`：新增一筆 item，複製原 item 的基本資料、照片、季節、顏色、風格，並把新 item 的 `Space_ID` 設為目標行李箱。
+- 目標空間必須存在。
+- 目標空間的 `Space_Type` 必須是 `行李箱`。
+- 目標行李箱不可超過容量。
+
+移動成功：`200`
+
+```json
+{
+  "success": true,
+  "status": "success",
+  "data": {
+    "message": "移動衣物到行李箱成功"
+  }
+}
+```
+
+複製成功：`200`
+
+```json
+{
+  "success": true,
+  "status": "success",
+  "data": {
+    "item_id": 19,
+    "message": "複製衣物到行李箱成功"
+  }
+}
+```
+
+錯誤回應：`400`
+
+```json
+{
+  "success": false,
+  "status": "error",
+  "message": "目標行李箱容量已滿"
+}
+```
+
+目前後端實作注意事項：
+
+- `app.py` 目前 route 拼成 `transfet`。
+- `app.py` 目前用 `_required_int(data, "mode")` 讀取 `mode`，但 `mode` 應該是字串，建議改成 `_required_value(data, "mode")`。
+- 成功回應目前程式碼使用 key `date`，建議改成 `data`。
+
+---
+
+## Outfit / History APIs / 穿搭歷史
+
+穿搭日期使用 `wornDate`，格式為 `YYYY-MM-DD`。資料庫欄位為 `history.Worn_Date`。
 
 ### GET `/api/outfits/occasion-options`
 
-Returns occasion options for the outfit filter dropdown.
+取得指定使用者曾使用過的場合選項，供篩選下拉選單使用。
 
 Query:
 
@@ -550,7 +701,7 @@ Query:
 ?user_id=1
 ```
 
-Success: `200`
+成功：`200`
 
 ```json
 {
@@ -562,7 +713,7 @@ Success: `200`
 
 ### GET `/api/outfits`
 
-Gets all outfit history records for one user.
+取得指定使用者的所有穿搭歷史紀錄。
 
 Query:
 
@@ -571,7 +722,7 @@ Query:
 ?user_id=1&occasion=上班會議
 ```
 
-Success: `200`
+成功：`200`
 
 ```json
 {
@@ -592,15 +743,15 @@ Success: `200`
 
 ### GET `/api/outfits/<history_id>`
 
-Gets one outfit history record with item details.
+取得單一穿搭歷史紀錄，包含該穿搭使用的衣物詳細資料。
 
-Example:
+範例：
 
 ```text
 GET /api/outfits/1
 ```
 
-Success: `200`
+成功：`200`
 
 ```json
 {
@@ -627,13 +778,13 @@ Success: `200`
 }
 ```
 
-Not found: `404`
+找不到資料：`404`
 
 ### POST `/api/outfits`
 
-Creates one outfit history record and attaches selected item ids.
+新增一筆穿搭歷史紀錄，並綁定多個衣物。
 
-Request:
+請求內容：
 
 ```json
 {
@@ -646,14 +797,13 @@ Request:
 }
 ```
 
-Success: `201`
+成功：`201`
 
 ### PATCH `/api/outfits/<history_id>`
 
-Updates one outfit history record. Omitted fields are not changed.
-If `item_ids` is included, old outfit item mappings are replaced.
+修改一筆穿搭歷史紀錄。
 
-Request:
+請求內容可包含任意子集：
 
 ```json
 {
@@ -664,42 +814,48 @@ Request:
 }
 ```
 
-Success: `200`
+行為：
+
+- 未傳入的欄位不會被修改。
+- 如果傳入 `item_ids`，會用新的衣物陣列取代原本 `history_outfit` 關聯。
+
+成功：`200`
 
 ### DELETE `/api/outfits/<history_id>`
 
-Deletes one outfit history record. Rows in `history_outfit` are removed by cascade.
+刪除指定穿搭歷史紀錄。
 
-Example:
+範例：
 
 ```text
 DELETE /api/outfits/1
 ```
 
-Success: `200`
+成功：`200`
 
 ```json
 {
   "success": true,
   "status": "success",
-  "message": "刪除穿搭紀錄成功"
+  "message": "刪除穿搭歷史成功"
 }
 ```
 
 ---
-## Search API
+
+## Search API / 搜尋衣物
 
 ### GET or POST `/api/search`
 
-Searches wardrobe items by user and optional filters.
+依照使用者與篩選條件搜尋衣物。
 
-GET example:
+GET 範例：
 
 ```text
 GET /api/search?user_id=1&keyword=黑&space_id=1&season_ids=1,2
 ```
 
-POST example:
+POST 範例：
 
 ```json
 {
@@ -713,43 +869,53 @@ POST example:
 }
 ```
 
-Filter behavior:
+篩選邏輯：
 
-- Different groups are combined with `AND`.
-- Multiple ids inside the same group use `IN (...)`, so they behave like `OR`.
+- 不同篩選群組之間使用 `AND`。
+- 同一群組中多個 id 使用 `IN (...)`，效果類似 `OR`。
 
 ---
 
-## Image Pipeline APIs
+## Image Pipeline APIs / 圖片流程
 
-Recommended frontend flow:
+建議前端流程：
 
 ```text
 POST /api/images/upload-input
 -> POST /api/images/parse-input
--> display preview_url
+-> 顯示 preview_url
 -> POST /api/items/confirm-image
 ```
 
 ### POST `/api/images/upload-input`
 
-Uploads the current input image.
+上傳目前要處理的圖片到 `pictures/input`。
 
-Content type:
+Content-Type:
 
 ```text
 multipart/form-data
 ```
 
-Fields:
+欄位：
 
-- `file` or `image`: image file
+- `file` 或 `image`：圖片檔案。
+
+成功回應包含：
+
+```json
+{
+  "success": true,
+  "status": "success",
+  "input_path": "pictures/input/input.jpg"
+}
+```
 
 ### POST `/api/images/parse-input`
 
-Parses the current image in `pictures/input`.
+解析目前 `pictures/input` 中的圖片，並產生預覽圖。
 
-Request:
+請求內容：
 
 ```json
 {
@@ -757,10 +923,12 @@ Request:
 }
 ```
 
-Response includes:
+成功回應包含：
 
 ```json
 {
+  "success": true,
+  "status": "success",
   "input_path": "pictures/input/input.jpg",
   "preview_path": "pictures/output/output.png",
   "preview_url": "/pictures/output/output.png",
@@ -770,55 +938,60 @@ Response includes:
 
 ---
 
-## Endpoint Summary
+## Endpoint Summary / API 總表
 
 ```text
-GET    /                                  Health check
-GET    /pictures/<path:filename>          Serve picture file
-GET    /images/<path:filename>            Serve output image file
+GET    /                                      健康檢查
+GET    /pictures/<path:filename>              讀取 pictures 資料夾圖片
+GET    /images/<path:filename>                讀取圖片辨識輸出圖
 
-POST   /api/auth/register                 Register user
-POST   /api/auth/login                    Login user
+POST   /api/auth/register                     註冊
+POST   /api/auth/login                        登入
+PATCH  /api/auth/<user_id>/password           修改密碼
 
-GET    /api/space/predefined              Get supported space types
-POST   /api/space                         Create space
-GET    /api/space/user/<user_id>          Get user spaces
-GET    /api/space/<space_id>/items        Get all items in one space
-GET    /api/space/<space_id>/capacity     Get space capacity status
-PATCH  /api/space/<space_id>/capacity     Update space capacity
-DELETE /api/space/<space_id>              Delete space
+GET    /api/space/predefined                  取得支援的空間類型
+POST   /api/space                             建立空間
+GET    /api/space/user/<user_id>              取得使用者所有空間
+GET    /api/space/<space_id>/items            取得指定空間中的所有衣物
+GET    /api/space/<space_id>/capacity         取得指定空間容量狀態
+PATCH  /api/space/<space_id>/capacity         修改指定空間容量
+DELETE /api/space/<space_id>                  刪除指定空間
 
-GET    /api/items/<item_id>               Get item detail
-PATCH  /api/items/<item_id>               Update item
-PATCH  /api/items/<item_id>/space         Move item to another space
-DELETE /api/items/<item_id>               Delete item
-GET    /api/items/<item_id>/outfits       Get outfit history records related to one item
-POST   /api/items/preview-image           Upload and parse image in one step
-POST   /api/items/confirm-image           Confirm parsed image and create item
+GET    /api/items/<item_id>                   取得單一衣物詳情
+PATCH  /api/items/<item_id>                   修改衣物
+PATCH  /api/items/<item_id>/space             移動衣物到另一個空間
+DELETE /api/items/<item_id>                   刪除衣物
+GET    /api/items/<item_id>/outfits           取得與衣物相關的歷史穿搭
+POST   /api/items/preview-image               上傳並解析圖片
+POST   /api/items/confirm-image               確認圖片並建立衣物
 
-GET    /api/outfits/occasion-options    Get outfit occasion options
-GET    /api/outfits                     Get user outfit history records
-GET    /api/outfits/<history_id>        Get outfit detail
-POST   /api/outfits                     Create outfit history record
-PATCH  /api/outfits/<history_id>        Update outfit history record
-DELETE /api/outfits/<history_id>        Delete outfit history record
-GET    /api/search                        Search wardrobe items
-POST   /api/search                        Search wardrobe items
+POST   /api/luggage/items/transfet            移動或複製衣物到行李箱，目前 route 拼字為 transfet
 
-POST   /api/images/upload-input           Upload image to pictures/input
-POST   /api/images/parse-input            Parse current input image
+GET    /api/outfits/occasion-options          取得穿搭場合選項
+GET    /api/outfits                           取得使用者穿搭歷史列表
+GET    /api/outfits/<history_id>              取得單一穿搭歷史詳情
+POST   /api/outfits                           新增穿搭歷史
+PATCH  /api/outfits/<history_id>              修改穿搭歷史
+DELETE /api/outfits/<history_id>              刪除穿搭歷史
+
+GET    /api/search                            搜尋衣物
+POST   /api/search                            搜尋衣物
+
+POST   /api/images/upload-input               上傳圖片到 pictures/input
+POST   /api/images/parse-input                解析目前 input 圖片
 ```
 
 ---
 
-## Capacity Notes
+## 容量規則備註
 
-Capacity is managed by counting current items in each space instead of trusting a manually maintained number.
+容量狀態建議以目前空間中的衣物數量計算，也就是使用 `COUNT(Item_ID)`，不要只信任手動維護的 `Space.Used_Capacity`。
 
-Recommended behavior:
+建議規則：
 
-- New spaces start with `Used_Capacity = 0`.
-- Capacity status uses `COUNT(Item_ID)` to calculate `Used_Capacity`.
-- Creating an item should check whether the target space is full.
-- Moving an item should check whether the target space is full.
-- Deleting a space keeps its items, but sets their `Space_ID` to `NULL` through the database foreign key.
+- 新空間建立時，`Used_Capacity` 預設為 `0`。
+- 取得容量狀態時，用 `COUNT(Item_ID)` 計算目前已使用容量。
+- 新增衣物時，需要檢查目標空間是否已滿。
+- 移動衣物時，需要檢查目標空間是否已滿。
+- 複製衣物到行李箱時，也需要檢查目標行李箱是否已滿。
+- 刪除空間時，衣物不會被刪除，而是透過外鍵讓 `Item.Space_ID` 變成 `NULL`。
