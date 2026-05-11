@@ -10,7 +10,8 @@ import { useWardrobeEditor } from "@/hooks/useWardrobeEditor";
 import ItemCard from "@/component/item-card";
 import {
     getSpaceItems,
-    getUserRooms
+    getUserRooms,
+    type UserRoom,
 } from "@/lib/api/clothing";
 import { FIXED_COLORS } from "@/lib/constants/color-map";
 import { createClothingFilters, type ClothingFilters, type ClothingItem } from "@/lib/types/clothing";
@@ -130,10 +131,10 @@ export default function WardrobePage() {
                 }
 
                 setAllRooms(
-                    roomList.map((room: any) => ({
+                    roomList.map((room: UserRoom) => ({
                         roomId: room.Space_ID,
                         name: room.Space_Name || `沒抓到房間名`,
-                        itemCount: room.Item_Count ?? 0,
+                        itemCount: room.Used_Capacity ?? 0,
                         totalCapacity: room.Capacity ?? 0,
                     }))
                 );

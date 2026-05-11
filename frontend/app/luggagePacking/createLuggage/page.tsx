@@ -60,9 +60,12 @@ export default function CreateLuggagePage() {
       <div className="mb-10 flex w-full max-w-125 flex-col">
         <label className="mb-3 text-[16px] font-medium text-[#333]">Days</label>
         <input
-          type="text"
+          type="number"
           placeholder="Value"
           value={days}
+          min={1}
+          step={1}
+          inputMode="numeric"
           onChange={(e) => setDays(e.target.value)}
           className="rounded-lg border border-[#ddd] bg-base-200 px-4 py-4 text-[16px] text-[#333] transition-colors placeholder:text-[#999] focus:border-[#999] focus:outline-none disabled:cursor-not-allowed disabled:bg-[#f0f0f0] disabled:text-[#999]"
           disabled={loading}

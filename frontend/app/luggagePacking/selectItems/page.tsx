@@ -113,7 +113,7 @@ export default function SelectItemsPage() {
 	}
 
 	return (
-		<main className="h-[90%] overflow-y-auto scrollbar-hide bg-[#E2E2E2] text-black">
+		<main className="h-full overflow-y-auto scrollbar-hide bg-[#E2E2E2] text-black">
 			<section className="bg-[#D3D3D3] px-4 py-5">
 				<ClothingFiltersPanel
 					filters={filters}

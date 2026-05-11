@@ -9,8 +9,10 @@ export type UserRoom = {
   Space_ID: number;
   Space_Type: string;
   Space_Name: string | null;
-  Item_Count?: number;
   Capacity?: number;
+  Used_Capacity?: number;
+  Remaining_Capacity?: number;
+  Is_Full?: number;
   User_ID?: number;
 };
 
@@ -37,13 +39,13 @@ function toColorSlot(value?: string | null) {
 // 串接後端 API 取得該使用者所有 type 為「衣櫃」的空間名稱
 export async function getUserRooms(userId: string | number): Promise<UserRoom[]> {
   if (!userId) return [];
-  const res = await fetch(`${API_BASE_URL}/api/space/user/${userId}`);
+  const res = await fetch(`${API_BASE_URL}/api/space/user/${userId}?type=${encodeURIComponent("衣櫃")}`);
   if (!res.ok) return [];
   const data = await res.json();
   console.log("Fetched user rooms:", data);
   if (!data.success || !Array.isArray(data.data)) return [];
 
-  return (data.data as UserRoom[]).filter((s) => s.Space_Type === "衣櫃");
+  return data.data as UserRoom[];
 
 }
 
