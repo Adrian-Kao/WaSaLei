@@ -154,11 +154,12 @@ export type CreateItemPayload = {
   season_ids: number[];
   color_ids: number[];
   style_ids: number[];
+  notes?: string;
 };
 
 export async function createItem(
   payload: CreateItemPayload
-): Promise<ClothingItemDetail | null> {
+): Promise<number | null> {
   const res = await fetch(`${API_BASE_URL}/api/items/confirm-image`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -166,18 +167,8 @@ export async function createItem(
   });
   if (!res.ok) return null;
   const data = await res.json();
-  if (!data.success || !data.data) return null;
-  const item = data.data as BackendItemDetail;
-  return {
-    id: item.item_id,
-    name: item.name,
-    color: toColorTuple(item.colors),
-    season: item.seasons ?? [],
-    type: item.type ?? "其他",
-    style: item.styles ?? [],
-    imageUrl: toAbsolutePhotoUrl(item.photo_url, item.photo),
-    note: item.notes ?? "",
-  };
+  if (!data.success) return null;
+  return data.item_id ?? null;
 }
 
 export type UpdateItemPayload = {

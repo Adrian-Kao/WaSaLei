@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { parseInputImage, uploadInputImage } from "@/lib/api/image-preview";
 
 type Offset = {
   x: number;
@@ -29,6 +30,8 @@ export default function CameraCapturePage() {
   const [viewportSize, setViewportSize] = useState(0);
   const [zoom, setZoom] = useState(1);
   const [offset, setOffset] = useState<Offset>({ x: 0, y: 0 });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const baseScale = useMemo(() => {
     if (!imageSize || viewportSize === 0) {
@@ -106,6 +109,8 @@ export default function CameraCapturePage() {
     if (!file) {
       return;
     }
+
+    setErrorMessage("");
 
     const objectUrl = URL.createObjectURL(file);
 
@@ -205,9 +210,12 @@ export default function CameraCapturePage() {
   }
 
   async function handleConfirm() {
-    if (!previewUrl || !imageSize || viewportSize === 0) {
+    if (!previewUrl || !imageSize || viewportSize === 0 || !roomId) {
       return;
     }
+
+    setIsSubmitting(true);
+    setErrorMessage("");
 
     try {
       const outputSize = 1024;
@@ -234,11 +242,36 @@ export default function CameraCapturePage() {
       const blob = await canvasToBlob(canvas);
       const outputFile = new File([blob], "wardrobe-icon.png", { type: "image/png" });
 
-      // TODO: 接上 API 時，將 outputFile 送出後端。
-      console.log("1:1 圖片已準備好", outputFile);
+      const uploadResult = await uploadInputImage(outputFile);
+      if (!uploadResult.success) {
+        setErrorMessage(uploadResult.message ?? "圖片上傳失敗");
+        return;
+      }
 
-      router.push(roomId ? `/myWardrobe/1-2?roomId=${roomId}` : "/myWardrobe/1-2");
-    } catch {}
+      const parseResult = await parseInputImage("garment");
+      if (!parseResult.success) {
+        setErrorMessage(parseResult.message ?? "圖片解析失敗");
+        return;
+      }
+
+      const colors = (parseResult.colors ?? [])
+        .map((item) => item.color ?? "")
+        .map((color) => color.trim())
+        .filter((color) => color.length > 0);
+
+      const query = new URLSearchParams({
+        roomId,
+        colors: JSON.stringify(colors),
+        previewUrl: parseResult.preview_url ?? "",
+      });
+
+      router.push(`/myWardrobe/createItem?${query.toString()}`);
+    } catch (error) {
+      console.error("處理圖片時發生錯誤", error);
+      setErrorMessage("處理圖片時發生錯誤");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -281,9 +314,11 @@ export default function CameraCapturePage() {
       />
 
       <div className="mt-auto grid grid-cols-[2fr_1fr] gap-3 px-4">
+        {errorMessage ? <div className="col-span-2 text-sm text-error">{errorMessage}</div> : null}
         <button
           type="button"
           onClick={handleOpenFilePicker}
+          disabled={isSubmitting}
           className="btn btn-outline btn-primary h-14 rounded-2xl text-3xl font-medium shadow-sm"
         >
           上傳圖檔
@@ -292,9 +327,10 @@ export default function CameraCapturePage() {
         <button
           type="button"
           onClick={handleConfirm}
+          disabled={isSubmitting || !previewUrl}
           className="btn btn-outline btn-primary h-14 rounded-2xl text-3xl font-medium shadow-sm"
         >
-          確認
+          {isSubmitting ? "處理中..." : "確認"}
         </button>
       </div>
     </div>

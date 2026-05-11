@@ -1,11 +1,11 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import Image from "next/image";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { normalizeColorToHex, colorHexToId } from "@/lib/constants/color-map";
 import { createItem } from "@/lib/api/clothing";
-import { useCreateItemStore } from "@/store/store";
+
+import { useUserStore } from "@/store/store";
 import ColorStrip from "@/component/color-strip";
 
 const seasonOptions = ["春", "夏", "秋", "冬"];
@@ -26,11 +26,12 @@ type CreateItemFormData = {
 
 export default function CreateItemPage() {
   const router = useRouter();
-  const imageUrl = useCreateItemStore((state) => state.imageUrl) as string;
-  const inputPath = useCreateItemStore((state) => state.inputPath) as string;
-  const detectedColors = useCreateItemStore((state) => state.detectedColors) as string[];
-  const spaceId = useCreateItemStore((state) => state.spaceId);
-  const userId = useCreateItemStore((state) => state.userId);
+  const searchParams = useSearchParams();
+  const userId = useUserStore((state) => state.userId);
+  const roomIdParam = searchParams.get("roomId");
+  const colorsParam = searchParams.get("colors");
+  const previewUrlParam = searchParams.get("previewUrl");
+  const spaceId = roomIdParam ? Number(roomIdParam) : null;
 
   const [form, setForm] = useState<CreateItemFormData>({
     name: "",
@@ -40,6 +41,26 @@ export default function CreateItemPage() {
     note: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const detectedColors = useMemo(() => {
+    if (!colorsParam) {
+      return [] as string[];
+    }
+
+    try {
+      const parsed = JSON.parse(colorsParam);
+      return Array.isArray(parsed)
+        ? parsed.map((color) => String(color).trim()).filter((color) => color.length > 0)
+        : [];
+    } catch {
+      return [] as string[];
+    }
+  }, [colorsParam]);
+
+  const imageUrl = previewUrlParam
+    ? `http://127.0.0.1:5000${previewUrlParam}`
+    : `http://127.0.0.1:5000/pictures/output/output.png`;
+  
 
   const colorSlots: [string, string, string] = useMemo(
     () =>
@@ -84,6 +105,7 @@ export default function CreateItemPage() {
         season_ids: form.season.map((s) => SEASON_ID[s]),
         color_ids: colorIds,
         style_ids: form.style.map((s) => STYLE_ID[s]),
+        notes: form.note.trim() || undefined,
       });
 
       if (result) {
@@ -102,22 +124,19 @@ export default function CreateItemPage() {
         <div className="card w-full rounded-3xl border border-base-300 bg-base-200 p-6 shadow-sm">
           <div className="mb-6">
             <label className="mb-2 block text-sm font-medium">衣服圖片</label>
-            {imageUrl ? (
+            {spaceId ? (
               <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-base-100">
-                <Image
+                <img
                   src={imageUrl}
                   alt="去背後衣服圖片"
-                  fill
-                  sizes="(max-width: 768px) 100vw, 520px"
-                  className="object-cover"
+                  className="h-full w-full object-cover"
                 />
               </div>
             ) : (
               <div className="flex aspect-square w-full items-center justify-center rounded-2xl border-2 border-dashed border-base-300 bg-base-100 text-sm text-gray-400">
-                尚未收到圖片，請先從圖片解析頁進入
+                尚未收到解析資料，請先從 1-5 頁進入
               </div>
             )}
-            {inputPath ? <p className="mt-2 text-xs text-gray-500">來源: {inputPath}</p> : null}
           </div>
 
           <div className="mb-6">
