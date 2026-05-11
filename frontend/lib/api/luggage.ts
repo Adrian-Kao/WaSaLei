@@ -13,7 +13,7 @@ import { useUserStore } from "@/store/store";
 // 後端返回的 DTO 格式
 interface LuggageDTO {
   id: number;
-  name: string; // 後端直接回傳要顯示的名稱
+  name: string; // 後端直接回傳要顯示的名
 }
 
 export type LuggageSpaceItem = ClothingItem;

@@ -28,6 +28,8 @@ export default function LoginPage() {
                 setUserInfo(res.data.User_ID, res.data.User_Name);
                 router.push("/myWardrobe/1-1");
                 setSuccess("登入成功！");
+
+                console.log("登入成功，使用者資訊已儲存到全局狀態");
                 
             } else {
                 setError(res.message || "登入失敗");
