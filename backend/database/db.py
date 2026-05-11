@@ -97,7 +97,6 @@ def update_user_password(user_id, new_password):
     
     finally:
         connection.close()
-
 # ==========================================
 # 3. 儲存空間功能 (Space) (對應space.py)
 # ==========================================
@@ -144,7 +143,7 @@ def get_spaces_by_user_id(user_id):
                         WHEN COUNT(i.Item_ID) >= s.Capacity THEN 1
                         ELSE 0
                     END AS Is_Full
-                FROM `Spacd` s
+                FROM `Space` s
                 LEFT JOIN `Item` i ON s.Space_ID = i.Space_ID
                 WHERE s.User_ID = %s
                 GROUP BY
