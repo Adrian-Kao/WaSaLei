@@ -13,7 +13,7 @@ import {
 	type LuggageSpaceFilters,
 	type LuggageSpaceItem,
 } from "@/lib/api/luggage";
-// import { useAppStore } from "@/store/store";
+import { useUserStore } from "@/store/store";
 
 const seasonOptions = ["春", "夏", "秋", "冬"];
 const styleOptions = ["日常", "運動", "正式", "其他"];
@@ -23,7 +23,7 @@ const colorOptions = ["#2A3388", "#000000", "#FFFFFF", "#9CA3AF"];
 export default function SelectItemsPage() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
-	const userId = localStorage.getItem("userId") || null;
+	const userId = useUserStore((state) => state.userId);
 
 	const luggageId = Number(searchParams.get("luggageId") ?? 0);
 

@@ -85,6 +85,13 @@ export default function WardrobePage() {
     const [roomOptions, setRoomOptions] = useState<RoomInfo[]>([]);
     const [selectedTargetRoom, setSelectedTargetRoom] = useState("");
     const [loading, setLoading] = useState(true);
+    // 驗證 roomId 是否有效，無效時導回上一頁
+    useEffect(() => {
+        if (roomId === 0) {
+            router.back();
+        }
+    }, [roomId, router]);
+
 
     async function handleOpenMoveModal() {
         handleMoveSelectedItems();
@@ -174,7 +181,7 @@ export default function WardrobePage() {
     }, [filters, roomItems]);
 
     return (
-        <main className="h-[90%] overflow-y-auto scrollbar-hide bg-[#E2E2E2] text-black ">
+        <main className="h-[90%] overflow-y-auto scrollbar-hide bg-[#E2E2E2] text-black">
             <section className="bg-[#D3D3D3] px-4 py-5">
                 {/* 上方是四個篩選器，控制清單顯示內容。 */}
                 <ClothingFiltersPanel
@@ -187,9 +194,9 @@ export default function WardrobePage() {
                 />
             </section>
 
-            <section className="w-full h-full p-6">
+            <section className="w-full h-auto p-6">
                 {/* 標題列：左邊是目前房間，右邊是編輯模式切換。 */}
-                <div className="flex items-center h-[10%] gap-5">
+                <div className="flex items-center h-15 gap-5">
                     <div className="flex h-full flex-1 items-center justify-center rounded-2xl border-2 border-black text-center text-3xl tracking-[0.18em]">
                         {allRooms.find(room => room.roomId === roomId)?.name ?? "尚未選擇房間"}
                     </div>

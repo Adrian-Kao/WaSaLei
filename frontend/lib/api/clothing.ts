@@ -47,6 +47,31 @@ export async function getUserRooms(userId: string | number): Promise<UserRoom[]>
 
 }
 
+export type CreateSpaceResult = {
+  success: boolean;
+  spaceId?: number;
+  message?: string;
+};
+
+export async function createSpace(
+  userId: string | number,
+  spaceName: string,
+  capacity: number,
+): Promise<CreateSpaceResult> {
+  const res = await fetch(`${API_BASE_URL}/api/space`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      user_id: userId,
+      space_type: "衣櫃",
+      space_name: spaceName,
+      capacity,
+    }),
+  });
+  const data = await res.json();
+  return data as CreateSpaceResult;
+}
+
 type BackendSpaceItem = {
   item_id?: number;
   name: string;

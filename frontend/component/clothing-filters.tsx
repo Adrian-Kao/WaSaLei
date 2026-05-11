@@ -2,6 +2,7 @@ import type { Dispatch, SetStateAction } from "react";
 import Select, { type MultiValue, type StylesConfig } from "react-select";
 
 import type { ClothingFilters } from "@/lib/types/clothing";
+import { colorHexToName } from "@/lib/constants/color-map";
 
 type SelectOption = {
     value: string;
@@ -85,14 +86,15 @@ export default function ClothingFilters({
         }),
     };
 
-    const formatColorOptionLabel = (option: SelectOption) => (
-        <span className="flex items-center gap-2">
-            <span className="inline-block h-5 w-5 rounded border border-black" style={{ backgroundColor: option.value }} />
-            <span>{option.label}</span>
-        </span>
-    );
-
-    const formatColorValueLabel = (option: SelectOption) => option.label;
+    const formatColorOptionLabel = (option: SelectOption) => {
+        const colorName = colorHexToName(option.value);
+        return (
+            <span className="flex items-center gap-2">
+                <span className="inline-block h-5 w-5 rounded border border-black" style={{ backgroundColor: option.value }} />
+                <span>{colorName || option.label}</span>
+            </span>
+        );
+    };
 
     const roomSelectOptions = normalizeOptions(roomOptions);
 
@@ -180,7 +182,8 @@ export default function ClothingFilters({
                         placeholder="全部"
                         styles={selectStyles}
                         noOptionsMessage={() => "沒有選項"}
-                        formatOptionLabel={formatColorOptionLabel}                        formatOptionValue={formatColorValueLabel}                    />
+                        formatOptionLabel={formatColorOptionLabel}
+                    />
                 </div>
             </div>
         </div>
