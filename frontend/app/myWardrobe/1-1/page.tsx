@@ -1,8 +1,8 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useUserStore} from "@/store/store";
+import { useUserStore } from "@/store/store";
 import { getUserRooms, type UserRoom } from "@/lib/api/clothing";
 
 type RoomInfo = {
@@ -34,7 +34,7 @@ export default function MyWardrobePage() {
         const roomsWithInfo = roomList.map((room: UserRoom) => ({
           roomId: room.Space_ID,
           name: room.Space_Name ?? `衣櫃 ${room.Space_ID}`,
-          itemCount: room.Item_Count ?? 0, // 若後端有回傳 Item_Count
+          itemCount: room.Used_Capacity ?? 0,
           totalCapacity: room.Capacity ?? 0,
         }));
         setRooms_local(roomsWithInfo);
@@ -51,6 +51,10 @@ export default function MyWardrobePage() {
 
   function handleRoomClick(roomId: number) {
     router.push(`/myWardrobe/1-2?roomId=${roomId}`);
+  }
+
+  function handleAddRoom() {
+    router.push(`/myWardrobe/1-7`);
   }
 
   return (
@@ -72,7 +76,9 @@ export default function MyWardrobePage() {
                 className="btn relative h-25 w-full rounded-2xl border-0 bg-base-100 text-black hover:bg-base-200 transition-colors"
               >
                 <div className="text-center text-3xl">{room.name}</div>
-                <div className="absolute bottom-3 right-4 text-2xl">{room.itemCount}/{room.totalCapacity}</div>
+                <div className="absolute bottom-3 right-4 text-xl">
+                   {room.itemCount} /  {room.totalCapacity}
+                </div>
               </button>
             ))}
           </>
@@ -81,6 +87,7 @@ export default function MyWardrobePage() {
         <button
           type="button"
           className="btn btn-neutral btn-outline btn-xs h-25 w-full rounded-2xl text-5xl font-semibold"
+          onClick={handleAddRoom}
         >
           +
         </button>
