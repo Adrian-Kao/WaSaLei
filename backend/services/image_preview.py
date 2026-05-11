@@ -113,6 +113,7 @@ def confirm_item_image(
     season_ids,
     color_ids=None,
     style_ids=None,
+    notes=None,
 ):
 
     final_path = move_output_to_final()
@@ -128,6 +129,7 @@ def confirm_item_image(
             color_ids=color_ids,
             style_ids=style_ids,
             photo_path=photo_path,
+            notes=notes,
         )
     except Exception:
         if final_path.exists():

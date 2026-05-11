@@ -301,6 +301,7 @@ def confirm_image():
             season_ids=_int_list(data.get("season_ids")) or data.get("season"),
             color_ids=_int_list(data.get("color_ids")),
             style_ids=_int_list(data.get("style_ids")),
+            notes=data.get("notes") or None,
         )
         return jsonify({"success": True, "status": "success", **result})
     except Exception as exc:

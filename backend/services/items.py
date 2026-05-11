@@ -9,7 +9,7 @@ from database import db
 
 
 # 新增item
-def create_item_record(user_id, name, space_id, type_id, season_ids, color_ids=None, style_ids=None, photo_path=None):
+def create_item_record(user_id, name, space_id, type_id, season_ids, color_ids=None, style_ids=None, photo_path=None, notes=None):
     color_ids = _normalize_id_list(color_ids)
     style_ids = _normalize_id_list(style_ids)
     season_ids = _normalize_id_list(season_ids)
@@ -34,6 +34,7 @@ def create_item_record(user_id, name, space_id, type_id, season_ids, color_ids=N
         color_ids,
         style_ids,
         photo_path,
+        notes,
     )
 
 # 查詢item

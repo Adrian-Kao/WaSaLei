@@ -406,17 +406,17 @@ def delete_space(space_id):
 # 4. 衣服管理功能 (Item) (對應item.py)
 # ==========================================
 # 同時寫入Item及相關聯的表
-def insert_new_item(user_id, name, space_id, type_id, season_ids, color_ids, style_ids, photo_path=None):
+def insert_new_item(user_id, name, space_id, type_id, season_ids, color_ids, style_ids, photo_path=None, notes=None):
     connection = get_connection()
 
     try:
         with connection.cursor() as cursor:
             # 寫入Item表
             sql_item = """
-                INSERT INTO `Item` (`User_id`, `Name`, `Space_ID`, `Type_ID`, `Photo`) 
-                VALUES (%s, %s, %s, %s, %s)
+                INSERT INTO `Item` (`User_id`, `Name`, `Space_ID`, `Type_ID`, `Photo`, `Notes`) 
+                VALUES (%s, %s, %s, %s, %s, %s)
             """
-            cursor.execute(sql_item, (user_id, name, space_id, type_id, photo_path))
+            cursor.execute(sql_item, (user_id, name, space_id, type_id, photo_path, notes))
 
             # 取得剛剛新增的Item的ID
             new_item_id = cursor.lastrowid
