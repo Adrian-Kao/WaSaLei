@@ -1,4 +1,4 @@
-import Image from "next/image";
+
 import { useRouter } from "next/navigation";
 import { FiCheck, FiPlus } from "react-icons/fi";
 import { useEffect, useState } from "react";
@@ -95,12 +95,10 @@ export default function ItemCard({
                 </button>
             ) : null}
             <div className="relative mb-3 aspect-square w-full overflow-hidden rounded-md">
-                <Image
+                <img
                     src={imageSrc}
                     alt={imageAlt ?? name}
-                    fill
-                    sizes="(max-width: 768px) 70vw, 320px"
-                    className="object-cover"
+                    className="absolute inset-0 h-full w-full object-cover"
                     onError={() => setImageSrc("/1.webp")}
                 />
             </div>

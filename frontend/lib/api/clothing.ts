@@ -103,7 +103,7 @@ export async function getSpaceItems(spaceId: string | number): Promise<ClothingI
     season: item.seasons ?? [],
     type: item.type,
     style: item.styles ?? [],
-    imageUrl: item.photo_url ?? fixedItemUrl,
+    imageUrl: toAbsolutePhotoUrl(item.photo_url) ?? fixedItemUrl,
   }));
 }
 
@@ -112,9 +112,9 @@ function toColorTuple(colors?: string[]): [string, string, string] {
 }
 
 function toAbsolutePhotoUrl(photoUrl?: string | null, photo?: string | null): string {
-  if (photoUrl && /^https?:\/\//i.test(photoUrl)) return photoUrl;
+  // if (photoUrl && /^https?:\/\//i.test(photoUrl)) return photoUrl;
   if (photoUrl && photoUrl.startsWith("/")) return `${API_BASE_URL}${photoUrl}`;
-  if (photo) return `${API_BASE_URL}/images/${photo}`;
+  // if (photo) return `${API_BASE_URL}/images/${photo}`;
   return fixedItemUrl;
 }
 

@@ -57,9 +57,12 @@ export default function CreateItemPage() {
     }
   }, [colorsParam]);
 
-  const imageUrl = previewUrlParam
-    ? `http://127.0.0.1:5000${previewUrlParam}`
-    : `http://127.0.0.1:5000/pictures/output/output.png`;
+  const imageUrl = useMemo(() => {
+    const base = previewUrlParam
+      ? `http://127.0.0.1:5000${previewUrlParam}`
+      : `http://127.0.0.1:5000/pictures/output/output.png`;
+    return `${base}?t=${Date.now()}`;
+  }, [previewUrlParam]);
   
 
   const colorSlots: [string, string, string] = useMemo(
