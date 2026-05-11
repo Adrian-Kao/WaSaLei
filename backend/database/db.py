@@ -209,7 +209,7 @@ def fetch_raw_items_by_space(space_id):
                     i.Name,
                     i.Photo,
                     t.Type_Name as Type,
-                    GROUP_CONCAT(DISTINCT se.Season_Name SEPARATOR '、') as Seasons,
+                    GROUP_CONCAT(DISTINCT se.Season_Name ORDER BY se.Season_ID SEPARATOR '、') as Seasons,
                     GROUP_CONCAT(DISTINCT st.Style_Name SEPARATOR '、') as Styles, 
                     GROUP_CONCAT(DISTINCT c.Color_Name ORDER BY c.Color_ID SEPARATOR ',') as Colors
                 FROM Item i
@@ -608,7 +608,7 @@ def search_items(user_id, keyword=None, space_id=None, type_id=None, season_ids=
                     i.Name,
                     i.Photo,
                     t.Type_Name as Type,
-                    GROUP_CONCAT(DISTINCT se.Season_Name SEPARATOR '、') as Seasons,
+                    GROUP_CONCAT(DISTINCT se.Season_Name ORDER BY se.Season_ID SEPARATOR '、') as Seasons,
                     GROUP_CONCAT(DISTINCT st.Style_Name SEPARATOR '、') as Styles,
                     GROUP_CONCAT(DISTINCT c.Color_Name ORDER BY c.Color_ID SEPARATOR ',') as Colors
                 FROM Item i
