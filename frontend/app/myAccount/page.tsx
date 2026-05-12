@@ -1,10 +1,33 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useUserStore } from "@/store/store";
+
+type UserDataType = {
+    success: boolean;
+    status: string;
+    name: string;
+};
 
 export default function MyAccountPage() {
-    const [userName, setUserName] = useState("");
+    const userId = useUserStore((state) => state.userId);
+    const [UserData, setUserData] = useState<UserDataType | null>(null);
     useEffect(() => {
-        setUserName(localStorage.getItem("userName") || "未登入");
+        if (!userId) return;
+        async function fetchUser() {
+            try {
+                const response = await fetch(`http://127.0.0.1:5000/api/user/${userId}`);
+
+                const data = await response.json();
+
+                console.log("完整data:", data);
+
+                setUserData(data);
+            } catch (error) {
+                console.error("取得使用者資料失敗", error);
+            }
+        }
+
+        fetchUser();
     }, []);
     return (
         <main className="flex h-[90%] flex-col items-center bg-base-100 px-6 pb-32 pt-10 text-black">
@@ -17,9 +40,11 @@ export default function MyAccountPage() {
                 </div>
             </div>
 
-            <h1 className="mt-5 text-3xl font-medium">{userName}</h1>
+            <h1 className="mt-5 text-3xl font-medium">
+                {UserData?.name || "載入中"}
+            </h1>
 
-            <section className=" mt-28 w-full max-w-xs space-y-8 text-2xl">
+            <section className="mt-28 w-full max-w-xs space-y-8 text-2xl">
                 <p>帳號：1234567</p>
                 <p>密碼：**********</p>
             </section>

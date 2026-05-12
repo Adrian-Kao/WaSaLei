@@ -109,6 +109,7 @@ def api_change_password(user_id):
     return jsonify({"success": False, "status": "error", "message": msg}), 400
 
 # 取得用戶名稱(透過id)
+@app.get("/api/user/<int:user_id>")
 def api_get_user_name(user_id):
     from services.auth import getUserName
 
