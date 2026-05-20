@@ -7,7 +7,7 @@ import ClothingFiltersPanel from "@/component/clothing-filters";
 import ItemCard from "@/component/item-card";
 import {
 	createLuggageSpaceFilters,
-	getAllWardrobeItems,
+	getWardrobeFilteredItemsByUserId,
 	getWardrobeRoomOptions,
 	type LuggageSpaceFilters,
 	type LuggageSpaceItem,
@@ -75,8 +75,15 @@ export default function SelectItemsPage() {
 		let isMounted = true;
 
 		async function loadAllItems() {
+			if (!userId) {
+				if (isMounted) {
+					setAllItems([]);
+				}
+				return;
+			}
+
 			try {
-				const items = await getAllWardrobeItems(filters);
+				const items = await getWardrobeFilteredItemsByUserId(userId, filters);
 				if (isMounted) {
 					setAllItems(items);
 				}
@@ -90,7 +97,7 @@ export default function SelectItemsPage() {
 		return () => {
 			isMounted = false;
 		};
-	}, [filters]);
+	}, [filters, userId]);
 
 	function toggleSelectedItem(itemId: number) {
 		setSelectedItemIds((prev) =>
@@ -102,6 +109,16 @@ export default function SelectItemsPage() {
 
 	function handleConfirm() {
 		if (!outfitId || selectedItemIds.length === 0) {
+			return;
+		}
+
+		if (outfitId === "new") {
+			const imageFilename = searchParams.get("imageFilename") ?? "";
+			const query = new URLSearchParams({
+				imageFilename,
+				addedIds: selectedItemIds.join(","),
+			});
+			router.push(`/myOutfits/createOutfits?${query.toString()}`);
 			return;
 		}
 

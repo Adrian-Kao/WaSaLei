@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import OutfitHistoryCard from "@/component/outfit-history-card";
 import { getAllOutfits,getOutfitOccasionOptions } from "@/lib/api/outfits";
@@ -8,6 +9,7 @@ import { getAllOutfits,getOutfitOccasionOptions } from "@/lib/api/outfits";
 import type { Outfit } from "@/lib/types/outfit";
 
 export default function AllOutfitsPage() {
+  const router = useRouter();
   const [occasionFilter, setOccasionFilter] = useState("all");
   const [outfits, setOutfits] = useState<Outfit[]>([]);
   const [occasionOptions, setOccasionOptions] = useState<string[]>([]);
@@ -72,7 +74,11 @@ export default function AllOutfitsPage() {
         </select>
       </div>
 
-      <button type="button" className="btn btn-primary btn-outline rounded-2xl mb-6 h-16 min-h-0 w-full text-6xl font-semibold">
+      <button
+        type="button"
+        className="btn btn-primary btn-outline rounded-2xl mb-6 h-16 min-h-0 w-full text-6xl font-semibold"
+        onClick={() => router.push("/myOutfits/uploadOutfitPic")}
+      >
         +
       </button>
 

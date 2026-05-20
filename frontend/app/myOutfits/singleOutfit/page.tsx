@@ -6,8 +6,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { getOutfitDetail, deleteOutfitById, updateOutfit } from "@/lib/api/outfits";
 import { Outfit } from "@/lib/types/outfit";
 import ItemCard from "@/component/item-card";
-import { FiX } from "react-icons/fi";
-import { createLuggageSpaceFilters, getAllWardrobeItems } from "@/lib/api/luggage";
+import { createLuggageSpaceFilters, getWardrobeFilteredItemsByUserId } from "@/lib/api/luggage";
+import { useUserStore } from "@/store/store";
 
 function parseIdList(value: string | null) {
   if (!value) return [] as number[];
@@ -21,6 +21,7 @@ function parseIdList(value: string | null) {
 export default function SingleOutfitPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const userId = useUserStore((state) => state.userId);
 
   // 測試用：若無 id 參數則預設 '1'（匹配 mockOutfits）
   const id = searchParams.get("id") || '1';
@@ -52,21 +53,20 @@ export default function SingleOutfitPage() {
     let isMounted = true;
 
     async function hydrateAddedItems() {
+      if (!userId) return;
+
       try {
-        const allWardrobeItems = await getAllWardrobeItems(createLuggageSpaceFilters());
+        const allWardrobeItems = await getWardrobeFilteredItemsByUserId(userId, createLuggageSpaceFilters());
         if (!isMounted) return;
 
         const byId = new Map(allWardrobeItems.map((item) => [item.id, item]));
-        const currentItems = baseOutfit.items;
-        const currentIds = new Set(currentItems.map((item) => item.id));
-        const appendedItems = addedIds
-          .filter((itemId) => !currentIds.has(itemId))
+        const selectedItems = addedIds
           .map((itemId) => byId.get(itemId))
           .filter((item): item is NonNullable<typeof item> => Boolean(item));
 
         setDraftOutfit({
           ...baseOutfit,
-          items: [...currentItems, ...appendedItems],
+          items: selectedItems,
         });
         setEditMode(true);
       } catch (error) {
@@ -83,7 +83,7 @@ export default function SingleOutfitPage() {
     return () => {
       isMounted = false;
     };
-  }, [outfit, addedIdsParam, id, router]);
+  }, [outfit, addedIdsParam, id, router, userId]);
 
   // 進入編輯模式：建立 draft 複本
   function handleEnterEditMode() {
@@ -102,14 +102,6 @@ export default function SingleOutfitPage() {
   function handleDraftFieldChange(field: keyof Outfit, value: any) {
     if (!draftOutfit) return;
     setDraftOutfit((prev) => prev ? { ...prev, [field]: value } : null);
-  }
-
-  // 在 draft 中刪除 item
-  function handleRemoveItem(itemId: number) {
-    if (!draftOutfit) return;
-    setDraftOutfit((prev) =>
-      prev ? { ...prev, items: prev.items.filter((item) => item.id !== itemId) } : null
-    );
   }
 
   function handleGoToSelectItems() {
@@ -245,17 +237,17 @@ export default function SingleOutfitPage() {
           <div className="mb-3">
             <button
               type="button"
-              className="btn btn-primary btn-outline btn-sm"
+              className="btn btn-primary btn-outline btn-md  w-full"
               onClick={handleGoToSelectItems}
             >
-              + 新增衣物
+              新增修改服裝配件
             </button>
           </div>
         )}
         <div className="grid grid-cols-2 gap-4">
           {(!displayOutfit || displayOutfit.items.length === 0) && <div>無衣物</div>}
           {displayOutfit?.items.map((item) => (
-            <div key={item.id} className="relative">
+            <div key={item.id}>
               <ItemCard
                 name={item.name}
                 color={item.color}
@@ -264,15 +256,6 @@ export default function SingleOutfitPage() {
                 style={item.style}
                 imageUrl={item.imageUrl}
               />
-              {editMode && (
-                <button
-                  className="absolute -top-2 -right-2 border-3 border-black bg-white text-black rounded-full p-1 flex items-center justify-center hover:bg-black hover:text-white transition-colors"
-                  onClick={() => handleRemoveItem(item.id)}
-                  aria-label="刪除衣物"
-                >
-                  <FiX size={15} strokeWidth={3} />
-                </button>
-              )}
             </div>
           ))}
         </div>

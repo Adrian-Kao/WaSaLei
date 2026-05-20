@@ -63,11 +63,27 @@ async function parseResponseData<T>(response: Response): Promise<T | null> {
   return (payload.data ?? null) as T | null;
 }
 
+function toAbsolutePhotoUrl(photoUrl?: string | null): string {
+  if (!photoUrl) {
+    return "/1.webp";
+  }
+
+  if (/^https?:\/\//i.test(photoUrl)) {
+    return photoUrl;
+  }
+
+  if (photoUrl.startsWith("/")) {
+    return `${API_BASE_URL}${photoUrl}`;
+  }
+
+  return `${API_BASE_URL}/${photoUrl}`;
+}
+
 function normalizeOutfitSummary(row: BackendOutfitSummary): Outfit {
   return {
     id: Number(row.id ?? 0),
     wornDate: row.wornDate ?? "",
-    photo: row.photo ?? "/1.webp",
+    photo: toAbsolutePhotoUrl(row.photo),
     note: row.note ?? "",
     occasion: row.occasion ?? "",
     items: [],
@@ -78,7 +94,7 @@ function normalizeOutfitDetail(row: BackendOutfitDetail): Outfit {
   return {
     id: Number(row.id ?? 0),
     wornDate: row.wornDate ?? "",
-    photo: row.photo ?? "/1.webp",
+    photo: toAbsolutePhotoUrl(row.photo),
     note: row.note ?? "",
     occasion: row.occasion ?? "",
     items: Array.isArray(row.items)
@@ -89,7 +105,7 @@ function normalizeOutfitDetail(row: BackendOutfitDetail): Outfit {
           season: item.season ?? [],
           type: item.type ?? "其他",
           style: item.style ?? [],
-          imageUrl: item.imageUrl ?? "/1.webp",
+          imageUrl: toAbsolutePhotoUrl(item.imageUrl),
         }))
       : [],
   };
@@ -187,4 +203,27 @@ export async function uploadOutfitImage(file: File): Promise<{ path: string; url
   const payload = await response.json();
   if (!payload?.success) return null;
   return { path: payload.path, url: payload.url };
+}
+
+// Create a new outfit record
+export async function createOutfit(data: {
+  photo: string;
+  wornDate: string;
+  note: string;
+  occasion: string;
+  item_ids: number[];
+  user_id: number;
+}): Promise<Outfit> {
+  const response = await fetch(`${API_BASE_URL}/api/outfits`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+
+  const payload = await parseResponseData<BackendOutfitDetail>(response);
+  if (!payload) {
+    throw new Error("建立穿搭紀錄失敗");
+  }
+
+  return normalizeOutfitDetail(payload);
 }

@@ -2,6 +2,8 @@
 import { useEffect, useState } from "react";
 import { useUserStore } from "@/store/store";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:5000";
+
 type UserDataType = {
     success: boolean;
     status: string;
@@ -15,7 +17,7 @@ export default function MyAccountPage() {
         if (!userId) return;
         async function fetchUser() {
             try {
-                const response = await fetch(`http://127.0.0.1:5000/api/user/${userId}`);
+                const response = await fetch(`${API_BASE_URL}/api/user/${userId}`);
 
                 const data = await response.json();
 

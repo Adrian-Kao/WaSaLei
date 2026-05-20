@@ -90,7 +90,7 @@ export async function getLuggageList(userId: string | number): Promise<LuggageDT
 
   return spaces.map((space) => ({
     id: space.Space_ID,
-    name: space.Space_Name?.trim() || `行李 ${space.Space_ID}`,
+    name: space.Space_Name?.trim() || `行李箱 ${space.Space_ID}`,
   }));
 }
 
@@ -180,6 +180,19 @@ export async function getWardrobeRoomOptions(userId: string | number): Promise<s
   return spaces.map((space) => String(space.Space_ID));
 }
 
+export async function getWardrobeFilteredItemsByUserId(
+  userId: string | number,
+  filters: LuggageSpaceFilters,
+): Promise<LuggageSpaceItem[]> {
+  if (!userId) return [];
+
+  const rooms = filters.room && filters.room.length > 0
+    ? filters.room
+    : await getWardrobeRoomOptions(userId);
+  const items = await getLuggageItemsByRoomIds(rooms);
+  return items.filter((item) => matchesLuggageFilters(item, filters));
+}
+
 export async function requestMoveLuggageItemsToRoom(itemIds: number[], targetRoom: string) {
   return requestMoveSelectedItemsToRoom(itemIds, targetRoom);
 }
@@ -224,13 +237,6 @@ async function requestCopyItemsToLuggage(
   );
 
   return { success: failedIds.length === 0, failedIds };
-}
-
-// TODO: 接後端 API 取得所有房間的衣物（可篩選）
-export async function getAllWardrobeItems(filters: LuggageSpaceFilters): Promise<LuggageSpaceItem[]> {
-  const rooms = filters.room && filters.room.length > 0 ? filters.room : await getWardrobeRoomOptions(getCurrentUserId() ?? "");
-  const items = await getLuggageItemsByRoomIds(rooms);
-  return items.filter((item) => matchesLuggageFilters(item, filters));
 }
 
 // 複製衣物到行李（調用複製 API，不是移動）

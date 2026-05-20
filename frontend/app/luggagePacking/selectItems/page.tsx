@@ -8,8 +8,8 @@ import ItemCard from "@/component/item-card";
 import {
 	addItemsToLuggage,
 	createLuggageSpaceFilters,
-	getAllWardrobeItems,
-	getLuggageRoomOptions,
+	getWardrobeFilteredItemsByUserId,
+	getWardrobeRoomOptions,
 	type LuggageSpaceFilters,
 	type LuggageSpaceItem,
 } from "@/lib/api/luggage";
@@ -46,7 +46,7 @@ export default function SelectItemsPage() {
 			}
 
 			try {
-				const rooms = await getLuggageRoomOptions(userId);
+				const rooms = await getWardrobeRoomOptions(userId);
 				if (isMounted) {
 					setRoomOptions(rooms);
 				}
@@ -67,8 +67,15 @@ export default function SelectItemsPage() {
 		let isMounted = true;
 
 		async function loadAllItems() {
+				if (!userId) {
+					if (isMounted) {
+						setAllItems([]);
+					}
+					return;
+				}
+
 			try {
-				const items = await getAllWardrobeItems(filters);
+					const items = await getWardrobeFilteredItemsByUserId(userId, filters);
 				if (isMounted) {
 					setAllItems(items);
 				}
@@ -82,7 +89,7 @@ export default function SelectItemsPage() {
 		return () => {
 			isMounted = false;
 		};
-	}, [filters]);
+	}, [filters, userId]);
 
 	function toggleSelectedItem(itemId: number) {
 		setSelectedItemIds((prev) =>

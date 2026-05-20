@@ -8,6 +8,8 @@ import { createItem } from "@/lib/api/clothing";
 import { useUserStore } from "@/store/store";
 import ColorStrip from "@/component/color-strip";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:5000";
+
 const seasonOptions = ["春", "夏", "秋", "冬"];
 const styleOptions = ["運動", "正式", "日常", "社交", "其他"];
 const typeOptions = ["上身長", "上身短", "下身長", "下身短", "配件", "鞋類", "其他"];
@@ -59,8 +61,8 @@ export default function CreateItemPage() {
 
   const imageUrl = useMemo(() => {
     const base = previewUrlParam
-      ? `http://127.0.0.1:5000${previewUrlParam}`
-      : `http://127.0.0.1:5000/pictures/output/output.png`;
+      ? `${API_BASE_URL}${previewUrlParam}`
+      : `${API_BASE_URL}/pictures/output/output.png`;
     return `${base}?t=${Date.now()}`;
   }, [previewUrlParam]);
 

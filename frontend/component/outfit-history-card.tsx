@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 
 type OutfitHistoryCardProps = {
@@ -41,12 +40,10 @@ export default function OutfitHistoryCard({ imageUrl, wornDate, occasion, href, 
       {/* {content} */}
       <article className="rounded-xl bg-[#D3D3D3] pb-4">
       <div className="relative rounded-xl mb-3 aspect-4/5 w-full overflow-hidden bg-[#E4E4E4]">
-        <Image
+        <img
           src={imageUrl}
           alt="歷史穿搭"
-          fill
-          sizes="(max-width: 768px) 45vw, 180px"
-          className="object-cover"
+          className="absolute inset-0 h-full w-full object-cover"
         />
       </div>
 
