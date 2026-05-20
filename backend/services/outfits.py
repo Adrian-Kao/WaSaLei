@@ -222,7 +222,7 @@ if __name__ == "__main__":
     print("success:", success)
     print("result:", result)
 
-    RUN_WRITE_TESTS = False
+    RUN_WRITE_TESTS = True
 
     if RUN_WRITE_TESTS:
         print("\nCreate outfit test")
