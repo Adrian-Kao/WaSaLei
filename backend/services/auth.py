@@ -6,6 +6,7 @@ parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
 
 from database import db
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 # 註冊
@@ -14,7 +15,8 @@ def register(name, account, password):
     if existing_user is not None:
         return False, "帳號已經存在，無法重複註冊"
 
-    success = db.insert_new_user(name, account, password)
+    password_hash = generate_password_hash(password)
+    success = db.insert_new_user(name, account, password_hash)
     if success:
         return True, "註冊成功"
     return False, "註冊失敗，請稍後再試"
@@ -26,28 +28,30 @@ def login(account, password):
     if user is None:
         return False, "找不到此帳號"
 
-    if user["Password"] == password:
+    if check_password_hash(user["Password"], password):
+        user.pop("Password", None)
         return True, user
 
     return False, "登入失敗"
 
 # 修改密碼
-def changePassword(user_id, oldPassword, newPassword):
-    if not oldPassword:
+def changePassword(user_id, old_password, new_password):
+    if not old_password:
         return False, "舊密碼不能為空"
-    if not newPassword:
+    if not new_password:
         return False, "新密碼不能為空"
-    if oldPassword == newPassword:
+    if old_password == new_password:
         return False, "新舊密碼不能相同"
 
     user = db.get_user_by_id(user_id)
 
     if not user:
         return False, "找不到使用者"
-    if user["Password"] != oldPassword:
+    if not check_password_hash(user["Password"], old_password):
         return False, "舊密碼輸入錯誤"
     
-    success = db.update_user_password(user_id, newPassword)
+    new_password_hash = generate_password_hash(new_password)
+    success = db.update_user_password(user_id, new_password_hash)
 
     if success:
         return True, "密碼修改成功"
