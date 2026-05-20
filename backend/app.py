@@ -111,12 +111,12 @@ def api_change_password(user_id):
 # 取得用戶名稱(透過id)
 @app.get("/api/user/<int:user_id>")
 def api_get_user_name(user_id):
-    from services.auth import getUserName
+    from services.auth import getUserById
 
-    success, result = getUserName(user_id)
+    success, result = getUserById(user_id)
 
     if success:
-        return jsonify({"success": True, "status": "success", "name":result}), 200
+        return jsonify({"success": True, "status": "success", "data":result}), 200
     return jsonify({"success": False, "status": "error", "message": result}), 404
 
 # ==========================================

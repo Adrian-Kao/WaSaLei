@@ -63,6 +63,14 @@ def getUserName(user_id):
     
     return True, user["User_Name"]
 
+def getUserById(user_id):
+    user = db.get_user_by_id(user_id)
+
+    if user is None:
+        return False, "找不到使用者"
+
+    return True, user
+
 # ==========================================
 # 本機測試
 # ==========================================
