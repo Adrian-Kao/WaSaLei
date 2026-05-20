@@ -1,56 +1,190 @@
-import { ClothingItem, Outfit } from "@/lib/types/outfit";
-import { getSpaceItems } from "@/lib/api/clothing";
+import { Outfit } from "@/lib/types/outfit";
 
-// 統一 mock 資料
-const allItems: ClothingItem[] = getSpaceItems("");
-const mockOutfits: Outfit[] = [
-  {
-    id: 1,
-    wornDate: "2025/08/23",
-    photo: "/1.webp",
-    note: "和朋友聚餐",
-    occasion: "休閒",
-    items: allItems.slice(0, 3),
-  },
-  {
-    id: 2,
-    wornDate: "2025/08/24",
-    photo: "/1.webp",
-    note: "上班穿搭",
-    occasion: "工作",
-    items: allItems.slice(2, 5),
-  },
-  {
-    id: 3,
-    wornDate: "2025/08/25",
-    photo: "/1.webp",
-    note: "假日出遊",
-    occasion: "約會",
-    items: allItems.slice(1, 4),
-  },
-];
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:5000";
 
-export async function getAllOutfits(): Promise<Outfit[]> {
-  return mockOutfits;
+type BackendOutfitSummary = {
+  id?: number;
+  wornDate?: string;
+  photo?: string;
+  note?: string;
+  occasion?: string;
+  item_ids?: number[];
+};
+
+type BackendOutfitDetailItem = {
+  id: number;
+  name: string;
+  color?: [string, string, string];
+  season?: string[];
+  type?: string;
+  style?: string | string[];
+  imageUrl?: string;
+};
+
+type BackendOutfitDetail = {
+  id?: number;
+  wornDate?: string;
+  photo?: string;
+  note?: string;
+  occasion?: string;
+  items?: BackendOutfitDetailItem[];
+};
+// 這不會用到八
+function getStoredUserId(): number | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const raw = window.localStorage.getItem("user-storage");
+    if (!raw) {
+      return null;
+    }
+
+    const parsed = JSON.parse(raw) as { state?: { userId?: number | string } };
+    const candidate = parsed?.state?.userId;
+    const userId = Number(candidate);
+    return Number.isFinite(userId) && userId > 0 ? userId : null;
+  } catch {
+    return null;
+  }
+}
+
+async function parseResponseData<T>(response: Response): Promise<T | null> {
+  if (!response.ok) {
+    return null;
+  }
+
+  const payload = await response.json();
+  if (!payload?.success) {
+    return null;
+  }
+
+  return (payload.data ?? null) as T | null;
+}
+
+function normalizeOutfitSummary(row: BackendOutfitSummary): Outfit {
+  return {
+    id: Number(row.id ?? 0),
+    wornDate: row.wornDate ?? "",
+    photo: row.photo ?? "/1.webp",
+    note: row.note ?? "",
+    occasion: row.occasion ?? "",
+    items: [],
+  };
+}
+
+function normalizeOutfitDetail(row: BackendOutfitDetail): Outfit {
+  return {
+    id: Number(row.id ?? 0),
+    wornDate: row.wornDate ?? "",
+    photo: row.photo ?? "/1.webp",
+    note: row.note ?? "",
+    occasion: row.occasion ?? "",
+    items: Array.isArray(row.items)
+      ? row.items.map((item) => ({
+          id: Number(item.id),
+          name: item.name ?? "",
+          color: item.color ?? ["none", "none", "none"],
+          season: item.season ?? [],
+          type: item.type ?? "其他",
+          style: item.style ?? [],
+          imageUrl: item.imageUrl ?? "/1.webp",
+        }))
+      : [],
+  };
+}
+
+export async function getAllOutfits(userId?: string | number): Promise<Outfit[]> {
+  const resolvedUserId = Number(userId ?? getStoredUserId());
+  if (!Number.isFinite(resolvedUserId) || resolvedUserId <= 0) {
+    return [];
+  }
+
+  const params = new URLSearchParams({ user_id: String(resolvedUserId) });
+  const response = await fetch(`${API_BASE_URL}/api/outfits?${params.toString()}`);
+  const data = await parseResponseData<BackendOutfitSummary[]>(response);
+
+  if (!Array.isArray(data)) {
+    return [];
+  }
+
+  return data.map(normalizeOutfitSummary);
+}
+
+export async function getOutfitDetail(outfitId: string | number): Promise<Outfit | undefined> {
+  const response = await fetch(`${API_BASE_URL}/api/outfits/${outfitId}`);
+  const data = await parseResponseData<BackendOutfitDetail>(response);
+
+  if (!data) {
+    return undefined;
+  }
+
+  return normalizeOutfitDetail(data);
 }
 
 export async function getOutfitById(id: string | number): Promise<Outfit | undefined> {
-  return mockOutfits.find(o => o.id === Number(id));
+  return getOutfitDetail(id);
 }
 
 // Placeholder: delete an outfit by id
 export async function deleteOutfitById(id: string | number): Promise<void> {
-  // TODO: Replace with real backend call
-  return;
+  const response = await fetch(`${API_BASE_URL}/api/outfits/${id}`, {
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    throw new Error("刪除穿搭紀錄失敗");
+  }
 }
 
-// Placeholder: update an outfit (add/remove items, edit name, etc)
+// Update one outfit record (date/occasion/note/items)
 export async function updateOutfit(outfit: Outfit): Promise<Outfit> {
-  // TODO: Replace with real backend call
-  return outfit;
+  const response = await fetch(`${API_BASE_URL}/api/outfits/${outfit.id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      occasion: outfit.occasion,
+      photo: outfit.photo,
+      note: outfit.note,
+      wornDate: outfit.wornDate,
+      item_ids: outfit.items.map((item) => item.id),
+    }),
+  });
+
+  const data = await parseResponseData<BackendOutfitDetail>(response);
+  if (!data) {
+    throw new Error("更新穿搭紀錄失敗");
+  }
+
+  return normalizeOutfitDetail(data);
 }
 
 // TODO: 之後在這裡接後端呼叫取得 occasion 選項列表
-export async function getOutfitOccasionOptions() {
-  return Promise.resolve(["all", "休閒", "工作", "約會"]);
+export async function getOutfitOccasionOptions(userId?: string | number): Promise<string[]> {
+  const resolvedUserId = Number(userId ?? getStoredUserId());
+  if (!Number.isFinite(resolvedUserId) || resolvedUserId <= 0) {
+    return ["all"];
+  }
+
+  const response = await fetch(
+    `${API_BASE_URL}/api/outfits/occasion-options?user_id=${resolvedUserId}`
+  );
+
+  const data = await parseResponseData<string[]>(response);
+  return Array.isArray(data) ? data : ["all"];
+}
+
+// Upload outfit image to /api/outfits/upload-image
+export async function uploadOutfitImage(file: File): Promise<{ path: string; url: string } | null> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const response = await fetch(`${API_BASE_URL}/api/outfits/upload-image`, {
+    method: "POST",
+    body: formData,
+  });
+  if (!response.ok) return null;
+  const payload = await response.json();
+  if (!payload?.success) return null;
+  return { path: payload.path, url: payload.url };
 }

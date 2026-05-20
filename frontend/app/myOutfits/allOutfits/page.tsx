@@ -7,7 +7,7 @@ import { getAllOutfits,getOutfitOccasionOptions } from "@/lib/api/outfits";
 
 import type { Outfit } from "@/lib/types/outfit";
 
-export default function Home() {
+export default function AllOutfitsPage() {
   const [occasionFilter, setOccasionFilter] = useState("all");
   const [outfits, setOutfits] = useState<Outfit[]>([]);
   const [occasionOptions, setOccasionOptions] = useState<string[]>([]);
@@ -57,16 +57,16 @@ export default function Home() {
 
   return (
     <main className="h-[90%] overflow-y-auto bg-[#E2E2E2] px-5 pb-8 pt-6 text-black scrollbar-hide">
-      <div className="mb-5">
+      <div className="mb-5 ">
         <select
           value={occasionFilter}
           onChange={(event) => setOccasionFilter(event.target.value)}
-          className="select h-13 min-h-0 w-72 rounded-2xl border-0 bg-base-100 text-2xl font-medium"
-          aria-label="Occation"
+          className="select h-13 min-h-0 w-full rounded-2xl border-0 bg-base-100 text-2xl font-medium"
+          aria-label="Occasion"
         >
           {occasionOptions.map((option) => (
             <option key={option} value={option}>
-              {option === "all" ? "Occation" : option}
+              {option === "all" ? "All Occasions" : option}
             </option>
           ))}
         </select>
@@ -88,6 +88,8 @@ export default function Home() {
               imageUrl={outfit.photo}
               wornDate={outfit.wornDate}
               occasion={outfit.occasion}
+              href={`/myOutfits/singleOutfit?id=${outfit.id}`}
+              ariaLabel={`查看穿搭 ${outfit.id}`}
             />
           ))}
         </div>

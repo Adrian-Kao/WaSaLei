@@ -63,7 +63,7 @@ export default function CreateItemPage() {
       : `http://127.0.0.1:5000/pictures/output/output.png`;
     return `${base}?t=${Date.now()}`;
   }, [previewUrlParam]);
-  
+
 
   const colorSlots: [string, string, string] = useMemo(
     () =>
@@ -120,133 +120,131 @@ export default function CreateItemPage() {
   }
 
   return (
-    <div className="w-full h-[90%] bg-base-100 px-4 py-8 overflow-scroll no-scrollbar">
-      <div className="mx-auto w-full max-w-2xl">
-        <h1 className="mb-6 text-2xl font-bold">新增衣服</h1>
+    <div className="w-full h-[90%] bg-base-100  overflow-scroll no-scrollbar">
 
-        <div className="card w-full rounded-3xl border border-base-300 bg-base-200 p-6 shadow-sm">
-          <div className="mb-6">
-            <label className="mb-2 block text-sm font-medium">衣服圖片</label>
-            {spaceId ? (
-              <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-base-100">
-                <img
-                  src={imageUrl}
-                  alt="去背後衣服圖片"
-                  className="h-full w-full object-cover"
-                />
-              </div>
+
+      <div className="card w-full border border-base-300 bg-base-200 p-6 shadow-sm">
+        <div className="mb-6">
+
+          {spaceId ? (
+            <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-base-100">
+              <img
+                src={imageUrl}
+                alt="去背後衣服圖片"
+                className="h-full w-full object-cover"
+              />
+            </div>
+          ) : (
+            <div className="flex aspect-square w-full items-center justify-center rounded-2xl border-2 border-dashed border-base-300 bg-base-100 text-sm text-gray-400">
+              尚未收到解析資料，請先從 1-5 頁進入
+            </div>
+          )}
+        </div>
+
+        <div className="mb-6">
+          <label className="mb-2 block text-sm font-medium">解析顏色</label>
+          {detectedColors.length === 0 ? (
+            <>
+              <ColorStrip colors={[]} />
+              <p className="mt-2 text-sm text-gray-400">尚未取得顏色資料</p>
+            </>
+          ) : (
+            <ColorStrip colors={colorSlots} showLabel={true} />
+          )}
+        </div>
+
+        <div className="mb-4">
+          <label className="mb-2 block text-sm font-medium">名稱</label>
+          <input
+            type="text"
+            value={form.name}
+            onChange={(event) => updateFormField("name", event.target.value)}
+            className="input input-bordered w-full"
+            aria-label="衣服名稱"
+          />
+        </div>
+
+        <div className="mb-4">
+          <div className="mb-2 block text-sm font-medium">季節 (可多選)</div>
+          <div className="flex flex-wrap gap-2">
+            {seasonOptions.map((option) => {
+              const selected = form.season.includes(option);
+              return (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => toggleArrayField("season", option)}
+                  className={`btn btn-sm rounded-full ${selected ? "btn-primary" : "btn-outline"}`}
+                >
+                  {option}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="mb-4">
+          <div className="mb-2 block text-sm font-medium">風格 (可多選)</div>
+          <div className="flex flex-wrap gap-2">
+            {styleOptions.map((option) => {
+              const selected = form.style.includes(option);
+              return (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => toggleArrayField("style", option)}
+                  className={`btn btn-sm rounded-full ${selected ? "btn-primary" : "btn-outline"}`}
+                >
+                  {option}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="mb-4">
+          <div className="mb-2 block text-sm font-medium">類型 (單選)</div>
+          <div className="flex flex-wrap gap-2">
+            {typeOptions.map((option) => {
+              const selected = form.type === option;
+              return (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => updateFormField("type", option)}
+                  className={`btn btn-sm rounded-full ${selected ? "btn-primary" : "btn-outline"}`}
+                >
+                  {option}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="mb-6">
+          <label className="mb-2 block text-sm font-medium">備註</label>
+          <textarea
+            value={form.note}
+            onChange={(event) => updateFormField("note", event.target.value)}
+            className="textarea textarea-bordered h-24 w-full"
+            aria-label="衣服備註"
+          />
+        </div>
+
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={handleConfirmCreate}
+            disabled={isSubmitting || !form.name.trim()}
+            className="btn btn-primary"
+            aria-label="確認新增"
+          >
+            {isSubmitting ? (
+              <span className="loading loading-spinner loading-xs" />
             ) : (
-              <div className="flex aspect-square w-full items-center justify-center rounded-2xl border-2 border-dashed border-base-300 bg-base-100 text-sm text-gray-400">
-                尚未收到解析資料，請先從 1-5 頁進入
-              </div>
+              "確認"
             )}
-          </div>
-
-          <div className="mb-6">
-            <label className="mb-2 block text-sm font-medium">解析顏色</label>
-            {detectedColors.length === 0 ? (
-              <>
-                <ColorStrip colors={[]} />
-                <p className="mt-2 text-sm text-gray-400">尚未取得顏色資料</p>
-              </>
-            ) : (
-              <ColorStrip colors={colorSlots} showLabel={true} />
-            )}
-          </div>
-
-          <div className="mb-4">
-            <label className="mb-2 block text-sm font-medium">名稱</label>
-            <input
-              type="text"
-              value={form.name}
-              onChange={(event) => updateFormField("name", event.target.value)}
-              className="input input-bordered w-full"
-              aria-label="衣服名稱"
-            />
-          </div>
-
-          <div className="mb-4">
-            <div className="mb-2 block text-sm font-medium">季節 (可多選)</div>
-            <div className="flex flex-wrap gap-2">
-              {seasonOptions.map((option) => {
-                const selected = form.season.includes(option);
-                return (
-                  <button
-                    key={option}
-                    type="button"
-                    onClick={() => toggleArrayField("season", option)}
-                    className={`btn btn-sm rounded-full ${selected ? "btn-primary" : "btn-outline"}`}
-                  >
-                    {option}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="mb-4">
-            <div className="mb-2 block text-sm font-medium">風格 (可多選)</div>
-            <div className="flex flex-wrap gap-2">
-              {styleOptions.map((option) => {
-                const selected = form.style.includes(option);
-                return (
-                  <button
-                    key={option}
-                    type="button"
-                    onClick={() => toggleArrayField("style", option)}
-                    className={`btn btn-sm rounded-full ${selected ? "btn-primary" : "btn-outline"}`}
-                  >
-                    {option}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="mb-4">
-            <div className="mb-2 block text-sm font-medium">類型 (單選)</div>
-            <div className="flex flex-wrap gap-2">
-              {typeOptions.map((option) => {
-                const selected = form.type === option;
-                return (
-                  <button
-                    key={option}
-                    type="button"
-                    onClick={() => updateFormField("type", option)}
-                    className={`btn btn-sm rounded-full ${selected ? "btn-primary" : "btn-outline"}`}
-                  >
-                    {option}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="mb-6">
-            <label className="mb-2 block text-sm font-medium">備註</label>
-            <textarea
-              value={form.note}
-              onChange={(event) => updateFormField("note", event.target.value)}
-              className="textarea textarea-bordered h-24 w-full"
-              aria-label="衣服備註"
-            />
-          </div>
-
-          <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={handleConfirmCreate}
-              disabled={isSubmitting || !form.name.trim()}
-              className="btn btn-primary"
-              aria-label="確認新增"
-            >
-              {isSubmitting ? (
-                <span className="loading loading-spinner loading-xs" />
-              ) : (
-                "確認"
-              )}
-            </button>
-          </div>
+          </button>
         </div>
       </div>
     </div>

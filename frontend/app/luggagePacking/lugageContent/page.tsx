@@ -68,7 +68,11 @@ export default function LuggageContentPage() {
 		let isMounted = true;
 
 		async function loadFilteredItems() {
-			const nextItems = await getLuggageFilteredItems(filters);
+			const scopedFilters: LuggageSpaceFilters = {
+				...filters,
+				room: [String(luggageId)],
+			};
+			const nextItems = await getLuggageFilteredItems(scopedFilters);
 			if (isMounted) {
 				setFilteredItems(nextItems);
 			}
@@ -79,7 +83,7 @@ export default function LuggageContentPage() {
 		return () => {
 			isMounted = false;
 		};
-	}, [filters]);
+	}, [filters, luggageId]);
 
 	function toggleEditMode() {
 		setIsEditMode((prev) => {
@@ -103,12 +107,26 @@ export default function LuggageContentPage() {
 		router.push(`/luggagePacking/selectItems?luggageId=${luggageId}`);
 	}
 
-	function handleDeleteSelectedItems() {
+	async function handleDeleteSelectedItems() {
 		if (selectedItemIds.length === 0) {
 			return;
 		}
 
-		void requestDeleteLuggageItems(selectedItemIds);
+		const result = await requestDeleteLuggageItems(selectedItemIds);
+		if (!result.success) {
+			console.error("Delete selected items failed:", result.results);
+		}
+
+		const deletedItemIds = result.results
+			.filter((item) => item.ok)
+			.map((item) => item.id);
+
+		if (deletedItemIds.length > 0) {
+			setFilteredItems((prev) =>
+				prev.filter((item) => !deletedItemIds.includes(item.id))
+			);
+		}
+
 		setSelectedItemIds([]);
 	}
 

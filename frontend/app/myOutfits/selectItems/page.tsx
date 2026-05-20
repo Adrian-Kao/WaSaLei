@@ -6,10 +6,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import ClothingFiltersPanel from "@/component/clothing-filters";
 import ItemCard from "@/component/item-card";
 import {
-	addItemsToLuggage,
 	createLuggageSpaceFilters,
 	getAllWardrobeItems,
-	getLuggageRoomOptions,
+	getWardrobeRoomOptions,
 	type LuggageSpaceFilters,
 	type LuggageSpaceItem,
 } from "@/lib/api/luggage";
@@ -20,18 +19,27 @@ const styleOptions = ["日常", "運動", "正式", "其他"];
 const typeOptions = ["上身", "下身", "配件", "鞋類", "其他"];
 const colorOptions = ["#2A3388", "#000000", "#FFFFFF", "#9CA3AF"];
 
+function parseIdList(value: string | null) {
+	if (!value) return [] as number[];
+
+	return value
+		.split(",")
+		.map((rawId) => Number(rawId.trim()))
+		.filter((id) => Number.isFinite(id) && id > 0);
+}
+
 export default function SelectItemsPage() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const userId = useUserStore((state) => state.userId);
 
-	const luggageId = Number(searchParams.get("luggageId") ?? 0);
+	const outfitId = searchParams.get("outfitId") ?? "";
+	const initialSelectedIds = parseIdList(searchParams.get("selectedIds"));
 
 	const [filters, setFilters] = useState<LuggageSpaceFilters>(() => createLuggageSpaceFilters());
 	const [allItems, setAllItems] = useState<LuggageSpaceItem[]>([]);
-	const [selectedItemIds, setSelectedItemIds] = useState<number[]>([]);
+	const [selectedItemIds, setSelectedItemIds] = useState<number[]>(initialSelectedIds);
 	const [roomOptions, setRoomOptions] = useState<string[]>([]);
-	const [isLoading, setIsLoading] = useState(false);
 
 	// 載入所有房間列表
 	useEffect(() => {
@@ -46,7 +54,7 @@ export default function SelectItemsPage() {
 			}
 
 			try {
-				const rooms = await getLuggageRoomOptions(userId);
+				const rooms = await getWardrobeRoomOptions(userId);
 				if (isMounted) {
 					setRoomOptions(rooms);
 				}
@@ -92,24 +100,17 @@ export default function SelectItemsPage() {
 		);
 	}
 
-	async function handleConfirm() {
-		if (selectedItemIds.length === 0) {
+	function handleConfirm() {
+		if (!outfitId || selectedItemIds.length === 0) {
 			return;
 		}
 
-		if (luggageId <= 0) {
-			console.error("Invalid luggage ID");
-			return;
-		}
+		const query = new URLSearchParams({
+			id: outfitId,
+			addedIds: selectedItemIds.join(","),
+		});
 
-		try {
-			setIsLoading(true);
-			await addItemsToLuggage(luggageId, selectedItemIds);
-			router.replace(`/luggagePacking/lugageContent?id=${luggageId}&refresh=${Date.now()}`);
-		} catch (error) {
-			console.error("Failed to add items:", error);
-			setIsLoading(false);
-		}
+		router.push(`/myOutfits/singleOutfit?${query.toString()}`);
 	}
 
 	return (
@@ -149,7 +150,6 @@ export default function SelectItemsPage() {
 					<button
 						type="button"
 						onClick={() => router.back()}
-						disabled={isLoading}
 						className="btn btn-primary btn-outline h-16 min-h-0 rounded-2xl px-12 text-2xl"
 					>
 						取消
@@ -158,10 +158,10 @@ export default function SelectItemsPage() {
 					<button
 						type="button"
 						onClick={handleConfirm}
-						disabled={selectedItemIds.length === 0 || isLoading}
+						disabled={!outfitId || selectedItemIds.length === 0}
 						className="btn btn-primary btn-outline h-16 min-h-0 rounded-2xl px-12 text-2xl"
 					>
-						{isLoading ? "新增中..." : `確認 (${selectedItemIds.length})`}
+						{`確認 (${selectedItemIds.length})`}
 					</button>
 				</div>
 			</section>

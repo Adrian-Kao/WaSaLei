@@ -3,10 +3,20 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { getOutfitById, deleteOutfitById, updateOutfit } from "@/lib/api/outfits";
+import { getOutfitDetail, deleteOutfitById, updateOutfit } from "@/lib/api/outfits";
 import { Outfit } from "@/lib/types/outfit";
 import ItemCard from "@/component/item-card";
 import { FiX } from "react-icons/fi";
+import { createLuggageSpaceFilters, getAllWardrobeItems } from "@/lib/api/luggage";
+
+function parseIdList(value: string | null) {
+  if (!value) return [] as number[];
+
+  return value
+    .split(",")
+    .map((rawId) => Number(rawId.trim()))
+    .filter((id) => Number.isFinite(id) && id > 0);
+}
 
 export default function SingleOutfitPage() {
   const router = useRouter();
@@ -14,16 +24,66 @@ export default function SingleOutfitPage() {
 
   // 測試用：若無 id 參數則預設 '1'（匹配 mockOutfits）
   const id = searchParams.get("id") || '1';
+  const addedIdsParam = searchParams.get("addedIds");
   const [outfit, setOutfit] = useState<Outfit | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [loading, setLoading] = useState(false);
   const [draftOutfit, setDraftOutfit] = useState<Outfit | null>(null);
 
   useEffect(() => {
-    getOutfitById(id).then((outfit) => {
+    getOutfitDetail(id).then((outfit) => {
       setOutfit(outfit ?? null);
     });
   }, [id]);
+
+  useEffect(() => {
+    if (!outfit || !addedIdsParam) {
+      return;
+    }
+
+    const baseOutfit = outfit;
+
+    const addedIds = parseIdList(addedIdsParam);
+    if (addedIds.length === 0) {
+      router.replace(`/myOutfits/singleOutfit?id=${id}`);
+      return;
+    }
+
+    let isMounted = true;
+
+    async function hydrateAddedItems() {
+      try {
+        const allWardrobeItems = await getAllWardrobeItems(createLuggageSpaceFilters());
+        if (!isMounted) return;
+
+        const byId = new Map(allWardrobeItems.map((item) => [item.id, item]));
+        const currentItems = baseOutfit.items;
+        const currentIds = new Set(currentItems.map((item) => item.id));
+        const appendedItems = addedIds
+          .filter((itemId) => !currentIds.has(itemId))
+          .map((itemId) => byId.get(itemId))
+          .filter((item): item is NonNullable<typeof item> => Boolean(item));
+
+        setDraftOutfit({
+          ...baseOutfit,
+          items: [...currentItems, ...appendedItems],
+        });
+        setEditMode(true);
+      } catch (error) {
+        console.error("Failed to hydrate added items:", error);
+      } finally {
+        if (isMounted) {
+          router.replace(`/myOutfits/singleOutfit?id=${id}`);
+        }
+      }
+    }
+
+    void hydrateAddedItems();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [outfit, addedIdsParam, id, router]);
 
   // 進入編輯模式：建立 draft 複本
   function handleEnterEditMode() {
@@ -52,6 +112,17 @@ export default function SingleOutfitPage() {
     );
   }
 
+  function handleGoToSelectItems() {
+    const selectedIds = draftOutfit?.items.map((item) => item.id) ?? [];
+    const selectedIdsParam = selectedIds.join(",");
+    const query = new URLSearchParams({
+      outfitId: String(id),
+      selectedIds: selectedIdsParam,
+    });
+
+    router.push(`/myOutfits/selectItems?${query.toString()}`);
+  }
+
   // 完成編輯：送出 draft 到後端，成功後重新抓資料
   async function handleFinishEdit() {
     if (!draftOutfit) return;
@@ -59,7 +130,7 @@ export default function SingleOutfitPage() {
     try {
       await updateOutfit(draftOutfit);
       // 重新抓最新資料並更新畫面
-      const refreshed = await getOutfitById(draftOutfit.id);
+      const refreshed = await getOutfitDetail(draftOutfit.id);
       setOutfit(refreshed ?? null);
       setDraftOutfit(null);
       setEditMode(false);
@@ -76,7 +147,7 @@ export default function SingleOutfitPage() {
     setLoading(true);
     try {
       await deleteOutfitById(outfit.id);
-      router.push("/myOutfits");
+      router.push("/myOutfits/allOutfits");
     } catch (error) {
       console.error("Failed to delete outfit:", error);
     } finally {
@@ -102,8 +173,7 @@ export default function SingleOutfitPage() {
 
   return (
     <div className="max-w-xl mx-auto p-6 h-[90%] overflow-auto no-scrollbar">
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold">{displayOutfit?.note || "穿搭"}</h1>
+      <div className="mb-4 flex justify-end">
         <button
           className="btn btn-outline btn-sm btn-primary"
           onClick={() => (editMode ? handleFinishEdit() : handleEnterEditMode())}
@@ -113,9 +183,9 @@ export default function SingleOutfitPage() {
         </button>
       </div>
 
-      {outfit.photo && (
-        <img src={outfit.photo} alt="outfit" className="w-full rounded mb-4" />
-      )}
+      
+      <img src={outfit.photo||'/1.webp'} alt="outfit" className="w-full rounded mb-4" />
+      
 
       {/* 日期 */}
       <div className="mb-4">
@@ -171,6 +241,17 @@ export default function SingleOutfitPage() {
       {/* 衣服列表 */}
       <div className="mb-4">
         <label className="block font-semibold mb-1">服裝配件列表</label>
+        {editMode && (
+          <div className="mb-3">
+            <button
+              type="button"
+              className="btn btn-primary btn-outline btn-sm"
+              onClick={handleGoToSelectItems}
+            >
+              + 新增衣物
+            </button>
+          </div>
+        )}
         <div className="grid grid-cols-2 gap-4">
           {(!displayOutfit || displayOutfit.items.length === 0) && <div>無衣物</div>}
           {displayOutfit?.items.map((item) => (

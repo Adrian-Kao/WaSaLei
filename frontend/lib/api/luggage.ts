@@ -164,6 +164,22 @@ export async function getLuggageRoomOptions(userId: string | number): Promise<st
   return luggages.map((luggage) => String(luggage.id));
 }
 
+export async function getWardrobeRoomOptions(userId: string | number): Promise<string[]> {
+  if (!userId) return [];
+
+  const response = await fetch(
+    `${API_BASE_URL}/api/space/user/${userId}?type=${"衣櫃"}`
+  );
+
+  if (!response.ok) return [];
+
+  const data = await response.json();
+  if (!data.success || !Array.isArray(data.data)) return [];
+
+  const spaces = data.data as Array<{ Space_ID: number }>;
+  return spaces.map((space) => String(space.Space_ID));
+}
+
 export async function requestMoveLuggageItemsToRoom(itemIds: number[], targetRoom: string) {
   return requestMoveSelectedItemsToRoom(itemIds, targetRoom);
 }
@@ -172,19 +188,61 @@ export async function requestDeleteLuggageItems(itemIds: number[]) {
   return requestDeleteSelectedItems(itemIds);
 }
 
+/**
+ * 複製衣物到行李箱（調用後端 /api/luggage/items/transfet 使用 mode=copy）
+ * 支持批量複製，每個 item 會複製一份副本到目標行李箱
+ */
+async function requestCopyItemsToLuggage(
+  itemIds: number[],
+  toLuggageId: number
+): Promise<{ success: boolean; failedIds: number[] }> {
+  if (itemIds.length === 0) return { success: true, failedIds: [] };
+
+  const failedIds: number[] = [];
+
+  const results = await Promise.all(
+    itemIds.map(async (itemId) => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/luggage/items/transfet`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            item_id: itemId,
+            to_space_id: toLuggageId,
+            mode: "copy",
+          }),
+        });
+
+        if (!response.ok) {
+          failedIds.push(itemId);
+        }
+      } catch (error) {
+        console.error(`Failed to copy item ${itemId}:`, error);
+        failedIds.push(itemId);
+      }
+    })
+  );
+
+  return { success: failedIds.length === 0, failedIds };
+}
+
 // TODO: 接後端 API 取得所有房間的衣物（可篩選）
 export async function getAllWardrobeItems(filters: LuggageSpaceFilters): Promise<LuggageSpaceItem[]> {
-  const rooms = filters.room && filters.room.length > 0 ? filters.room : await getLuggageRoomOptions(getCurrentUserId() ?? "");
+  const rooms = filters.room && filters.room.length > 0 ? filters.room : await getWardrobeRoomOptions(getCurrentUserId() ?? "");
   const items = await getLuggageItemsByRoomIds(rooms);
   return items.filter((item) => matchesLuggageFilters(item, filters));
 }
 
-// TODO: 接後端 API 新增衣物到行李
+// 複製衣物到行李（調用複製 API，不是移動）
 export async function addItemsToLuggage(luggageId: number, itemIds: number[]): Promise<void> {
   if (itemIds.length === 0) return;
 
-  const result = await requestMoveSelectedItemsToRoom(itemIds, String(luggageId));
+  const result = await requestCopyItemsToLuggage(itemIds, luggageId);
   if (!result.success) {
-    throw new Error("部分衣物移動失敗");
+    if (result.failedIds.length === itemIds.length) {
+      throw new Error("複製衣物失敗");
+    } else {
+      throw new Error(`部分衣物複製失敗，失敗項目: ${result.failedIds.join(", ")}`);
+    }
   }
 }

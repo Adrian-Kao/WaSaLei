@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import Image from "next/image";
 import ItemCard from "@/component/item-card";
 import ColorStrip from "@/component/color-strip";
 import { getItemById, getItemHistory, updateItem, type ClothingItemDetail } from "@/lib/api/clothing";
@@ -208,12 +207,10 @@ export default function ItemDetailPage() {
             <div className="card w-full rounded-3xl border border-base-300 bg-base-200 shadow-sm">
 
               <div className="relative mb-4 aspect-square w-full overflow-hidden rounded-2xl bg-base-100">
-                <Image
+                <img
                   src={detailImageSrc}
                   alt={item.name}
-                  fill
-                  sizes="(max-width: 768px) 70vw, 320px"
-                  className="object-cover"
+                  className="h-full w-full object-cover"
                   onError={() => setDetailImageSrc("/1.webp")}
                 />
               </div>
@@ -358,11 +355,10 @@ export default function ItemDetailPage() {
                       {/* Photo */}
                       {record.photo ? (
                         <div className="relative w-24 h-24 shrink-0 rounded-lg overflow-hidden">
-                          <Image
+                          <img
                             src={record.photo}
                             alt="History photo"
-                            fill
-                            className="object-cover"
+                            className="h-full w-full object-cover"
                           />
                         </div>
                       ) : null}
