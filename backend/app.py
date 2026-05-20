@@ -1,4 +1,4 @@
-﻿import os
+import os
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 
@@ -13,6 +13,7 @@ from services.image_preview import (
 )
 
 app = Flask(__name__)
+app.config["MAX_CONTENT_LENGTH"] = int(os.getenv("MAX_UPLOAD_MB", "12")) * 1024 * 1024
 CORS(app, origins="*")
 
 # Make sure WaSaLei/pictures/input|output|final exist when the server starts.
@@ -606,5 +607,7 @@ def api_upload_outfit_image():
         }), 400
 
 if __name__ == "__main__":
+    debug_enabled = os.getenv("FLASK_DEBUG", "false").lower() in {"1", "true", "yes", "on"}
     print("API started")
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=debug_enabled)
+
