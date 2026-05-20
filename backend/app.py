@@ -329,7 +329,7 @@ def api_move_or_copy_item_to_luggage():
     try:
         item_id = _required_int(data, "item_id")
         to_space_id = _required_int(data, "to_space_id")
-        mode = _required_int(data, "mode")
+        mode = _required_value(data, "mode").strip().lower()
 
         from_space_id = data.get("from_space_id")
         if from_space_id is not None and from_space_id != "":
@@ -424,12 +424,20 @@ def api_get_outfit_detail(history_id):
 @app.post("/api/outfits")
 def api_create_outfit():
     from services.outfits import create_outfit_record
+    from services.image_outfit_upload import move_outfit_to_final
 
     data = request.get_json(silent=True) or request.form.to_dict(flat=True)
 
     success, result = create_outfit_record(data)
 
     if success:
+        photo = data.get("photo") or ""
+        # plain filename (no path separator) → move from prepare to final
+        if photo and "/" not in str(photo) and "\\" not in str(photo):
+            try:
+                move_outfit_to_final(photo)
+            except Exception:
+                pass
         return jsonify({
             "success": True,
             "status": "success",
@@ -572,6 +580,30 @@ def _int_list(value):
     if isinstance(value, str):
         return [int(item.strip()) for item in value.split(",") if item.strip()]
     return [int(value)]
+
+# ==========================================
+# 7. Outfits image upload
+# ==========================================
+@app.post("/api/outfits/upload-image")
+def api_upload_outfit_image():
+    from services.image_outfit_upload import save_outfit_upload_to_prepare
+    file_storage = request.files.get("file") or request.files.get("image")
+    try:
+        save_path = save_outfit_upload_to_prepare(file_storage)
+        # Return relative path for frontend reference
+        rel_path = save_path.relative_to(save_path.parents[3])  # project root
+        return jsonify({
+            "success": True,
+            "status": "success",
+            "path": rel_path.as_posix(),
+            "url": f"/pictures/Outfits/prepare/{save_path.name}"
+        }), 201
+    except Exception as exc:
+        return jsonify({
+            "success": False,
+            "status": "error",
+            "message": str(exc)
+        }), 400
 
 if __name__ == "__main__":
     print("API started")
