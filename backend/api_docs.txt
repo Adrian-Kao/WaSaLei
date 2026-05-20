@@ -542,7 +542,7 @@ GET /api/items/1/outfits
     {
       "imageUrl": "/uploads/history_work_meeting.jpg",
       "wornDate": "2026-05-01",
-      "occasion": "上班會議"
+      "occasion": "上班"
     }
   ]
 }
@@ -689,11 +689,11 @@ multipart/form-data
 
 ## Outfit / History APIs / 穿搭歷史
 
-穿搭日期使用 `wornDate`，格式為 `YYYY-MM-DD`。資料庫欄位為 `history.Worn_Date`。
+穿搭日期使用 `wornDate`，格式為 `YYYY-MM-DD`。資料庫欄位為 `history.Worn_Date`。`occasion` 為固定選項，只能使用：`日常`、`上班`、`正式`、`社交`、`運動`、`旅行`、`其他`。重建資料庫時，`history.Occasion` 也會使用 enum 限制這些值。
 
 ### GET `/api/outfits/occasion-options`
 
-取得指定使用者曾使用過的場合選項，供篩選下拉選單使用。
+取得固定的穿搭場合選項，供篩選下拉選單使用。
 
 Query:
 
@@ -707,7 +707,7 @@ Query:
 {
   "success": true,
   "status": "success",
-  "data": ["all", "上班會議", "週末咖啡廳"]
+  "data": ["all", "日常", "上班", "正式", "社交", "運動", "旅行", "其他"]
 }
 ```
 
@@ -719,7 +719,7 @@ Query:
 
 ```text
 ?user_id=1
-?user_id=1&occasion=上班會議
+?user_id=1&occasion=上班
 ```
 
 成功：`200`
@@ -734,7 +734,7 @@ Query:
       "wornDate": "2026-05-01",
       "photo": "/uploads/history_work_meeting.jpg",
       "note": "正式但不要太沉重。",
-      "occasion": "上班會議",
+      "occasion": "上班",
       "item_ids": [1, 9, 10]
     }
   ]
@@ -762,7 +762,7 @@ GET /api/outfits/1
     "wornDate": "2026-05-01",
     "photo": "/uploads/history_work_meeting.jpg",
     "note": "正式但不要太沉重。",
-    "occasion": "上班會議",
+    "occasion": "上班",
     "items": [
       {
         "id": 1,
@@ -789,7 +789,7 @@ GET /api/outfits/1
 ```json
 {
   "user_id": 1,
-  "occasion": "上班會議",
+  "occasion": "上班",
   "photo": "uploads/history_work_meeting.jpg",
   "note": "正式但不要太沉重。",
   "wornDate": "2026-05-01",
@@ -807,7 +807,7 @@ GET /api/outfits/1
 
 ```json
 {
-  "occasion": "週末咖啡廳",
+  "occasion": "日常",
   "note": "舒適日常穿搭。",
   "wornDate": "2026-05-02",
   "item_ids": [2, 3, 6]

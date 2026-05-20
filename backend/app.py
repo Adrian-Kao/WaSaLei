@@ -420,7 +420,7 @@ def api_get_outfit_detail(history_id):
         "message": result
     }), 404
 
-# Create one outfit history record.
+# 新增outfits
 @app.post("/api/outfits")
 def api_create_outfit():
     from services.outfits import create_outfit_record

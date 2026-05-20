@@ -127,7 +127,7 @@ CREATE TABLE `item_style` (
 
 CREATE TABLE `history` (
   `History_ID` int NOT NULL AUTO_INCREMENT,
-  `Occasion` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `Occasion` enum('日常','上班','正式','社交','運動','旅行','其他') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT '其他',
   `Photo` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `User_ID` int NOT NULL,
   `Note` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -291,11 +291,11 @@ INSERT INTO `item_style` (`Item_ID`, `Style_ID`) VALUES
 
 -- Outfit history records
 INSERT INTO `history` (`History_ID`, `Occasion`, `Photo`, `User_ID`, `Note`, `Worn_Date`) VALUES
-(1, '上班會議', 'uploads/history_work_meeting.jpg', 1, '正式但不要太沉重。', '2026-05-01'),
-(2, '週末咖啡廳', 'uploads/history_weekend_cafe.jpg', 1, '舒適日常穿搭。', '2026-05-02'),
-(3, '短途旅行', 'uploads/history_weekend_trip.jpg', 1, '行李箱內的輕便組合。', '2026-05-03'),
-(4, '健身房', 'uploads/history_gym.jpg', 2, '運動訓練穿搭。', '2026-05-04'),
-(5, '出差雨天', 'uploads/history_business_rain.jpg', 3, '雨天備用穿搭。', '2026-05-05');
+(1, '上班', 'uploads/history_work_meeting.jpg', 1, '正式但不要太沉重。', '2026-05-01'),
+(2, '日常', 'uploads/history_weekend_cafe.jpg', 1, '舒適日常穿搭。', '2026-05-02'),
+(3, '旅行', 'uploads/history_weekend_trip.jpg', 1, '行李箱內的輕便組合。', '2026-05-03'),
+(4, '運動', 'uploads/history_gym.jpg', 2, '運動訓練穿搭。', '2026-05-04'),
+(5, '上班', 'uploads/history_business_rain.jpg', 3, '雨天備用穿搭。', '2026-05-05');
 
 -- Outfit items inside each history entry
 INSERT INTO `history_outfit` (`Outfit_ID`, `History_ID`, `Item_ID`) VALUES

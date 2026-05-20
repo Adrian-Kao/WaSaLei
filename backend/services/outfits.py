@@ -1,4 +1,4 @@
-import sys
+﻿import sys
 import os
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -8,8 +8,16 @@ sys.path.append(parent_dir)
 from database import db
 
 
+OCCASION_OPTIONS = ["日常", "上班", "正式", "社交", "運動", "旅行", "其他"]
+
+
 # Get all outfit records for one user.
 def get_user_outfits(user_id, occasion=None):
+    if occasion == "all":
+        occasion = None
+    if occasion and occasion not in OCCASION_OPTIONS:
+        return []
+
     rows = db.get_outfits_by_user_id(user_id, occasion)
 
     return [
@@ -24,12 +32,13 @@ def get_user_outfits(user_id, occasion=None):
         for row in rows
     ]
 
+
 # Get one outfit detail with item cards.
 def get_outfit_detail(history_id):
     rows = db.get_outfit_by_id(history_id)
 
     if not rows:
-        return False, "找不到指定穿搭紀錄"
+        return False, "找不到指定穿搭歷史"
 
     first = rows[0]
 
@@ -58,17 +67,22 @@ def get_outfit_detail(history_id):
 
     return True, outfit
 
+
 # Create one outfit record.
 def create_outfit_record(data):
     user_id = data.get("user_id")
     if not user_id:
         return False, "user_id is required"
 
+    success, occasion_or_message = _validate_occasion(data.get("occasion") or "其他")
+    if not success:
+        return False, occasion_or_message
+
     item_ids = _normalize_id_list(data.get("item_ids"))
 
     success, result = db.create_outfit(
         user_id=user_id,
-        occasion=data.get("occasion"),
+        occasion=occasion_or_message,
         photo=data.get("photo"),
         note=data.get("note"),
         worn_date=data.get("wornDate") or data.get("worn_date") or data.get("date"),
@@ -80,15 +94,23 @@ def create_outfit_record(data):
 
     return get_outfit_detail(result)
 
+
 # Update one outfit record.
 def update_outfit_record(history_id, data):
     item_ids = None
     if "item_ids" in data:
         item_ids = _normalize_id_list(data.get("item_ids"))
 
+    occasion = None
+    if "occasion" in data:
+        success, occasion_or_message = _validate_occasion(data.get("occasion"))
+        if not success:
+            return False, occasion_or_message
+        occasion = occasion_or_message
+
     success, result = db.update_outfit(
         history_id=history_id,
-        occasion=data.get("occasion") if "occasion" in data else None,
+        occasion=occasion,
         photo=data.get("photo") if "photo" in data else None,
         note=data.get("note") if "note" in data else None,
         worn_date=(data.get("wornDate") or data.get("worn_date") or data.get("date")) if ("wornDate" in data or "worn_date" in data or "date" in data) else None,
@@ -100,14 +122,23 @@ def update_outfit_record(history_id, data):
 
     return get_outfit_detail(history_id)
 
+
 # Delete one outfit record.
 def delete_outfit_record(history_id):
     return db.delete_outfit(history_id)
 
-# Get available occasion filter options.
+
+# Get fixed occasion filter options.
 def get_occasion_options(user_id):
-    options = db.get_outfit_occasion_options(user_id)
-    return ["all"] + options
+    return ["all"] + OCCASION_OPTIONS
+
+
+# Validate occasion against the fixed backend option list.
+def _validate_occasion(value):
+    if value not in OCCASION_OPTIONS:
+        return False, f"occasion must be one of: {', '.join(OCCASION_OPTIONS)}"
+    return True, value
+
 
 # Normalize None, scalar, comma string, or list into int list.
 def _normalize_id_list(value):
@@ -122,17 +153,20 @@ def _normalize_id_list(value):
 
     return [int(value)]
 
+
 # Split comma-separated text into list.
 def _split_text(value):
     if not value:
         return []
     return [item for item in str(value).split(",") if item]
 
+
 # Split comma-separated ids into integer list.
 def _split_ints(value):
     if not value:
         return []
     return [int(item) for item in str(value).split(",") if item]
+
 
 # Make item color array fit frontend ItemCard shape.
 def _to_three_colors(colors):
@@ -141,6 +175,7 @@ def _to_three_colors(colors):
         colors[1] if len(colors) > 1 else "none",
         colors[2] if len(colors) > 2 else "none",
     ]
+
 
 # Convert stored photo path into frontend-friendly URL.
 def _to_photo_url(photo):
@@ -153,11 +188,11 @@ def _to_photo_url(photo):
     if str(photo).startswith("/"):
         return photo
 
-    # plain filename (no path separator) → outfit final directory
     if "/" not in str(photo) and "\\" not in str(photo):
         return f"/pictures/Outfits/final/{photo}"
 
     return f"/{photo}"
+
 
 # Format a database DATE value for frontend wornDate display.
 def _format_date(value):
@@ -166,9 +201,7 @@ def _format_date(value):
 
     return str(value)
 
-# ==========================================
-# 本機測試
-# ==========================================
+
 if __name__ == "__main__":
     print("=== outfits.py local test ===")
 
@@ -189,13 +222,13 @@ if __name__ == "__main__":
     print("success:", success)
     print("result:", result)
 
-    RUN_WRITE_TESTS = True
+    RUN_WRITE_TESTS = False
 
     if RUN_WRITE_TESTS:
         print("\nCreate outfit test")
         success, result = create_outfit_record({
             "user_id": test_user_id,
-            "occasion": "local test",
+            "occasion": "日常",
             "note": "Created by outfits.py local test.",
             "wornDate": "2026-05-09",
             "item_ids": [1, 2],
@@ -208,7 +241,7 @@ if __name__ == "__main__":
 
             print("\nUpdate outfit test")
             success, result = update_outfit_record(created_id, {
-                "occasion": "local test updated",
+                "occasion": "上班",
                 "note": "Updated by outfits.py local test.",
                 "item_ids": [1],
             })
