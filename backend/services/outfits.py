@@ -153,6 +153,10 @@ def _to_photo_url(photo):
     if str(photo).startswith("/"):
         return photo
 
+    # plain filename (no path separator) → outfit final directory
+    if "/" not in str(photo) and "\\" not in str(photo):
+        return f"/pictures/Outfits/final/{photo}"
+
     return f"/{photo}"
 
 # Format a database DATE value for frontend wornDate display.

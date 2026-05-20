@@ -299,7 +299,7 @@ def copy_item_to_space(item_id, to_space_id):
     connection = get_connection()
 
     try:
-        with connection.cursor as cursor:
+        with connection.cursor() as cursor:
             status = get_space_capacity_status(to_space_id)
 
             if status is None:
