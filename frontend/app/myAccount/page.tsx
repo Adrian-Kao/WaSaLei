@@ -2,10 +2,17 @@
 import { useEffect, useState } from "react";
 import { useUserStore } from "@/store/store";
 
+type UserInfo = {
+    User_ID: number;
+    User_Name: string;
+    User_Account: string;
+    Password: string;
+};
+
 type UserDataType = {
     success: boolean;
     status: string;
-    name: string;
+    data: UserInfo;
 };
 
 export default function MyAccountPage() {
@@ -28,7 +35,7 @@ export default function MyAccountPage() {
         }
 
         fetchUser();
-    }, []);
+    }, [userId]);
     return (
         <main className="flex h-[90%] flex-col items-center bg-base-100 px-6 pb-32 pt-10 text-black">
             <div className="avatar mt-4">
@@ -41,12 +48,12 @@ export default function MyAccountPage() {
             </div>
 
             <h1 className="mt-5 text-3xl font-medium">
-                {UserData?.name || "載入中"}
+                {UserData?.data.User_Name || "載入中"}
             </h1>
 
             <section className="mt-28 w-full max-w-xs space-y-8 text-2xl">
-                <p>帳號：1234567</p>
-                <p>密碼：**********</p>
+                <p>帳號：{UserData?.data.User_Account}</p>
+                <p>密碼：{UserData?.data.Password}</p>
             </section>
 
             <button className="btn btn-neutral btn-outline mt-24 h-15 w-40 text-2xl font-medium">
