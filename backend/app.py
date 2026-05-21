@@ -1,4 +1,4 @@
-import os
+﻿import os
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 
@@ -353,6 +353,20 @@ def api_move_or_copy_item_to_luggage():
     
     return jsonify({"success": False, "status": "error", "message": result}), 400
 
+# Generate auto outfit selections from the current filtered candidate items.
+@app.post("/api/luggage/<int:luggage_id>/auto-outfit")
+def api_generate_auto_outfit(luggage_id):
+    from services.auto_packing import generate_auto_outfit_selection
+
+    data = request.get_json(silent=True) or {}
+    candidate_items = data.get("candidate_items") or data.get("items") or []
+
+    success, result = generate_auto_outfit_selection(luggage_id, candidate_items)
+
+    if success:
+        return jsonify({"success": True, "status": "success", "data": result}), 200
+
+    return jsonify({"success": False, "status": "error", "message": result}), 400
 # ==========================================
 # 4. Outfits / History
 # ==========================================
@@ -610,4 +624,5 @@ if __name__ == "__main__":
     debug_enabled = os.getenv("FLASK_DEBUG", "false").lower() in {"1", "true", "yes", "on"}
     print("API started")
     app.run(host="0.0.0.0", port=5000, debug=debug_enabled)
+
 

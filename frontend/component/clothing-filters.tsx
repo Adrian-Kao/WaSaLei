@@ -20,6 +20,8 @@ type ClothingFiltersProps = {
     colorOptions: OptionInput[];
     showRoomFilter?: boolean;
     roomOptions?: OptionInput[];
+    onAutoOutfit?: () => void;
+    autoOutfitDisabled?: boolean;
 };
 
 function toOption(option: OptionInput): FilterSelectOption {
@@ -44,6 +46,8 @@ export default function ClothingFilters({
     colorOptions,
     showRoomFilter = false,
     roomOptions = [],
+    onAutoOutfit,
+    autoOutfitDisabled = false,
 }: ClothingFiltersProps) {
     const toSelectedOptions = (selectedValues: string[] | undefined, options: FilterSelectOption[]) =>
         options.filter((option) => (selectedValues ?? []).includes(option.value));
@@ -125,9 +129,21 @@ export default function ClothingFilters({
         <div className="grid gap-3">
             <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-semibold leading-none">篩選衣服</h2>
-                <button type="button" onClick={clearFilters} className="btn btn-sm rounded-lg bg-white text-black">
-                    清除
-                </button>
+                <div className="flex items-center gap-2">
+                    {onAutoOutfit ? (
+                        <button
+                            type="button"
+                            onClick={onAutoOutfit}
+                            disabled={autoOutfitDisabled}
+                            className="btn btn-sm rounded-lg bg-black text-white disabled:bg-black/30"
+                        >
+                            一鍵穿搭
+                        </button>
+                    ) : null}
+                    <button type="button" onClick={clearFilters} className="btn btn-sm rounded-lg bg-white text-black">
+                        清除
+                    </button>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -217,4 +233,7 @@ export default function ClothingFilters({
         </div>
     );
 }
+
+
+
 

@@ -11,6 +11,7 @@ import {
 	filterLuggageItems,
 	getWardrobeItemsByUserId,
 	getWardrobeRoomSelectOptions,
+	requestAutoOutfitSelection,
 	type LuggageSpaceFilters,
 	type LuggageSpaceItem,
 	type SpaceFilterOption,
@@ -132,6 +133,35 @@ export default function SelectItemsPage() {
 		);
 	}
 
+	async function handleAutoOutfit() {
+		if (filteredItems.length === 0) {
+			window.alert("目前篩選條件下沒有可用衣服。");
+			return;
+		}
+
+		if (luggageId <= 0) {
+			window.alert("找不到指定行李箱。");
+			return;
+		}
+
+		try {
+			const result = await requestAutoOutfitSelection(luggageId, filteredItems);
+
+			if (result.selectedItemIds.length === 0) {
+				window.alert("目前篩選條件下無法產生穿搭。");
+				return;
+			}
+
+			setSelectedItemIds(result.selectedItemIds);
+
+			const warningText = result.warnings.length > 0 ? `\n\n${result.warnings.join("\n")}` : "";
+			window.alert(`已依目前篩選條件產生 ${result.days} 天穿搭，並選取 ${result.selectedItemIds.length} 件衣服。${warningText}`);
+		} catch (error) {
+			console.error("Failed to generate auto outfit:", error);
+			window.alert(error instanceof Error ? error.message : "一鍵穿搭產生失敗");
+		}
+	}
+
 	async function handleConfirm() {
 		if (selectedItemIds.length === 0) {
 			return;
@@ -164,6 +194,8 @@ export default function SelectItemsPage() {
 					colorOptions={colorOptions}
 					showRoomFilter
 					roomOptions={roomOptions}
+					onAutoOutfit={handleAutoOutfit}
+					autoOutfitDisabled={isFetchingItems || filteredItems.length === 0}
 				/>
 			</section>
 

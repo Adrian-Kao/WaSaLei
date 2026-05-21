@@ -215,6 +215,35 @@ export async function getWardrobeFilteredItemsByUserId(
   return filterLuggageItems(items, filters);
 }
 
+export async function requestAutoOutfitSelection(
+  luggageId: number,
+  candidateItems: LuggageSpaceItem[]
+): Promise<{ days: number; selectedItemIds: number[]; warnings: string[] }> {
+  const response = await fetch(`${API_BASE_URL}/api/luggage/${luggageId}/auto-outfit`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      candidate_items: candidateItems.map((item) => ({
+        id: item.id,
+        name: item.name,
+        type: item.type,
+      })),
+    }),
+  });
+
+  const payload = await response.json();
+  if (!response.ok || !payload.success) {
+    throw new Error(payload.message || `API Error: ${response.status}`);
+  }
+
+  return {
+    days: Number(payload.data?.days ?? 1),
+    selectedItemIds: Array.isArray(payload.data?.selected_item_ids)
+      ? payload.data.selected_item_ids.map((id: unknown) => Number(id)).filter((id: number) => Number.isFinite(id))
+      : [],
+    warnings: Array.isArray(payload.data?.warnings) ? payload.data.warnings : [],
+  };
+}
 export async function requestMoveLuggageItemsToRoom(itemIds: number[], targetRoom: string) {
   return requestMoveSelectedItemsToRoom(itemIds, targetRoom);
 }
@@ -269,4 +298,5 @@ export async function addItemsToLuggage(luggageId: number, itemIds: number[]): P
     }
   }
 }
+
 
