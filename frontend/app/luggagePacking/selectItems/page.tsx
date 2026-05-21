@@ -16,18 +16,8 @@ import {
 	type LuggageSpaceItem,
 	type SpaceFilterOption,
 } from "@/lib/api/luggage";
+import { COLOR_OPTIONS, SEASON_OPTIONS, STYLE_OPTIONS, TYPE_OPTIONS } from "@/lib/constants/filter-options";
 import { useUserStore } from "@/store/store";
-
-const defaultSeasonOptions = ["春", "夏", "秋", "冬"];
-const defaultStyleOptions = ["日常", "運動", "正式", "其他"];
-
-function uniqueSorted(values: string[]) {
-	return Array.from(new Set(values.filter(Boolean))).sort((a, b) => a.localeCompare(b, "zh-Hant"));
-}
-
-function uniqueColors(values: string[]) {
-	return Array.from(new Set(values.filter((value) => value && value !== "none")));
-}
 
 export default function SelectItemsPage() {
 	const router = useRouter();
@@ -86,44 +76,7 @@ export default function SelectItemsPage() {
 		};
 	}, [userId]);
 
-	const roomScopedItems = useMemo(() => {
-		if (!filters.room || filters.room.length === 0) {
-			return allItems;
-		}
-
-		return allItems.filter((item) => filters.room?.includes(String(item.roomId ?? "")));
-	}, [allItems, filters.room]);
-
-	const colorOptions = useMemo(
-		() => uniqueColors(roomScopedItems.flatMap((item) => item.color)),
-		[roomScopedItems]
-	);
-
-	useEffect(() => {
-		setFilters((prev) => {
-			const nextColors = prev.color.filter((color) => colorOptions.includes(color));
-			if (nextColors.length === prev.color.length) {
-				return prev;
-			}
-			return { ...prev, color: nextColors };
-		});
-	}, [colorOptions]);
-
 	const filteredItems = useMemo(() => filterLuggageItems(allItems, filters), [allItems, filters]);
-
-	const typeOptions = useMemo(() => uniqueSorted(roomScopedItems.map((item) => item.type)), [roomScopedItems]);
-
-	const seasonOptions = useMemo(() => {
-		const values = uniqueSorted(roomScopedItems.flatMap((item) => item.season));
-		return values.length > 0 ? values : defaultSeasonOptions;
-	}, [roomScopedItems]);
-
-	const styleOptions = useMemo(() => {
-		const values = uniqueSorted(
-			roomScopedItems.flatMap((item) => (Array.isArray(item.style) ? item.style : [item.style]))
-		);
-		return values.length > 0 ? values : defaultStyleOptions;
-	}, [roomScopedItems]);
 
 	function toggleSelectedItem(itemId: number) {
 		setSelectedItemIds((prev) =>
@@ -188,10 +141,10 @@ export default function SelectItemsPage() {
 				<ClothingFiltersPanel
 					filters={filters}
 					setFilters={setFilters}
-					seasonOptions={seasonOptions}
-					styleOptions={styleOptions}
-					typeOptions={typeOptions}
-					colorOptions={colorOptions}
+					seasonOptions={SEASON_OPTIONS}
+					styleOptions={STYLE_OPTIONS}
+					typeOptions={TYPE_OPTIONS}
+					colorOptions={COLOR_OPTIONS}
 					showRoomFilter
 					roomOptions={roomOptions}
 					onAutoOutfit={handleAutoOutfit}

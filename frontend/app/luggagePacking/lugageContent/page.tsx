@@ -15,12 +15,8 @@ import {
 	type LuggageSpaceFilters,
 	type LuggageSpaceItem,
 } from "@/lib/api/luggage";
+import { COLOR_OPTIONS, SEASON_OPTIONS, STYLE_OPTIONS, TYPE_OPTIONS } from "@/lib/constants/filter-options";
 import { useUserStore } from "@/store/store";
-
-const seasonOptions = ["春", "夏", "秋", "冬"];
-const styleOptions = ["日常", "運動", "正式", "其他"];
-const typeOptions = ["上身", "下身", "配件", "鞋類", "其他"];
-const colorOptions = ["#2A3388", "#000000", "#FFFFFF", "#9CA3AF"];
 
 export default function LuggageContentPage() {
 	const router = useRouter();
@@ -29,7 +25,7 @@ export default function LuggageContentPage() {
 
 	const luggageId = Number(searchParams.get("id") ?? 0);
 
-	const [luggageName, setLuggageName] = useState("");
+	const [luggageName, setLuggageName] = useState("我的行李");
 	const [isEditMode, setIsEditMode] = useState(false);
 	const [selectedItemIds, setSelectedItemIds] = useState<number[]>([]);
 	const [filters, setFilters] = useState<LuggageSpaceFilters>(() => createLuggageSpaceFilters());
@@ -55,8 +51,6 @@ export default function LuggageContentPage() {
 
 		if (luggageId > 0) {
 			void loadLuggageName();
-		} else {
-			setLuggageName("我的行李");
 		}
 
 		return () => {
@@ -136,10 +130,10 @@ export default function LuggageContentPage() {
 				<ClothingFiltersPanel
 					filters={filters}
 					setFilters={setFilters}
-					seasonOptions={seasonOptions}
-					styleOptions={styleOptions}
-					typeOptions={typeOptions}
-					colorOptions={colorOptions}
+					seasonOptions={SEASON_OPTIONS}
+					styleOptions={STYLE_OPTIONS}
+					typeOptions={TYPE_OPTIONS}
+					colorOptions={COLOR_OPTIONS}
 
 				/>
 			</section>

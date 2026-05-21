@@ -8,16 +8,13 @@ import ItemCard from "@/component/item-card";
 import {
 	createLuggageSpaceFilters,
 	getWardrobeFilteredItemsByUserId,
-	getWardrobeRoomOptions,
+	getWardrobeRoomSelectOptions,
 	type LuggageSpaceFilters,
 	type LuggageSpaceItem,
+	type SpaceFilterOption,
 } from "@/lib/api/luggage";
+import { COLOR_OPTIONS, SEASON_OPTIONS, STYLE_OPTIONS, TYPE_OPTIONS } from "@/lib/constants/filter-options";
 import { useUserStore } from "@/store/store";
-
-const seasonOptions = ["春", "夏", "秋", "冬"];
-const styleOptions = ["日常", "運動", "正式", "其他"];
-const typeOptions = ["上身", "下身", "配件", "鞋類", "其他"];
-const colorOptions = ["#2A3388", "#000000", "#FFFFFF", "#9CA3AF"];
 
 function parseIdList(value: string | null) {
 	if (!value) return [] as number[];
@@ -39,7 +36,7 @@ export default function SelectItemsPage() {
 	const [filters, setFilters] = useState<LuggageSpaceFilters>(() => createLuggageSpaceFilters());
 	const [allItems, setAllItems] = useState<LuggageSpaceItem[]>([]);
 	const [selectedItemIds, setSelectedItemIds] = useState<number[]>(initialSelectedIds);
-	const [roomOptions, setRoomOptions] = useState<string[]>([]);
+	const [roomOptions, setRoomOptions] = useState<SpaceFilterOption[]>([]);
 
 	// 載入所有房間列表
 	useEffect(() => {
@@ -54,7 +51,7 @@ export default function SelectItemsPage() {
 			}
 
 			try {
-				const rooms = await getWardrobeRoomOptions(userId);
+				const rooms = await getWardrobeRoomSelectOptions(userId);
 				if (isMounted) {
 					setRoomOptions(rooms);
 				}
@@ -136,10 +133,10 @@ export default function SelectItemsPage() {
 				<ClothingFiltersPanel
 					filters={filters}
 					setFilters={setFilters}
-					seasonOptions={seasonOptions}
-					styleOptions={styleOptions}
-					typeOptions={typeOptions}
-					colorOptions={colorOptions}
+					seasonOptions={SEASON_OPTIONS}
+					styleOptions={STYLE_OPTIONS}
+					typeOptions={TYPE_OPTIONS}
+					colorOptions={COLOR_OPTIONS}
 					showRoomFilter
 					roomOptions={roomOptions}
 				/>
