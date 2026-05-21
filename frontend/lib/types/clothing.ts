@@ -1,4 +1,4 @@
-export type ClothingItem = {
+﻿export type ClothingItem = {
   id: number;
   name: string;
   color: [string, string, string];
@@ -6,6 +6,8 @@ export type ClothingItem = {
   type: string;
   style: string | string[];
   imageUrl: string;
+  roomId?: string;
+  roomName?: string;
 };
 
 export type ClothingFilters = {
@@ -15,16 +17,15 @@ export type ClothingFilters = {
   color: string[];
   room?: string[];
 };
-// ??這有用到嗎
+
 export type ItemHistory = {
   id: number;
   itemId: number;
   time: Date;
-  photo?: string; // URL to photo from this wearing/occasion
-  note?: string; // Note about this specific history record
-  occasion?: string; // What occasion this was worn for
+  photo?: string;
+  note?: string;
+  occasion?: string;
 };
-
 
 export const defaultClothingFilters: ClothingFilters = {
   season: [],

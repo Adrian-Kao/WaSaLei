@@ -1,24 +1,39 @@
-import type { Dispatch, SetStateAction } from "react";
+﻿import type { Dispatch, SetStateAction } from "react";
 import Select, { type MultiValue, type StylesConfig } from "react-select";
 
 import type { ClothingFilters } from "@/lib/types/clothing";
 import { colorHexToName } from "@/lib/constants/color-map";
 
-type SelectOption = {
+export type FilterSelectOption = {
     value: string;
     label: string;
 };
 
+type OptionInput = string | FilterSelectOption;
+
 type ClothingFiltersProps = {
     filters: ClothingFilters;
     setFilters: Dispatch<SetStateAction<ClothingFilters>>;
-    seasonOptions: string[];
-    styleOptions: string[];
-    typeOptions: string[];
-    colorOptions: string[];
+    seasonOptions: OptionInput[];
+    styleOptions: OptionInput[];
+    typeOptions: OptionInput[];
+    colorOptions: OptionInput[];
     showRoomFilter?: boolean;
-    roomOptions?: string[];
+    roomOptions?: OptionInput[];
 };
+
+function toOption(option: OptionInput): FilterSelectOption {
+    if (typeof option === "string") {
+        return { value: option, label: option };
+    }
+    return option;
+}
+
+function normalizeOptions(options: OptionInput[]) {
+    return options
+        .map(toOption)
+        .filter((option) => option.value && option.value !== "all");
+}
 
 export default function ClothingFilters({
     filters,
@@ -30,19 +45,18 @@ export default function ClothingFilters({
     showRoomFilter = false,
     roomOptions = [],
 }: ClothingFiltersProps) {
-    const normalizeOptions = (options: string[]) => options.filter((value) => value !== "all").map((value) => ({ value, label: value }));
+    const toSelectedOptions = (selectedValues: string[] | undefined, options: FilterSelectOption[]) =>
+        options.filter((option) => (selectedValues ?? []).includes(option.value));
 
-    const toSelectedOptions = (selectedValues: string[], options: SelectOption[]) =>
-        options.filter((option) => selectedValues.includes(option.value));
+    const toFilterValues = (selected: MultiValue<FilterSelectOption>) => selected.map((option) => option.value);
 
-    const toFilterValues = (selected: MultiValue<SelectOption>) => selected.map((option) => option.value);
-
+    const roomSelectOptions = normalizeOptions(roomOptions);
     const seasonSelectOptions = normalizeOptions(seasonOptions);
     const styleSelectOptions = normalizeOptions(styleOptions);
     const typeSelectOptions = normalizeOptions(typeOptions);
     const colorSelectOptions = normalizeOptions(colorOptions);
 
-    const selectStyles: StylesConfig<SelectOption, true> = {
+    const selectStyles: StylesConfig<FilterSelectOption, true> = {
         control: (base) => ({
             ...base,
             minHeight: 40,
@@ -86,7 +100,7 @@ export default function ClothingFilters({
         }),
     };
 
-    const formatColorOptionLabel = (option: SelectOption) => {
+    const formatColorOptionLabel = (option: FilterSelectOption) => {
         const colorName = colorHexToName(option.value);
         return (
             <span className="flex items-center gap-2">
@@ -96,63 +110,47 @@ export default function ClothingFilters({
         );
     };
 
-    const roomSelectOptions = normalizeOptions(roomOptions);
+    const clearFilters = () => {
+        setFilters((prev) => ({
+            ...prev,
+            room: [],
+            season: [],
+            style: [],
+            type: [],
+            color: [],
+        }));
+    };
 
     return (
         <div className="grid gap-3">
-            {showRoomFilter ? (
-                <div className="space-y-1">
-                    <label className="block text-xl leading-none">room</label>
-                    <Select
-                        instanceId="room-filter-select"
-                        isMulti
-                        closeMenuOnSelect={false}
-                        hideSelectedOptions={false}
-                        options={roomSelectOptions}
-                        value={toSelectedOptions(filters.room ?? [], roomSelectOptions)}
-                        onChange={(selected) => setFilters((prev) => ({ ...prev, room: toFilterValues(selected) }))}
-                        placeholder="全部"
-                        styles={selectStyles}
-                        noOptionsMessage={() => "沒有選項"}
-                    />
-                </div>
-            ) : null}
+            <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-semibold leading-none">篩選衣服</h2>
+                <button type="button" onClick={clearFilters} className="btn btn-sm rounded-lg bg-white text-black">
+                    清除
+                </button>
+            </div>
 
-            <div className="grid grid-cols-1 gap-1">
-                <div className="space-y-1">
-                    <label className="block text-xl leading-none">season</label>
-                    <Select
-                        instanceId="season-filter-select"
-                        isMulti
-                        closeMenuOnSelect={false}
-                        hideSelectedOptions={false}
-                        options={seasonSelectOptions}
-                        value={toSelectedOptions(filters.season, seasonSelectOptions)}
-                        onChange={(selected) => setFilters((prev) => ({ ...prev, season: toFilterValues(selected) }))}
-                        placeholder="全部"
-                        styles={selectStyles}
-                        noOptionsMessage={() => "沒有選項"}
-                    />
-                </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {showRoomFilter ? (
+                    <div className="space-y-1">
+                        <label className="block text-lg leading-none">選擇衣櫃</label>
+                        <Select
+                            instanceId="room-filter-select"
+                            isMulti
+                            closeMenuOnSelect={false}
+                            hideSelectedOptions={false}
+                            options={roomSelectOptions}
+                            value={toSelectedOptions(filters.room, roomSelectOptions)}
+                            onChange={(selected) => setFilters((prev) => ({ ...prev, room: toFilterValues(selected) }))}
+                            placeholder="選擇要從哪個衣櫃挑"
+                            styles={selectStyles}
+                            noOptionsMessage={() => "沒有選項"}
+                        />
+                    </div>
+                ) : null}
 
                 <div className="space-y-1">
-                    <label className="block text-xl leading-none">style</label>
-                    <Select
-                        instanceId="style-filter-select"
-                        isMulti
-                        closeMenuOnSelect={false}
-                        hideSelectedOptions={false}
-                        options={styleSelectOptions}
-                        value={toSelectedOptions(filters.style, styleSelectOptions)}
-                        onChange={(selected) => setFilters((prev) => ({ ...prev, style: toFilterValues(selected) }))}
-                        placeholder="全部"
-                        styles={selectStyles}
-                        noOptionsMessage={() => "沒有選項"}
-                    />
-                </div>
-
-                <div className="space-y-1">
-                    <label className="block text-xl leading-none">type</label>
+                    <label className="block text-lg leading-none">類型</label>
                     <Select
                         instanceId="type-filter-select"
                         isMulti
@@ -161,16 +159,46 @@ export default function ClothingFilters({
                         options={typeSelectOptions}
                         value={toSelectedOptions(filters.type, typeSelectOptions)}
                         onChange={(selected) => setFilters((prev) => ({ ...prev, type: toFilterValues(selected) }))}
-                        placeholder="全部"
+                        placeholder="全部類型"
                         styles={selectStyles}
                         noOptionsMessage={() => "沒有選項"}
                     />
                 </div>
 
                 <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                        <label className="block text-xl leading-none">color</label>
-                    </div>
+                    <label className="block text-lg leading-none">季節</label>
+                    <Select
+                        instanceId="season-filter-select"
+                        isMulti
+                        closeMenuOnSelect={false}
+                        hideSelectedOptions={false}
+                        options={seasonSelectOptions}
+                        value={toSelectedOptions(filters.season, seasonSelectOptions)}
+                        onChange={(selected) => setFilters((prev) => ({ ...prev, season: toFilterValues(selected) }))}
+                        placeholder="全部季節"
+                        styles={selectStyles}
+                        noOptionsMessage={() => "沒有選項"}
+                    />
+                </div>
+
+                <div className="space-y-1">
+                    <label className="block text-lg leading-none">風格</label>
+                    <Select
+                        instanceId="style-filter-select"
+                        isMulti
+                        closeMenuOnSelect={false}
+                        hideSelectedOptions={false}
+                        options={styleSelectOptions}
+                        value={toSelectedOptions(filters.style, styleSelectOptions)}
+                        onChange={(selected) => setFilters((prev) => ({ ...prev, style: toFilterValues(selected) }))}
+                        placeholder="全部風格"
+                        styles={selectStyles}
+                        noOptionsMessage={() => "沒有選項"}
+                    />
+                </div>
+
+                <div className="space-y-1">
+                    <label className="block text-lg leading-none">顏色</label>
                     <Select
                         instanceId="color-filter-select"
                         isMulti
@@ -179,7 +207,7 @@ export default function ClothingFilters({
                         options={colorSelectOptions}
                         value={toSelectedOptions(filters.color, colorSelectOptions)}
                         onChange={(selected) => setFilters((prev) => ({ ...prev, color: toFilterValues(selected) }))}
-                        placeholder="全部"
+                        placeholder="全部顏色"
                         styles={selectStyles}
                         noOptionsMessage={() => "沒有選項"}
                         formatOptionLabel={formatColorOptionLabel}
@@ -189,3 +217,4 @@ export default function ClothingFilters({
         </div>
     );
 }
+

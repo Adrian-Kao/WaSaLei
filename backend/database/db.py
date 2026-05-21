@@ -1,4 +1,4 @@
-import pymysql
+﻿import pymysql
 import config
 
 # ==========================================
@@ -108,8 +108,8 @@ def create_new_space(user_id, space_type, capacity=30, space_name=None):
         with connection.cursor() as cursor:
             sql = """
                 INSERT INTO `Space` 
-                (`Space_Type`, `Capacity`, `Used_Capacity`, `User_ID`, `Space_Name`) 
-                VALUES (%s, %s, 0, %s, %s)
+                (`Space_Type`, `Capacity`, `User_ID`, `Space_Name`) 
+                VALUES (%s, %s, %s, %s)
             """
             cursor.execute(sql, (space_type, capacity, user_id, space_name))
             connection.commit()
@@ -148,7 +148,7 @@ def get_spaces_by_user_id(user_id):
                 WHERE s.User_ID = %s
                 GROUP BY
                     s.Space_ID,
-                    S.Space_Type,
+                    s.Space_Type,
                     s.Space_Name,
                     s.Capacity,
                     s.User_ID
@@ -926,6 +926,7 @@ def get_outfit_occasion_options(user_id):
 
     finally:
         connection.close()
+
 
 
 

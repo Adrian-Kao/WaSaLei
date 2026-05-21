@@ -1,4 +1,4 @@
-import {
+﻿import {
   getSpaceItems,
   requestDeleteSelectedItems,
   requestMoveSelectedItemsToRoom,
@@ -10,14 +10,14 @@ import {
 } from "@/lib/types/clothing";
 import { useUserStore } from "@/store/store";
 
-// 後端返回的 DTO 格式
 interface LuggageDTO {
   id: number;
-  name: string; // 後端直接回傳要顯示的名
+  name: string;
 }
 
 export type LuggageSpaceItem = ClothingItem;
 export type LuggageSpaceFilters = ClothingFilters;
+export type SpaceFilterOption = { value: string; label: string };
 
 export const createLuggageSpaceFilters = createClothingFilters;
 
@@ -27,9 +27,18 @@ function getCurrentUserId() {
   return useUserStore.getState().userId;
 }
 
+export function filterLuggageItems(items: LuggageSpaceItem[], filters: LuggageSpaceFilters) {
+  return items.filter((item) => matchesLuggageFilters(item, filters));
+}
+
 function matchesLuggageFilters(item: LuggageSpaceItem, filters: LuggageSpaceFilters) {
   const itemStyles = Array.isArray(item.style) ? item.style : [item.style];
   const itemColors = item.color.filter((color) => color && color !== "none");
+
+  if ((filters.room?.length ?? 0) > 0 && !filters.room?.includes(String(item.roomId ?? ""))) {
+    return false;
+  }
+
 
   if (filters.season.length > 0 && !filters.season.some((season) => item.season.includes(season))) {
     return false;
@@ -50,10 +59,20 @@ function matchesLuggageFilters(item: LuggageSpaceItem, filters: LuggageSpaceFilt
   return true;
 }
 
-async function getLuggageItemsByRoomIds(roomIds: string[]) {
+async function getLuggageItemsByRoomIds(roomIds: string[], roomNamesById: Record<string, string> = {}) {
   if (roomIds.length === 0) return [];
 
-  const itemsByRoom = await Promise.all(roomIds.map((roomId) => getSpaceItems(roomId)));
+  const itemsByRoom = await Promise.all(
+    roomIds.map(async (roomId) => {
+      const items = await getSpaceItems(roomId);
+      return items.map((item) => ({
+        ...item,
+        roomId,
+        roomName: roomNamesById[roomId] ?? `衣櫃 ${roomId}`,
+      }));
+    })
+  );
+
   const merged = itemsByRoom.flat();
   const deduped = new Map<number, LuggageSpaceItem>();
 
@@ -64,16 +83,11 @@ async function getLuggageItemsByRoomIds(roomIds: string[]) {
   return Array.from(deduped.values());
 }
 
-/**
- * Format luggage name: { note, duration, season } → 單一 name 字串
- * 這裡只負責把前端輸入組成後端要的 name。
- */
 export function formatLuggageName(note: string, duration: string, season: string | string[]): string {
   const seasonStr = Array.isArray(season) ? season.join("") : season;
   return `${note}|${duration}|${seasonStr}`;
 }
 
-// TODO: 接後端 API 取得使用者的行李清單
 export async function getLuggageList(userId: string | number): Promise<LuggageDTO[]> {
   if (!userId) return [];
 
@@ -94,9 +108,6 @@ export async function getLuggageList(userId: string | number): Promise<LuggageDT
   }));
 }
 
-// TODO: 接後端 API 建立新行李
-// 注意：如果行李和衣柜是同一個實體，可以改為調用衣柜的 API 端點
-// 例如：POST /api/wardrobes 或 POST /api/closets
 export async function createLuggage(name: string): Promise<LuggageDTO> {
   const userId = getCurrentUserId();
   if (!userId) {
@@ -113,11 +124,11 @@ export async function createLuggage(name: string): Promise<LuggageDTO> {
         space_name: name,
       }),
     });
-    
+
     if (!response.ok) {
       throw new Error(`API Error: ${response.status}`);
     }
-    
+
     const data = await response.json();
     return {
       id: Number(data.spaceId),
@@ -129,7 +140,6 @@ export async function createLuggage(name: string): Promise<LuggageDTO> {
   }
 }
 
-// TODO: 接後端 API 刪除行李
 export async function deleteLuggage(luggageId: number): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/api/space/${luggageId}`, {
     method: "DELETE",
@@ -150,13 +160,14 @@ export async function getLuggageSpaceItems() {
 
   const luggages = await getLuggageList(userId);
   const roomIds = luggages.map((luggage) => String(luggage.id));
-  return getLuggageItemsByRoomIds(roomIds);
+  const roomNamesById = Object.fromEntries(luggages.map((luggage) => [String(luggage.id), luggage.name]));
+  return getLuggageItemsByRoomIds(roomIds, roomNamesById);
 }
 
 export async function getLuggageFilteredItems(filters: LuggageSpaceFilters) {
   const rooms = filters.room && filters.room.length > 0 ? filters.room : await getLuggageRoomOptions(getCurrentUserId() ?? "");
   const items = await getLuggageItemsByRoomIds(rooms);
-  return items.filter((item) => matchesLuggageFilters(item, filters));
+  return filterLuggageItems(items, filters);
 }
 
 export async function getLuggageRoomOptions(userId: string | number): Promise<string[]> {
@@ -164,7 +175,7 @@ export async function getLuggageRoomOptions(userId: string | number): Promise<st
   return luggages.map((luggage) => String(luggage.id));
 }
 
-export async function getWardrobeRoomOptions(userId: string | number): Promise<string[]> {
+export async function getWardrobeRoomSelectOptions(userId: string | number): Promise<SpaceFilterOption[]> {
   if (!userId) return [];
 
   const response = await fetch(
@@ -176,21 +187,32 @@ export async function getWardrobeRoomOptions(userId: string | number): Promise<s
   const data = await response.json();
   if (!data.success || !Array.isArray(data.data)) return [];
 
-  const spaces = data.data as Array<{ Space_ID: number }>;
-  return spaces.map((space) => String(space.Space_ID));
+  const spaces = data.data as Array<{ Space_ID: number; Space_Name?: string | null }>;
+  return spaces.map((space) => ({
+    value: String(space.Space_ID),
+    label: space.Space_Name?.trim() || `衣櫃 ${space.Space_ID}`,
+  }));
+}
+
+export async function getWardrobeRoomOptions(userId: string | number): Promise<string[]> {
+  const rooms = await getWardrobeRoomSelectOptions(userId);
+  return rooms.map((room) => room.value);
+}
+
+export async function getWardrobeItemsByUserId(userId: string | number): Promise<LuggageSpaceItem[]> {
+  if (!userId) return [];
+
+  const rooms = await getWardrobeRoomSelectOptions(userId);
+  const roomNamesById = Object.fromEntries(rooms.map((room) => [room.value, room.label]));
+  return getLuggageItemsByRoomIds(rooms.map((room) => room.value), roomNamesById);
 }
 
 export async function getWardrobeFilteredItemsByUserId(
   userId: string | number,
   filters: LuggageSpaceFilters,
 ): Promise<LuggageSpaceItem[]> {
-  if (!userId) return [];
-
-  const rooms = filters.room && filters.room.length > 0
-    ? filters.room
-    : await getWardrobeRoomOptions(userId);
-  const items = await getLuggageItemsByRoomIds(rooms);
-  return items.filter((item) => matchesLuggageFilters(item, filters));
+  const items = await getWardrobeItemsByUserId(userId);
+  return filterLuggageItems(items, filters);
 }
 
 export async function requestMoveLuggageItemsToRoom(itemIds: number[], targetRoom: string) {
@@ -201,10 +223,6 @@ export async function requestDeleteLuggageItems(itemIds: number[]) {
   return requestDeleteSelectedItems(itemIds);
 }
 
-/**
- * 複製衣物到行李箱（調用後端 /api/luggage/items/transfet 使用 mode=copy）
- * 支持批量複製，每個 item 會複製一份副本到目標行李箱
- */
 async function requestCopyItemsToLuggage(
   itemIds: number[],
   toLuggageId: number
@@ -213,7 +231,7 @@ async function requestCopyItemsToLuggage(
 
   const failedIds: number[] = [];
 
-  const results = await Promise.all(
+  await Promise.all(
     itemIds.map(async (itemId) => {
       try {
         const response = await fetch(`${API_BASE_URL}/api/luggage/items/transfet`, {
@@ -239,7 +257,6 @@ async function requestCopyItemsToLuggage(
   return { success: failedIds.length === 0, failedIds };
 }
 
-// 複製衣物到行李（調用複製 API，不是移動）
 export async function addItemsToLuggage(luggageId: number, itemIds: number[]): Promise<void> {
   if (itemIds.length === 0) return;
 
@@ -252,3 +269,4 @@ export async function addItemsToLuggage(luggageId: number, itemIds: number[]): P
     }
   }
 }
+
