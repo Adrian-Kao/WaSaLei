@@ -5,16 +5,9 @@ import { useSearchParams } from "next/navigation";
 import ItemCard from "@/component/item-card";
 import ColorStrip from "@/component/color-strip";
 import { getItemById, getItemHistory, updateItem, type ClothingItemDetail } from "@/lib/api/clothing";
+import { SEASON_ID, SEASON_OPTIONS, STYLE_ID, STYLE_OPTIONS, TYPE_ID, TYPE_OPTIONS } from "@/lib/constants/filter-options";
 import type { ItemHistory } from "@/lib/types/clothing";
 import { FiEdit2 } from "react-icons/fi";
-
-const seasonOptions = ["春", "夏", "秋", "冬"];
-const styleOptions = ["運動", "正式", "日常", "社交", "其他"];
-const typeOptions = ["上身長", "上身短", "下身長", "下身短", "配件", "鞋類", "其他"];
-
-const SEASON_ID: Record<string, number> = { 春: 1, 夏: 2, 秋: 3, 冬: 4 };
-const STYLE_ID: Record<string, number> = { 運動: 1, 正式: 2, 日常: 3, 社交: 4, 其他: 5 };
-const TYPE_ID: Record<string, number> = { 上身長: 1, 上身短: 2, 下身長: 3, 下身短: 4, 配件: 5, 鞋類: 6, 其他: 7 };
 
 type EditableItemDraft = {
   name: string;
@@ -235,7 +228,7 @@ export default function ItemDetailPage() {
                 <div className="mb-4">
                   <div className="mb-2 block text-sm font-medium">季節（可多選）</div>
                   <div className="flex flex-wrap gap-2">
-                    {seasonOptions.map((option) => {
+                    {SEASON_OPTIONS.map((option) => {
                       const isSelected = draft.season.includes(option);
 
                       return (
@@ -255,7 +248,7 @@ export default function ItemDetailPage() {
                 <div className="mb-4">
                   <div className="mb-2 block text-sm font-medium">Style（可多選）</div>
                   <div className="flex flex-wrap gap-2">
-                    {styleOptions.map((option) => {
+                    {STYLE_OPTIONS.map((option) => {
                       const isSelected = draft.style.includes(option);
 
                       return (
@@ -275,7 +268,7 @@ export default function ItemDetailPage() {
                 <div className="mb-4">
                   <div className="mb-2 block text-sm font-medium">Type（單選）</div>
                   <div className="flex flex-wrap gap-2">
-                    {typeOptions.map((option) => {
+                    {TYPE_OPTIONS.map((option) => {
                       const isSelected = draft.type === option;
 
                       return (

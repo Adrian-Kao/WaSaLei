@@ -214,7 +214,7 @@ export default function SingleOutfitPage() {
         <label className="block font-semibold mb-1">場合</label>
         {editMode && draftOutfit ? (
           <div className="flex flex-wrap gap-2">
-            {["休閒", "正式", "運動", "其他"].map((opt) => (
+            {["日常", "上班", "正式", "社交", "運動", "旅行", "其他"].map((opt) => (
               <button
                 key={opt}
                 type="button"
