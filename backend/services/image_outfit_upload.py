@@ -14,13 +14,11 @@ OUTFITS_FINAL_DIR = PROJECT_DIR / "pictures" / "Outfits" / "final"
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
 ALLOWED_IMAGE_FORMATS = {"JPEG", "PNG", "WEBP"}
 MAX_IMAGE_PIXELS = 50_000_000
-
-
+# 建立穿搭圖片資料夾。
 def ensure_outfit_folders():
     for folder in (OUTFITS_PREPARE_DIR, OUTFITS_FINAL_DIR):
         folder.mkdir(parents=True, exist_ok=True)
-
-
+# 移動穿搭圖片到正式區。
 def move_outfit_to_final(filename: str) -> Path:
     ensure_outfit_folders()
     safe_filename = secure_filename(filename)
@@ -30,8 +28,7 @@ def move_outfit_to_final(filename: str) -> Path:
     dst = OUTFITS_FINAL_DIR / safe_filename
     shutil.move(str(src), str(dst))
     return dst
-
-
+# 儲存穿搭暫存圖片。
 def save_outfit_upload_to_prepare(file_storage):
     if file_storage is None or not file_storage.filename:
         raise ValueError("No image file was uploaded.")
@@ -50,8 +47,7 @@ def save_outfit_upload_to_prepare(file_storage):
         raise
 
     return save_path
-
-
+# 驗證圖片檔案。
 def _validate_saved_image(path):
     try:
         with Image.open(path) as image:

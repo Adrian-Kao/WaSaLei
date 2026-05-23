@@ -14,24 +14,21 @@ from database import db
 JWT_SECRET = os.getenv("JWT_SECRET", "dev-secret-change-me")
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRES_HOURS = int(os.getenv("JWT_EXPIRES_HOURS", "12"))
-
-
+# 建立登入權杖。
 def create_access_token(user_id):
     payload = {
         "user_id": int(user_id),
         "exp": datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRES_HOURS),
     }
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
-
-
+# 解析登入權杖。
 def decode_access_token(token):
     payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
     user_id = payload.get("user_id")
     if not user_id:
         raise jwt.InvalidTokenError("Missing user_id in token.")
     return int(user_id)
-
-
+# 檢查密碼並支援舊明文。
 def _password_matches(stored_password, plain_password):
     try:
         if check_password_hash(stored_password, plain_password):
@@ -43,9 +40,7 @@ def _password_matches(stored_password, plain_password):
         return True, True
 
     return False, False
-
-
-# Register a new user and store password as hash.
+# 註冊新使用者。
 def register(name, account, password):
     existing_user = db.get_user_by_account(account)
     if existing_user is not None:
@@ -56,9 +51,7 @@ def register(name, account, password):
     if success:
         return True, "Register success."
     return False, "Register failed."
-
-
-# Login user and return JWT token.
+# 登入並回傳權杖。
 def login(account, password):
     user = db.get_user_by_account(account)
 
@@ -75,9 +68,7 @@ def login(account, password):
     token = create_access_token(user["User_ID"])
     user.pop("Password", None)
     return True, {"user": user, "token": token}
-
-
-# Change password after verifying the old password.
+# 修改使用者密碼。
 def changePassword(user_id, old_password, new_password):
     if not old_password:
         return False, "Old password is required."
@@ -102,9 +93,7 @@ def changePassword(user_id, old_password, new_password):
         return True, "Password changed."
 
     return False, "Password change failed."
-
-
-# Get a user's display name by id.
+# 取得使用者名稱。
 def getUserName(user_id):
     user = db.get_user_by_id(user_id)
 
@@ -112,9 +101,7 @@ def getUserName(user_id):
         return False, "User not found."
 
     return True, user["User_Name"]
-
-
-# Get user profile by id. Password is never returned.
+# 取得使用者資料。
 def getUserById(user_id):
     user = db.get_user_by_id(user_id)
 

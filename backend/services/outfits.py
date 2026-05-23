@@ -1,4 +1,4 @@
-﻿import sys
+import sys
 import os
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -9,9 +9,7 @@ from database import db
 
 
 OCCASION_OPTIONS = ["日常", "上班", "正式", "社交", "運動", "旅行", "其他"]
-
-
-# Get all outfit records for one user.
+# 取得使用者穿搭紀錄。
 def get_user_outfits(user_id, occasion=None):
     if occasion == "all":
         occasion = None
@@ -31,9 +29,7 @@ def get_user_outfits(user_id, occasion=None):
         }
         for row in rows
     ]
-
-
-# Get one outfit detail with item cards.
+# 取得穿搭詳細資料。
 def get_outfit_detail(history_id):
     rows = db.get_outfit_by_id(history_id)
 
@@ -66,9 +62,7 @@ def get_outfit_detail(history_id):
         })
 
     return True, outfit
-
-
-# Create one outfit record.
+# 新增穿搭紀錄。
 def create_outfit_record(data):
     user_id = data.get("user_id")
     if not user_id:
@@ -93,9 +87,7 @@ def create_outfit_record(data):
         return False, result
 
     return get_outfit_detail(result)
-
-
-# Update one outfit record.
+# 更新穿搭紀錄。
 def update_outfit_record(history_id, data):
     item_ids = None
     if "item_ids" in data:
@@ -121,26 +113,18 @@ def update_outfit_record(history_id, data):
         return False, result
 
     return get_outfit_detail(history_id)
-
-
-# Delete one outfit record.
+# 刪除穿搭紀錄。
 def delete_outfit_record(history_id):
     return db.delete_outfit(history_id)
-
-
-# Get fixed occasion filter options.
+# 取得場合選項。
 def get_occasion_options(user_id):
     return ["all"] + OCCASION_OPTIONS
-
-
-# Validate occasion against the fixed backend option list.
+# 驗證場合選項。
 def _validate_occasion(value):
     if value not in OCCASION_OPTIONS:
         return False, f"occasion must be one of: {', '.join(OCCASION_OPTIONS)}"
     return True, value
-
-
-# Normalize None, scalar, comma string, or list into int list.
+# 整理多選 ID。
 def _normalize_id_list(value):
     if value is None or value == "":
         return []
@@ -152,32 +136,24 @@ def _normalize_id_list(value):
         return list({int(item.strip()) for item in value.split(",") if item.strip()})
 
     return [int(value)]
-
-
-# Split comma-separated text into list.
+# 分割文字清單。
 def _split_text(value):
     if not value:
         return []
     return [item for item in str(value).split(",") if item]
-
-
-# Split comma-separated ids into integer list.
+# 分割數字清單。
 def _split_ints(value):
     if not value:
         return []
     return [int(item) for item in str(value).split(",") if item]
-
-
-# Make item color array fit frontend ItemCard shape.
+# 補齊三個顏色欄位。
 def _to_three_colors(colors):
     return [
         colors[0] if len(colors) > 0 else "none",
         colors[1] if len(colors) > 1 else "none",
         colors[2] if len(colors) > 2 else "none",
     ]
-
-
-# Convert stored photo path into frontend-friendly URL.
+# 轉成前端圖片網址。
 def _to_photo_url(photo):
     if not photo:
         return "/1.webp"
@@ -192,9 +168,7 @@ def _to_photo_url(photo):
         return f"/pictures/Outfits/final/{photo}"
 
     return f"/{photo}"
-
-
-# Format a database DATE value for frontend wornDate display.
+# 格式化日期。
 def _format_date(value):
     if value is None:
         return ""

@@ -1,4 +1,4 @@
-﻿import re
+import re
 import sys
 from pathlib import Path
 
@@ -7,10 +7,8 @@ parent_dir = current_dir.parent
 sys.path.append(str(parent_dir))
 
 from database import db
-
-
+# 產生行李自動搭配。
 def generate_auto_outfit_selection(luggage_id, candidate_items):
-    """Generate selected item IDs for auto packing from frontend-filtered candidates."""
     luggage = db.get_space_capacity_status(luggage_id)
     if luggage is None:
         return False, "找不到指定行李箱"
@@ -33,8 +31,7 @@ def generate_auto_outfit_selection(luggage_id, candidate_items):
         "selected_item_ids": result["selected_item_ids"],
         "warnings": result["warnings"],
     }
-
-
+# 整理候選衣物資料。
 def _normalize_candidate_item(item):
     try:
         item_id = int(item.get("id") or item.get("item_id"))
@@ -46,8 +43,7 @@ def _normalize_candidate_item(item):
         "name": str(item.get("name") or ""),
         "type": str(item.get("type") or ""),
     }
-
-
+# 解析行李天數。
 def _parse_packing_days(luggage_name):
     parts = [part.strip() for part in str(luggage_name or "").split("|")]
     if len(parts) > 1:
@@ -67,8 +63,7 @@ def _parse_packing_days(luggage_name):
         return max(1, int(first_number.group(0)))
 
     return 1
-
-
+# 判斷衣物分類。
 def _classify_packing_category(type_name):
     value = str(type_name or "")
     if re.search(r"鞋|靴|球鞋|拖鞋|涼鞋|鞋類", value):
@@ -80,14 +75,12 @@ def _classify_packing_category(type_name):
     if re.search(r"衣|上衣|外套|襯衫|毛衣|背心|洋裝|連身|T|tee|衫|上身", value, re.IGNORECASE):
         return "top"
     return "other"
-
-
+# 依天數挑選衣物。
 def _pick_by_day(items, day_index, repeat_every=1):
     if not items:
         return None
     return items[(day_index // repeat_every) % len(items)]
-
-
+# 產生衣物選擇結果。
 def _generate_selection(items, days):
     grouped = {
         "top": [],
@@ -130,8 +123,7 @@ def _generate_selection(items, days):
             _add_selected(selected_ids, selected_seen, item)
 
     return {"selected_item_ids": selected_ids, "warnings": warnings}
-
-
+# 加入已選衣物。
 def _add_selected(selected_ids, selected_seen, item):
     if not item:
         return

@@ -1,4 +1,4 @@
-﻿import sys
+import sys
 import os
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -8,9 +8,7 @@ sys.path.append(parent_dir)
 from database import db
 
 VALID_SPACE_TYPES = ["衣櫃", "行李箱"]
-
-
-# Create a storage space after validating type and capacity.
+# 新增收納空間。
 def add_space(user_id, space_type, capacity, space_name=None):
     if not isinstance(capacity, int) or capacity <= 0:
         return False, None, "容量必須是正整數"
@@ -25,19 +23,16 @@ def add_space(user_id, space_type, capacity, space_name=None):
     if success:
         return True, space_id, f"成功新增空間: {space_type}, 容量: {capacity}"
     return False, None, "新增空間失敗"
-
-# Get all spaces for one user, optionally filtered by space type.
+# 取得使用者空間。
 def get_user_all_spaces(user_id, space_type=None):
     spaces = db.get_spaces_by_user_id(user_id)
     if space_type:
         spaces = [space for space in spaces if space.get("Space_Type") == space_type]
     return spaces
-
-# Return all space types allowed by this service.
+# 取得空間類型。
 def get_predefined_space_types():
     return VALID_SPACE_TYPES
-
-# Get items in one space and format their attributes for frontend use.
+# 取得空間衣物。
 def get_formatted_items(space_id):
     raw_items = db.fetch_raw_items_by_space(space_id)
 
@@ -67,23 +62,20 @@ def get_formatted_items(space_id):
         })
 
     return True, formatted_items
-
-# Get capacity, used count, remaining count, and full status for one space.
+# 取得空間容量狀態。
 def get_capacity_status(space_id):
     status = db.get_space_capacity_status(space_id)
     if status is None:
         return False, "找不到指定空間"
 
     return True, status
-
-# Update one space capacity after validating the new value.
+# 更新空間容量。
 def update_capacity(space_id, capacity):
     if not isinstance(capacity, int) or capacity <= 0:
         return False, "容量必須是正整數"
 
     return db.update_space_capacity(space_id, capacity)
-
-# Delete one space while keeping its items detached from any space.
+# 刪除收納空間。
 def remove_space(space_id):
     return db.delete_space(space_id)
 

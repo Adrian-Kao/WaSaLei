@@ -22,13 +22,11 @@ OUTPUT_FILENAME = "output.png"
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
 ALLOWED_IMAGE_FORMATS = {"JPEG", "PNG", "WEBP"}
 MAX_IMAGE_PIXELS = 50_000_000
-
-
+# 建立衣物圖片資料夾。
 def ensure_picture_folders():
     for folder in (INPUT_DIR, OUTPUT_DIR, FINAL_DIR):
         folder.mkdir(parents=True, exist_ok=True)
-
-
+# 清空指定資料夾。
 def clear_folder(folder_path):
     folder = Path(folder_path)
     folder.mkdir(parents=True, exist_ok=True)
@@ -38,8 +36,7 @@ def clear_folder(folder_path):
             item.unlink()
         elif item.is_dir():
             shutil.rmtree(item)
-
-
+# 儲存上傳原圖。
 def save_upload_to_input(file_storage):
     if file_storage is None or not file_storage.filename:
         raise ValueError("No image file was uploaded.")
@@ -60,8 +57,7 @@ def save_upload_to_input(file_storage):
         raise
 
     return _to_project_relative_path(input_path)
-
-
+# 解析目前原圖。
 def parse_current_input_image(mode="garment"):
     print("start parse")
     input_path = get_current_input_image()
@@ -84,13 +80,11 @@ def parse_current_input_image(mode="garment"):
         "preview_url": "/" + _to_project_relative_path(output_path),
         "colors": result["colors"],
     }
-
-
+# 產生衣物預覽圖。
 def preview_item_image(file_storage, mode="garment"):
     save_upload_to_input(file_storage)
     return parse_current_input_image(mode=mode)
-
-
+# 取得目前原圖。
 def get_current_input_image():
     ensure_picture_folders()
 
@@ -101,8 +95,7 @@ def get_current_input_image():
         raise RuntimeError("pictures/input should contain only one image.")
 
     return input_files[0]
-
-
+# 移動輸出圖到正式區。
 def move_output_to_final():
     ensure_picture_folders()
 
@@ -114,8 +107,7 @@ def move_output_to_final():
     shutil.copy2(str(output_path), str(final_path))
 
     return final_path
-
-
+# 確認圖片並新增衣物。
 def confirm_item_image(
     user_id,
     name,
@@ -159,15 +151,13 @@ def confirm_item_image(
         "photo_path": photo_path,
         "photo_url": "/" + photo_path,
     }
-
-
+# 取得並驗證副檔名。
 def _get_upload_extension(filename):
     ext = Path(filename or "").suffix.lower()
     if ext not in ALLOWED_EXTENSIONS:
         raise ValueError("Only jpg, jpeg, png, and webp images are supported.")
     return ext
-
-
+# 驗證圖片檔案。
 def _validate_saved_image(path):
     try:
         with Image.open(path) as image:
@@ -181,7 +171,6 @@ def _validate_saved_image(path):
             image.verify()
     except UnidentifiedImageError as exc:
         raise ValueError("Uploaded file is not a valid image.") from exc
-
-
+# 轉成專案相對路徑。
 def _to_project_relative_path(path):
     return Path(path).resolve().relative_to(PROJECT_DIR).as_posix()

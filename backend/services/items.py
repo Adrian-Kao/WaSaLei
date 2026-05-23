@@ -6,9 +6,7 @@ parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
 
 from database import db
-
-
-# 新增item
+# 新增衣物資料。
 def create_item_record(user_id, name, space_id, type_id, season_ids, color_ids=None, style_ids=None, photo_path=None, notes=None):
     color_ids = _normalize_id_list(color_ids)
     style_ids = _normalize_id_list(style_ids)
@@ -36,8 +34,7 @@ def create_item_record(user_id, name, space_id, type_id, season_ids, color_ids=N
         photo_path,
         notes,
     )
-
-# 查詢item
+# 取得衣物詳細資料。
 def get_item_detail(item_id):
     item = db.get_item_by_id(item_id)
 
@@ -45,8 +42,7 @@ def get_item_detail(item_id):
         return False, "找不到指定衣服"
 
     return True, _format_item_detail(item)
-
-# 更新item
+# 更新衣物資料。
 def update_item_record(item_id, data):
     season_ids = _normalize_id_list(data.get("season_ids")) if "season_ids" in data else None
     color_ids = _normalize_id_list(data.get("color_ids")) if "color_ids" in data else None
@@ -67,16 +63,13 @@ def update_item_record(item_id, data):
         return False, result
 
     return get_item_detail(item_id)
-
-# 刪除item
+# 刪除衣物資料。
 def delete_item_record(item_id):
     return db.delete_item(item_id)
-
-# 移動item
+# 移動衣物空間。
 def move_item_space(item_id, target_space_id):
     return db.move_item_to_space(item_id, target_space_id)
-
-# 查詢與該item有關的歷史穿搭
+# 取得衣物相關穿搭。
 def getOutfitsByItem(item_id):
     rows = db.get_outfits_by_item(item_id)
 
@@ -92,8 +85,7 @@ def getOutfitsByItem(item_id):
         })
 
     return True, result
-
-# 移動或複製到空間
+# 移動或複製衣物到行李。
 def move_or_copy_item_to_luggage(item_id, from_space_id, to_space_id, mode):
     if mode not in ["move", "copy"]:
         return False, "mode 必須是 move 或 copy"
@@ -121,11 +113,7 @@ def move_or_copy_item_to_luggage(item_id, from_space_id, to_space_id, mode):
         return db.move_item_to_space(item_id, to_space_id)
     
     return db.copy_item_to_space(item_id, to_space_id)
-
-# ==========================================
-# Helper
-# ==========================================
-# Convert one database item row into frontend-friendly JSON.
+# 格式化衣物資料。
 def _format_item_detail(item):
     photo = item.get("Photo")
     return {
@@ -145,8 +133,7 @@ def _format_item_detail(item):
         "color_ids": _split_ints(item.get("Color_IDs")),
         "colors": _split_text(item.get("Colors"), ","),
     }
-
-# Normalize None, scalar, comma string, or list into unique int IDs.
+# 整理多選 ID。
 def _normalize_id_list(value):
     if value is None or value == "":
         return []
@@ -158,14 +145,12 @@ def _normalize_id_list(value):
         return list({int(item.strip()) for item in value.split(",") if item.strip()})
 
     return [int(value)]
-
-# Split a GROUP_CONCAT text field into a list.
+# 分割文字清單。
 def _split_text(value, separator):
     if not value:
         return []
     return value.split(separator)
-
-# Split a GROUP_CONCAT ID field into a list of integers.
+# 分割數字清單。
 def _split_ints(value):
     if not value:
         return []
