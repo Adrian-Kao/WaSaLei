@@ -2,14 +2,18 @@ import os
 from dotenv import load_dotenv
 import pymysql
 
+base_dir = os.path.dirname(os.path.abspath(__file__))
+
+dotenv_path = os.path.join(base_dir, '.env')
+
 # 讀 .env
 load_dotenv()
 
-DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_USER = os.getenv("DB_USER", "root")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "")
-DB_NAME = os.getenv("DB_NAME", "dbms-example")
-DB_PORT = int(os.getenv("DB_PORT", 3306))
+DB_HOST = os.getenv("DB_HOST")
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_NAME = os.getenv("DB_NAME")
+DB_PORT = int(os.getenv("DB_PORT"))
 
 # 測試連線
 def test_connection():
