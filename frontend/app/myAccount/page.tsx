@@ -97,7 +97,7 @@ export default function MyAccountPage() {
 
             <section className="mt-28 w-full max-w-xs space-y-8 text-2xl">
                 <p>帳號：{UserData?.data.User_Account}</p>
-                <p>密碼：{UserData?.data.Password}</p>
+                <p>密碼：********</p>
             </section>
 
             <button
