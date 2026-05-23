@@ -1,4 +1,4 @@
-﻿# WaSaLei 後端 API 文件
+# WaSaLei 後端 API 文件
 
 Base URL:
 
@@ -8,6 +8,26 @@ http://127.0.0.1:5000
 
 ---
 
+## JWT 驗證
+
+除了以下公開 API，其餘 `/api/...` 路由都需要帶 JWT：
+
+```text
+POST /api/auth/login
+POST /api/auth/register
+GET  /api/space/predefined
+```
+
+登入成功後，前端需要保存 `data.token`，後續 API 呼叫都帶上：
+
+```http
+Authorization: Bearer <token>
+```
+
+若沒有 token、token 過期或 token 無效，後端會回傳 `401`。
+若 token 的使用者不是該筆資料的擁有者，後端會回傳 `403`。
+
+---
 ## 通用回應格式
 
 成功：
@@ -144,9 +164,12 @@ GET /images/output.png
   "success": true,
   "status": "success",
   "data": {
-    "User_ID": 1,
-    "User_Name": "測試使用者",
-    "User_Account": "test@example.com"
+    "user": {
+      "User_ID": 1,
+      "User_Name": "測試使用者",
+      "User_Account": "test@example.com"
+    },
+    "token": "JWT_TOKEN"
   }
 }
 ```

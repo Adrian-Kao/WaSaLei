@@ -6,21 +6,22 @@ export const useUserStore = create(
     (set) => ({
       userId: null,
       userName: null,
+      token: null,
       
-      // 更新使用者資訊：會同時更新記憶體與 LocalStorage
-      setUserInfo: (id, name) => set({ userId: id, userName: name }),
+      // 更新使用者資訊，包含 JWT token
+      setUserInfo: (id, name, token = null) => set({ userId: id, userName: name, token }),
       
-      // 登出：清空資料
-      logout: () => set({ userId: null, userName: null }),
+      // 登出並清空登入資料
+      logout: () => set({ userId: null, userName: null, token: null }),
     }),
     {
-      name: 'user-storage', // 儲存在 LocalStorage 裡的 key 名稱
+      name: 'user-storage', // 儲存在 LocalStorage 的 key 名稱
     }
   )
 )
 
 
-// 這下面有用到嗎
+// 建立衣物流程暫存資料
 export const useCreateItemStore = create((set) => ({
   imageUrl: '',
   inputPath: '',

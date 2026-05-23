@@ -17,15 +17,16 @@ export default function RegistrationPage() {
         setLoading(true);
         setError("");
         setSuccess("");
+
         try {
             const res = await registerApi(name, account, password);
             if (res.success) {
-                setSuccess("註冊成功！請前往登入");
+                setSuccess("Register success. Please log in.");
             } else {
-                setError(res.message || "註冊失敗");
+                setError(res.message || "Register failed");
             }
         } catch (err) {
-            setError("伺服器錯誤");
+            setError("Please try again later");
         } finally {
             setLoading(false);
         }
@@ -35,10 +36,10 @@ export default function RegistrationPage() {
         <main className="flex h-full flex-col items-center bg-base-100 px-5 pb-8 pt-12">
             <header>
                 <h1 className="text-center text-[84px] font-semibold leading-none tracking-tight text-black mt-20">
-                    我衫咧
+                    WaSaLei
                 </h1>
                 <p className="mt-2 text-center text-[44px] leading-none tracking-tight text-black">
-                    gua sánn leh
+                    gua sann leh
                 </p>
             </header>
 
@@ -77,19 +78,18 @@ export default function RegistrationPage() {
                     />
 
                     <button className="btn btn-neutral mt-4" type="submit" disabled={loading}>
-                        {loading ? "註冊中..." : "Register"}
+                        {loading ? "Registering..." : "Register"}
                     </button>
                     {error && <div className="text-red-500 mt-2">{error}</div>}
                     {success && <div className="text-green-600 mt-2">{success}</div>}
                     <span
                         className="block mt-4 text-black hover:underline cursor-pointer text-center select-none"
-                        onClick={() => router.push('/login')}
+                        onClick={() => router.push("/login")}
                     >
-                        回到登入頁面
+                        Back to login
                     </span>
                 </fieldset>
             </form>
         </main>
     );
 }
-

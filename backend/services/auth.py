@@ -1,83 +1,130 @@
-﻿import sys
 import os
+import sys
+from datetime import datetime, timedelta, timezone
+
+import jwt
+from werkzeug.security import check_password_hash, generate_password_hash
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
 
 from database import db
-from werkzeug.security import generate_password_hash, check_password_hash
+
+JWT_SECRET = os.getenv("JWT_SECRET", "dev-secret-change-me")
+JWT_ALGORITHM = "HS256"
+JWT_EXPIRES_HOURS = int(os.getenv("JWT_EXPIRES_HOURS", "12"))
 
 
-# 註冊
+def create_access_token(user_id):
+    payload = {
+        "user_id": int(user_id),
+        "exp": datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRES_HOURS),
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+
+def decode_access_token(token):
+    payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+    user_id = payload.get("user_id")
+    if not user_id:
+        raise jwt.InvalidTokenError("Missing user_id in token.")
+    return int(user_id)
+
+
+def _password_matches(stored_password, plain_password):
+    try:
+        if check_password_hash(stored_password, plain_password):
+            return True, False
+    except ValueError:
+        pass
+
+    if stored_password == plain_password:
+        return True, True
+
+    return False, False
+
+
+# Register a new user and store password as hash.
 def register(name, account, password):
     existing_user = db.get_user_by_account(account)
     if existing_user is not None:
-        return False, "帳號已經存在，無法重複註冊"
+        return False, "Account already exists."
 
     password_hash = generate_password_hash(password)
     success = db.insert_new_user(name, account, password_hash)
     if success:
-        return True, "註冊成功"
-    return False, "註冊失敗，請稍後再試"
+        return True, "Register success."
+    return False, "Register failed."
 
-# 登入
+
+# Login user and return JWT token.
 def login(account, password):
     user = db.get_user_by_account(account)
 
     if user is None:
-        return False, "找不到此帳號"
+        return False, "Login failed."
 
-    if check_password_hash(user["Password"], password):
-        user.pop("Password", None)
-        return True, user
+    password_ok, needs_migration = _password_matches(user["Password"], password)
+    if not password_ok:
+        return False, "Login failed."
 
-    return False, "登入失敗"
+    if needs_migration:
+        db.update_user_password(user["User_ID"], generate_password_hash(password))
 
-# 修改密碼
+    token = create_access_token(user["User_ID"])
+    user.pop("Password", None)
+    return True, {"user": user, "token": token}
+
+
+# Change password after verifying the old password.
 def changePassword(user_id, old_password, new_password):
     if not old_password:
-        return False, "舊密碼不能為空"
+        return False, "Old password is required."
     if not new_password:
-        return False, "新密碼不能為空"
+        return False, "New password is required."
     if old_password == new_password:
-        return False, "新舊密碼不能相同"
+        return False, "New password must be different."
 
     user = db.get_user_by_id(user_id)
 
     if not user:
-        return False, "找不到使用者"
-    if not check_password_hash(user["Password"], old_password):
-        return False, "舊密碼輸入錯誤"
-    
+        return False, "User not found."
+
+    password_ok, _ = _password_matches(user["Password"], old_password)
+    if not password_ok:
+        return False, "Old password is incorrect."
+
     new_password_hash = generate_password_hash(new_password)
     success = db.update_user_password(user_id, new_password_hash)
 
     if success:
-        return True, "密碼修改成功"
-    
-    return False, "密碼修改失敗"
+        return True, "Password changed."
 
-# 透過id找使用者
+    return False, "Password change failed."
+
+
+# Get a user's display name by id.
 def getUserName(user_id):
     user = db.get_user_by_id(user_id)
 
     if not user:
-        return False, "找不到使用者"
-    
+        return False, "User not found."
+
     return True, user["User_Name"]
 
+
+# Get user profile by id. Password is never returned.
 def getUserById(user_id):
     user = db.get_user_by_id(user_id)
 
     if user is None:
-        return False, "找不到使用者"
+        return False, "User not found."
 
+    user.pop("Password", None)
     return True, user
 
-# ==========================================
-# 本機測試
-# ==========================================
+
 if __name__ == "__main__":
     print("=== auth.py local test ===")
 
@@ -89,12 +136,13 @@ if __name__ == "__main__":
 
     if success:
         print("Login success")
-        print(f"User_ID: {result.get('User_ID')}")
-        print(f"User_Name: {result.get('User_Name')}")
-        print(f"Membership: {result.get('Membership')}")
+        print(f"User_ID: {result['user'].get('User_ID')}")
+        print(f"User_Name: {result['user'].get('User_Name')}")
+        print(f"Membership: {result['user'].get('Membership')}")
+        print(f"Token exists: {bool(result.get('token'))}")
     else:
         print("Login failed")
         print(result)
 
     print("\nRegister test is intentionally not run to avoid creating duplicate users.")
-    print("To test register manually, call: register('測試2', 'new@example.com', '123456')")
+    print("To test register manually, call: register('Test User', 'new@example.com', '123456')")

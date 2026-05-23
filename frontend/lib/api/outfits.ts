@@ -1,6 +1,5 @@
+import { API_BASE_URL, apiFetch } from "@/lib/api/api-client";
 import { Outfit } from "@/lib/types/outfit";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:5000";
 
 type BackendOutfitSummary = {
   id?: number;
@@ -29,7 +28,7 @@ type BackendOutfitDetail = {
   occasion?: string;
   items?: BackendOutfitDetailItem[];
 };
-// 這不會用到八
+// 從 localStorage 取得目前使用者 id
 function getStoredUserId(): number | null {
   if (typeof window === "undefined") {
     return null;
@@ -118,7 +117,7 @@ export async function getAllOutfits(userId?: string | number): Promise<Outfit[]>
   }
 
   const params = new URLSearchParams({ user_id: String(resolvedUserId) });
-  const response = await fetch(`${API_BASE_URL}/api/outfits?${params.toString()}`);
+  const response = await apiFetch(`/api/outfits?${params.toString()}`);
   const data = await parseResponseData<BackendOutfitSummary[]>(response);
 
   if (!Array.isArray(data)) {
@@ -129,7 +128,7 @@ export async function getAllOutfits(userId?: string | number): Promise<Outfit[]>
 }
 
 export async function getOutfitDetail(outfitId: string | number): Promise<Outfit | undefined> {
-  const response = await fetch(`${API_BASE_URL}/api/outfits/${outfitId}`);
+  const response = await apiFetch(`/api/outfits/${outfitId}`);
   const data = await parseResponseData<BackendOutfitDetail>(response);
 
   if (!data) {
@@ -145,18 +144,18 @@ export async function getOutfitById(id: string | number): Promise<Outfit | undef
 
 // Placeholder: delete an outfit by id
 export async function deleteOutfitById(id: string | number): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/api/outfits/${id}`, {
+  const response = await apiFetch(`/api/outfits/${id}`, {
     method: "DELETE",
   });
 
   if (!response.ok) {
-    throw new Error("刪除穿搭紀錄失敗");
+    throw new Error("刪除穿搭失敗");
   }
 }
 
 // Update one outfit record (date/occasion/note/items)
 export async function updateOutfit(outfit: Outfit): Promise<Outfit> {
-  const response = await fetch(`${API_BASE_URL}/api/outfits/${outfit.id}`, {
+  const response = await apiFetch(`/api/outfits/${outfit.id}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -170,22 +169,20 @@ export async function updateOutfit(outfit: Outfit): Promise<Outfit> {
 
   const data = await parseResponseData<BackendOutfitDetail>(response);
   if (!data) {
-    throw new Error("更新穿搭紀錄失敗");
+    throw new Error("更新穿搭失敗");
   }
 
   return normalizeOutfitDetail(data);
 }
 
-// TODO: 之後在這裡接後端呼叫取得 occasion 選項列表
+// TODO: 從後端取得 occasion 選項列表
 export async function getOutfitOccasionOptions(userId?: string | number): Promise<string[]> {
   const resolvedUserId = Number(userId ?? getStoredUserId());
   if (!Number.isFinite(resolvedUserId) || resolvedUserId <= 0) {
     return ["all"];
   }
 
-  const response = await fetch(
-    `${API_BASE_URL}/api/outfits/occasion-options?user_id=${resolvedUserId}`
-  );
+  const response = await apiFetch(`/api/outfits/occasion-options?user_id=${resolvedUserId}`);
 
   const data = await parseResponseData<string[]>(response);
   return Array.isArray(data) ? data : ["all"];
@@ -195,7 +192,7 @@ export async function getOutfitOccasionOptions(userId?: string | number): Promis
 export async function uploadOutfitImage(file: File): Promise<{ path: string; url: string } | null> {
   const formData = new FormData();
   formData.append("file", file);
-  const response = await fetch(`${API_BASE_URL}/api/outfits/upload-image`, {
+  const response = await apiFetch(`/api/outfits/upload-image`, {
     method: "POST",
     body: formData,
   });
@@ -214,7 +211,7 @@ export async function createOutfit(data: {
   item_ids: number[];
   user_id: number;
 }): Promise<Outfit> {
-  const response = await fetch(`${API_BASE_URL}/api/outfits`, {
+  const response = await apiFetch(`/api/outfits`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -222,7 +219,7 @@ export async function createOutfit(data: {
 
   const payload = await parseResponseData<BackendOutfitDetail>(response);
   if (!payload) {
-    throw new Error("建立穿搭紀錄失敗");
+    throw new Error("建立穿搭失敗");
   }
 
   return normalizeOutfitDetail(payload);

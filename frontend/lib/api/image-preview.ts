@@ -1,5 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:5000";
-
+import { API_BASE_URL, apiFetch } from "@/lib/api/api-client";
 export type ParsedColor = {
   color: string | null;
   percent: number | null;
@@ -29,7 +28,7 @@ export async function uploadInputImage(file: File): Promise<UploadInputResponse>
   const formData = new FormData();
   formData.append("file", file);
 
-  const response = await fetch(`${API_BASE_URL}/api/images/upload-input`, {
+  const response = await apiFetch(`/api/images/upload-input`, {
     method: "POST",
     body: formData,
   });
@@ -39,7 +38,7 @@ export async function uploadInputImage(file: File): Promise<UploadInputResponse>
 
 export async function parseInputImage(mode = "garment"): Promise<ParseInputResponse> {
   console.log("API:", API_BASE_URL);//
-  const response = await fetch(`${API_BASE_URL}/api/images/parse-input`, {
+  const response = await apiFetch(`/api/images/parse-input`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

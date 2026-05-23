@@ -13,7 +13,7 @@ export default function LoginPage() {
     const [success, setSuccess] = useState("");
 
     const router = useRouter();
-    const setUserInfo = useUserStore((state) => state.setUserInfo);
+    const setUserInfo = useUserStore((state: any) => state.setUserInfo);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -23,33 +23,28 @@ export default function LoginPage() {
         try {
             const res = await loginApi(account, password);
             if (res.success) {
-                
-                // 假設後端回傳 user_id 和 user_name
-                setUserInfo(res.data.User_ID, res.data.User_Name);
+                setUserInfo(res.data.user.User_ID, res.data.user.User_Name, res.data.token);
                 router.push("/myWardrobe/1-1");
-                setSuccess("登入成功！");
-
-                console.log("登入成功，使用者資訊已儲存到全局狀態");
-                
+                setSuccess("Login success");
+                console.log("Login success; user info and token saved.");
             } else {
-                setError(res.message || "登入失敗");
+                setError(res.message || "Login failed");
             }
         } catch (err) {
-            setError("伺服器錯誤");
+            setError("Please try again later");
         } finally {
             setLoading(false);
         }
     }
-    
 
     return (
         <main className="flex h-full flex-col items-center bg-base-100 px-5 pb-8 pt-12">
             <header>
                 <h1 className="text-center text-[84px] font-semibold leading-none tracking-tight text-black mt-20">
-                    我衫咧
+                    WaSaLei
                 </h1>
                 <p className="mt-2 text-center text-[44px] leading-none tracking-tight text-black">
-                    gua sánn leh
+                    gua sann leh
                 </p>
             </header>
 
@@ -78,7 +73,7 @@ export default function LoginPage() {
                     />
 
                     <button className="btn btn-neutral mt-4" type="submit" disabled={loading}>
-                        {loading ? "登入中..." : "Login"}
+                        {loading ? "Logging in..." : "Login"}
                     </button>
                     {error && <div className="text-red-500 mt-2">{error}</div>}
                     {success && <div className="text-green-600 mt-2">{success}</div>}
@@ -86,12 +81,11 @@ export default function LoginPage() {
             </form>
 
             <p className="mt-4 text-sm text-base-content/70">
-                尚未登入？
+                No account yet?
                 <Link href="/registration" className="ml-1 underline underline-offset-4 hover:text-base-content">
-                    點此註冊
+                    Register
                 </Link>
             </p>
         </main>
     );
 }
-

@@ -1,4 +1,5 @@
-﻿import {
+import { apiFetch } from "@/lib/api/api-client";
+import {
   getSpaceItems,
   requestDeleteSelectedItems,
   requestMoveSelectedItemsToRoom,
@@ -20,8 +21,6 @@ export type LuggageSpaceFilters = ClothingFilters;
 export type SpaceFilterOption = { value: string; label: string };
 
 export const createLuggageSpaceFilters = createClothingFilters;
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:5000";
 
 function getCurrentUserId() {
   return useUserStore.getState().userId;
@@ -91,9 +90,7 @@ export function formatLuggageName(note: string, duration: string, season: string
 export async function getLuggageList(userId: string | number): Promise<LuggageDTO[]> {
   if (!userId) return [];
 
-  const response = await fetch(
-    `${API_BASE_URL}/api/space/user/${userId}?type=${"行李箱"}`
-  );
+  const response = await apiFetch(`/api/space/user/${userId}?type=${"行李箱"}`);
 
   if (!response.ok) return [];
 
@@ -115,7 +112,7 @@ export async function createLuggage(name: string): Promise<LuggageDTO> {
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}/api/space`, {
+    const response = await apiFetch(`/api/space`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -141,7 +138,7 @@ export async function createLuggage(name: string): Promise<LuggageDTO> {
 }
 
 export async function deleteLuggage(luggageId: number): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/api/space/${luggageId}`, {
+  const response = await apiFetch(`/api/space/${luggageId}`, {
     method: "DELETE",
   });
 
@@ -178,9 +175,7 @@ export async function getLuggageRoomOptions(userId: string | number): Promise<st
 export async function getWardrobeRoomSelectOptions(userId: string | number): Promise<SpaceFilterOption[]> {
   if (!userId) return [];
 
-  const response = await fetch(
-    `${API_BASE_URL}/api/space/user/${userId}?type=${"衣櫃"}`
-  );
+  const response = await apiFetch(`/api/space/user/${userId}?type=${"衣櫃"}`);
 
   if (!response.ok) return [];
 
@@ -219,7 +214,7 @@ export async function requestAutoOutfitSelection(
   luggageId: number,
   candidateItems: LuggageSpaceItem[]
 ): Promise<{ days: number; selectedItemIds: number[]; warnings: string[] }> {
-  const response = await fetch(`${API_BASE_URL}/api/luggage/${luggageId}/auto-outfit`, {
+  const response = await apiFetch(`/api/luggage/${luggageId}/auto-outfit`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -263,7 +258,7 @@ async function requestCopyItemsToLuggage(
   await Promise.all(
     itemIds.map(async (itemId) => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/luggage/items/transfet`, {
+        const response = await apiFetch(`/api/luggage/items/transfet`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -298,5 +293,3 @@ export async function addItemsToLuggage(luggageId: number, itemIds: number[]): P
     }
   }
 }
-
-

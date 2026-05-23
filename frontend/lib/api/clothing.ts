@@ -1,7 +1,6 @@
+import { API_BASE_URL, apiFetch } from "@/lib/api/api-client";
 import type { ClothingItem, ItemHistory } from "@/lib/types/clothing";
 import { normalizeColorToHex } from "@/lib/constants/color-map";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:5000";
 
 const fixedItemUrl = "/1.webp";
 
@@ -36,10 +35,10 @@ function toColorSlot(value?: string | null) {
   return normalizeColorToHex(value) ?? "none";
 }
 
-// 串接後端 API 取得該使用者所有 type 為「衣櫃」的空間名稱
+// Fetch all wardrobe spaces for the current user.
 export async function getUserRooms(userId: string | number): Promise<UserRoom[]> {
   if (!userId) return [];
-  const res = await fetch(`${API_BASE_URL}/api/space/user/${userId}?type=${encodeURIComponent("衣櫃")}`);
+  const res = await apiFetch(`/api/space/user/${userId}?type=${encodeURIComponent("\u8863\u6ac3")}`);
   if (!res.ok) return [];
   const data = await res.json();
   console.log("Fetched user rooms:", data);
@@ -60,12 +59,12 @@ export async function createSpace(
   spaceName: string,
   capacity: number,
 ): Promise<CreateSpaceResult> {
-  const res = await fetch(`${API_BASE_URL}/api/space`, {
+  const res = await apiFetch(`/api/space`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       user_id: userId,
-      space_type: "衣櫃",
+      space_type: "\u8863\u6ac3",
       space_name: spaceName,
       capacity,
     }),
@@ -89,7 +88,7 @@ type BackendSpaceItem = {
 export async function getSpaceItems(spaceId: string | number): Promise<ClothingItem[]> {
   if (!spaceId) return [];
 
-  const res = await fetch(`${API_BASE_URL}/api/space/${spaceId}/items`);
+  const res = await apiFetch(`/api/space/${spaceId}/items`);
   if (!res.ok) return [];
 
   const data = await res.json();
@@ -121,7 +120,7 @@ function toAbsolutePhotoUrl(photoUrl?: string | null, photo?: string | null): st
 export async function getItemById(itemId: number): Promise<ClothingItemDetail | null> {
   if (!itemId) return null;
 
-  const res = await fetch(`${API_BASE_URL}/api/items/${itemId}`);
+  const res = await apiFetch(`/api/items/${itemId}`);
   if (!res.ok) return null;
 
   const payload = await res.json();
@@ -134,7 +133,7 @@ export async function getItemById(itemId: number): Promise<ClothingItemDetail | 
     name: item.name,
     color: toColorTuple(item.colors),
     season: item.seasons ?? [],
-    type: item.type ?? "其他",
+    type: item.type ?? "\u5176\u4ed6",
     style: item.styles ?? [],
     imageUrl: toAbsolutePhotoUrl(item.photo_url, item.photo),
     note: item.notes ?? "",
@@ -160,7 +159,7 @@ export type CreateItemPayload = {
 export async function createItem(
   payload: CreateItemPayload
 ): Promise<number | null> {
-  const res = await fetch(`${API_BASE_URL}/api/items/confirm-image`, {
+  const res = await apiFetch(`/api/items/confirm-image`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -183,7 +182,7 @@ export async function updateItem(
   itemId: number,
   payload: UpdateItemPayload
 ): Promise<ClothingItemDetail | null> {
-  const res = await fetch(`${API_BASE_URL}/api/items/${itemId}`, {
+  const res = await apiFetch(`/api/items/${itemId}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -197,7 +196,7 @@ export async function updateItem(
     name: item.name,
     color: toColorTuple(item.colors),
     season: item.seasons ?? [],
-    type: item.type ?? "其他",
+    type: item.type ?? "\u5176\u4ed6",
     style: item.styles ?? [],
     imageUrl: toAbsolutePhotoUrl(item.photo_url, item.photo),
     note: item.notes ?? "",
@@ -205,7 +204,7 @@ export async function updateItem(
 }
 
 
-// 刪除和移動功能
+// Delete and move selected items.
 type ItemOpResult = { id: number; ok: boolean; status?: number; error?: string };
 
 export async function requestDeleteSelectedItems(
@@ -216,7 +215,7 @@ export async function requestDeleteSelectedItems(
   const results = await Promise.all(
     itemIds.map(async (id): Promise<ItemOpResult> => {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/items/${id}`, { method: "DELETE" });
+        const res = await apiFetch(`/api/items/${id}`, { method: "DELETE" });
         return { id, ok: res.ok, status: res.status };
       } catch (err) {
         return { id, ok: false, error: String(err) };
@@ -238,7 +237,7 @@ export async function requestMoveSelectedItemsToRoom(
   const results = await Promise.all(
     itemIds.map(async (id): Promise<ItemOpResult> => {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/items/${id}`, {
+        const res = await apiFetch(`/api/items/${id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ space_id: spaceId }),
@@ -252,5 +251,3 @@ export async function requestMoveSelectedItemsToRoom(
 
   return { success: results.every((r) => r.ok), results };
 }
-
-

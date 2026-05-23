@@ -1,8 +1,10 @@
-﻿import os
+import os
+
+import jwt
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 
-from services.auth import login, register
+from services.auth import decode_access_token, login, register
 from services.image_preview import (
     PICTURES_DIR,
     confirm_item_image,
@@ -18,6 +20,35 @@ CORS(app, origins="*")
 
 # Make sure WaSaLei/pictures/input|output|final exist when the server starts.
 ensure_picture_folders()
+
+PUBLIC_API_PATHS = {
+    "/api/auth/login",
+    "/api/auth/register",
+    "/api/space/predefined",
+}
+
+
+@app.before_request
+def authenticate_api_request():
+    if request.method == "OPTIONS":
+        return None
+
+    if not request.path.startswith("/api/") or request.path in PUBLIC_API_PATHS:
+        return None
+
+    auth_header = request.headers.get("Authorization", "")
+    if not auth_header.startswith("Bearer "):
+        return jsonify({"success": False, "status": "error", "message": "Missing Authorization token."}), 401
+
+    token = auth_header.removeprefix("Bearer ").strip()
+    try:
+        request.current_user_id = decode_access_token(token)
+    except jwt.ExpiredSignatureError:
+        return jsonify({"success": False, "status": "error", "message": "Token expired."}), 401
+    except jwt.InvalidTokenError:
+        return jsonify({"success": False, "status": "error", "message": "Invalid token."}), 401
+
+    return None
 
 # Return backend health status for quick API availability checks.
 @app.get("/")
@@ -47,11 +78,11 @@ def serve_image(filename):
 # ==========================================
 # 1. Auth
 # ==========================================
-# 註冊
+# Register
 @app.post("/api/auth/register")
 def register_user():
-    # silent = True : 預設情況下，如果前端傳過來的不是json會報錯，加上silent = True就只會回傳None
-    # 若左邊失敗了，就會嘗試讀傳統的Form data
+    # If JSON parsing fails, fall back to traditional form data.
+
     data = request.get_json(silent=True) or request.form.to_dict(flat=True)
 
     try:
@@ -69,9 +100,9 @@ def register_user():
     except ValueError as e:
         return jsonify({"success": False, "status": "error", "message": str(e)}), 400
     except Exception as exc:
-        return jsonify({"success": False, "status": "error", "message": "伺服器內部錯誤"}), 500
+        return jsonify({"success": False, "status": "error", "message": "Server error."}), 500
 
-# 登入
+# Login
 @app.post("/api/auth/login")
 def login_user():
     data = request.get_json(silent=True) or request.form.to_dict(flat=True)
@@ -85,17 +116,20 @@ def login_user():
         if success:
             return jsonify({"success": True, "status": "success", "data": result}), 200
         
-        return jsonify({"success": False, "status": "error", "message": result}), 201
+        return jsonify({"success": False, "status": "error", "message": result}), 401
 
     except ValueError as e:
         return jsonify({"success": False, "status": "error", "message": str(e)}), 400
     except Exception as exc:
-        return jsonify({"success": False, "status": "error", "message": "伺服器內部錯誤"}), 500
+        return jsonify({"success": False, "status": "error", "message": "Server error."}), 500
 
-# 修改密碼
+# Change password
 @app.patch("/api/auth/<int:user_id>/password")
 def api_change_password(user_id):
     from services.auth import changePassword
+
+    if user_id != _current_user_id():
+        return _forbidden_response()
 
     data = request.get_json(silent=True) or request.form.to_dict(flat=True)
 
@@ -109,10 +143,13 @@ def api_change_password(user_id):
     
     return jsonify({"success": False, "status": "error", "message": msg}), 400
 
-# 取得用戶名稱(透過id)
+# Get user profile by id
 @app.get("/api/user/<int:user_id>")
 def api_get_user_name(user_id):
     from services.auth import getUserById
+
+    if user_id != _current_user_id():
+        return _forbidden_response()
 
     success, result = getUserById(user_id)
 
@@ -137,7 +174,7 @@ def api_add_space():
     from services.space import add_space
 
     data = request.get_json(silent=True) or request.form.to_dict(flat=True)
-    user_id = data.get("user_id")
+    user_id = _current_user_id()
     space_type = data.get("space_type")
     space_name = data.get("space_name")
     capacity = _optional_int(data, "capacity") or 30
@@ -160,6 +197,8 @@ def api_add_space():
 @app.route("/api/space/user/<int:user_id>", methods=["GET"])
 def api_get_user_all_spaces(user_id):
     from services.space import get_user_all_spaces
+    if user_id != _current_user_id():
+        return _forbidden_response()
     space_type = request.args.get("type")
     spaces = get_user_all_spaces(user_id, space_type)
     return jsonify({"status": "success", "success": True, "data": spaces}), 200
@@ -168,6 +207,9 @@ def api_get_user_all_spaces(user_id):
 @app.route("/api/space/<int:space_id>/items", methods=["GET"])
 def api_get_space_items(space_id):
     from services.space import get_formatted_items
+
+    if not _space_belongs_to_current_user(space_id):
+        return _forbidden_response()
 
     success, result = get_formatted_items(space_id)
     if success:
@@ -178,6 +220,9 @@ def api_get_space_items(space_id):
 @app.get("/api/space/<int:space_id>/capacity")
 def api_get_space_capacity(space_id):
     from services.space import get_capacity_status
+
+    if not _space_belongs_to_current_user(space_id):
+        return _forbidden_response()
 
     success, result = get_capacity_status(space_id)
 
@@ -190,6 +235,9 @@ def api_get_space_capacity(space_id):
 @app.patch("/api/space/<int:space_id>/capacity")
 def api_update_space_capacity(space_id):
     from services.space import update_capacity
+
+    if not _space_belongs_to_current_user(space_id):
+        return _forbidden_response()
 
     data = request.get_json(silent=True) or request.form.to_dict(flat=True)
 
@@ -210,10 +258,15 @@ def api_update_space_capacity(space_id):
 def api_move_item_space(item_id):
     from services.items import move_item_space
 
+    if not _item_belongs_to_current_user(item_id):
+        return _forbidden_response()
+
     data = request.get_json(silent=True) or request.form.to_dict(flat=True)
 
     try:
         target_space_id = _required_int(data, "space_id")
+        if not _space_belongs_to_current_user(target_space_id):
+            return _forbidden_response()
     except ValueError as e:
         return jsonify({"success": False, "status": "error", "message": str(e)}), 400
 
@@ -228,6 +281,9 @@ def api_move_item_space(item_id):
 @app.delete("/api/space/<int:space_id>")
 def api_delete_space(space_id):
     from services.space import remove_space
+
+    if not _space_belongs_to_current_user(space_id):
+        return _forbidden_response()
 
     success, result = remove_space(space_id)
 
@@ -244,6 +300,9 @@ def api_delete_space(space_id):
 def api_get_item_detail(item_id):
     from services.items import get_item_detail
 
+    if not _item_belongs_to_current_user(item_id):
+        return _forbidden_response()
+
     success, result = get_item_detail(item_id)
 
     if success:
@@ -255,6 +314,9 @@ def api_get_item_detail(item_id):
 @app.patch("/api/items/<int:item_id>")
 def api_update_item(item_id):
     from services.items import update_item_record
+
+    if not _item_belongs_to_current_user(item_id):
+        return _forbidden_response()
 
     data = request.get_json(silent=True) or request.form.to_dict(flat=True)
 
@@ -269,6 +331,9 @@ def api_update_item(item_id):
 @app.delete("/api/items/<int:item_id>")
 def api_delete_item(item_id):
     from services.items import delete_item_record
+
+    if not _item_belongs_to_current_user(item_id):
+        return _forbidden_response()
 
     success, result = delete_item_record(item_id)
 
@@ -296,11 +361,11 @@ def confirm_image():
 
     try:
         result = confirm_item_image(
-            user_id=_required_int(data, "user_id"),
+            user_id=_current_user_id(),
             name=_required_value(data, "name"),
             space_id=_optional_int(data, "space_id"),
             type_id=_optional_int(data, "type_id"),
-            season_ids=_int_list(data.get("season_ids")) or data.get("season"),
+            season_ids=_int_list(data.get("season_ids") or data.get("season")),
             color_ids=_int_list(data.get("color_ids")),
             style_ids=_int_list(data.get("style_ids")),
             notes=data.get("notes") or None,
@@ -313,6 +378,9 @@ def confirm_image():
 def api_get_outfits_by_item(item_id):
     from services.items import getOutfitsByItem
 
+    if not _item_belongs_to_current_user(item_id):
+        return _forbidden_response()
+
     success, result = getOutfitsByItem(item_id)
 
     if success:
@@ -320,7 +388,7 @@ def api_get_outfits_by_item(item_id):
     
     return jsonify({"success": False, "status": "error", "message": result}), 404
 
-# 移動或複製衣物到行李箱
+# Move or copy item to luggage
 @app.post("/api/luggage/items/transfet")
 def api_move_or_copy_item_to_luggage():
     from services.items import move_or_copy_item_to_luggage
@@ -330,6 +398,8 @@ def api_move_or_copy_item_to_luggage():
     try:
         item_id = _required_int(data, "item_id")
         to_space_id = _required_int(data, "to_space_id")
+        if not _item_belongs_to_current_user(item_id) or not _space_belongs_to_current_user(to_space_id):
+            return _forbidden_response()
         mode = _required_value(data, "mode").strip().lower()
 
         from_space_id = data.get("from_space_id")
@@ -358,6 +428,9 @@ def api_move_or_copy_item_to_luggage():
 def api_generate_auto_outfit(luggage_id):
     from services.auto_packing import generate_auto_outfit_selection
 
+    if not _space_belongs_to_current_user(luggage_id):
+        return _forbidden_response()
+
     data = request.get_json(silent=True) or {}
     candidate_items = data.get("candidate_items") or data.get("items") or []
 
@@ -375,14 +448,7 @@ def api_generate_auto_outfit(luggage_id):
 def api_get_outfit_occasion_options():
     from services.outfits import get_occasion_options
 
-    user_id = request.args.get("user_id")
-
-    if not user_id:
-        return jsonify({
-            "success": False,
-            "status": "error",
-            "message": "Missing user_id."
-        }), 400
+    user_id = _current_user_id()
 
     options = get_occasion_options(user_id)
 
@@ -397,15 +463,8 @@ def api_get_outfit_occasion_options():
 def api_get_outfits():
     from services.outfits import get_user_outfits
 
-    user_id = request.args.get("user_id")
+    user_id = _current_user_id()
     occasion = request.args.get("occasion")
-
-    if not user_id:
-        return jsonify({
-            "success": False,
-            "status": "error",
-            "message": "Missing user_id."
-        }), 400
 
     outfits = get_user_outfits(user_id, occasion)
 
@@ -419,6 +478,9 @@ def api_get_outfits():
 @app.get("/api/outfits/<int:history_id>")
 def api_get_outfit_detail(history_id):
     from services.outfits import get_outfit_detail
+
+    if not _outfit_belongs_to_current_user(history_id):
+        return _forbidden_response()
 
     success, result = get_outfit_detail(history_id)
 
@@ -435,19 +497,20 @@ def api_get_outfit_detail(history_id):
         "message": result
     }), 404
 
-# 新增outfits
+# Create outfit
 @app.post("/api/outfits")
 def api_create_outfit():
     from services.outfits import create_outfit_record
     from services.image_outfit_upload import move_outfit_to_final
 
     data = request.get_json(silent=True) or request.form.to_dict(flat=True)
+    data["user_id"] = _current_user_id()
 
     success, result = create_outfit_record(data)
 
     if success:
         photo = data.get("photo") or ""
-        # plain filename (no path separator) → move from prepare to final
+        # plain filename (no path separator) ??move from prepare to final
         if photo and "/" not in str(photo) and "\\" not in str(photo):
             try:
                 move_outfit_to_final(photo)
@@ -470,6 +533,9 @@ def api_create_outfit():
 def api_update_outfit(history_id):
     from services.outfits import update_outfit_record
 
+    if not _outfit_belongs_to_current_user(history_id):
+        return _forbidden_response()
+
     data = request.get_json(silent=True) or request.form.to_dict(flat=True)
 
     success, result = update_outfit_record(history_id, data)
@@ -491,6 +557,9 @@ def api_update_outfit(history_id):
 @app.delete("/api/outfits/<int:history_id>")
 def api_delete_outfit(history_id):
     from services.outfits import delete_outfit_record
+
+    if not _outfit_belongs_to_current_user(history_id):
+        return _forbidden_response()
 
     success, result = delete_outfit_record(history_id)
 
@@ -516,10 +585,7 @@ def api_search_wardrobe():
     from services.search import search_wardrobe
 
     data = request.get_json(silent=True) or request.args.to_dict(flat=True)
-    user_id = data.get("user_id")
-
-    if not user_id:
-        return jsonify({"status": "error", "success": False, "message": "Missing user_id."}), 400
+    user_id = _current_user_id()
 
     success, result = search_wardrobe(
         user_id,
@@ -564,6 +630,34 @@ def parse_input_image():
 # ==========================================
 # Helpers
 # ==========================================
+
+def _current_user_id():
+    return int(getattr(request, "current_user_id"))
+
+
+def _forbidden_response():
+    return jsonify({"success": False, "status": "error", "message": "Forbidden."}), 403
+
+
+def _space_belongs_to_current_user(space_id):
+    from services.space import get_capacity_status
+
+    success, status = get_capacity_status(space_id)
+    return success and int(status.get("User_ID")) == _current_user_id()
+
+
+def _item_belongs_to_current_user(item_id):
+    from services.items import get_item_detail
+
+    success, item = get_item_detail(item_id)
+    return success and int(item.get("user_id")) == _current_user_id()
+
+
+def _outfit_belongs_to_current_user(history_id):
+    from database import db
+
+    rows = db.get_outfit_by_id(history_id)
+    return bool(rows) and int(rows[0].get("User_ID")) == _current_user_id()
 # Convert a boolean success flag into a response status string.
 def _status(success):
     return "success" if success else "error"
@@ -624,5 +718,3 @@ if __name__ == "__main__":
     debug_enabled = os.getenv("FLASK_DEBUG", "false").lower() in {"1", "true", "yes", "on"}
     print("API started")
     app.run(host="0.0.0.0", port=5000, debug=debug_enabled)
-
-
