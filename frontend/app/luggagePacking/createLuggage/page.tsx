@@ -148,13 +148,13 @@ export default function CreateLuggagePage() {
       {error && <div className="mb-5 w-full max-w-125 rounded bg-[#ffebee] px-3 py-3 text-sm text-[#d32f2f]">{error}</div>}
 
       <div className="mt-5 flex w-full flex-col gap-4">
-        <button
+        {/* <button
           onClick={handleConfirm}
           className="btn btn-primary btn-outline h-16 min-h-0 w-full rounded-2xl text-xl"
           disabled={loading}
         >
           {loading ? "處理中..." : "確認"}
-        </button>
+        </button> */}
 
         <button
           onClick={handleAutoPack}
