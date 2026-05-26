@@ -1,13 +1,21 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createLuggage, formatLuggageName } from "@/lib/api/luggage";
+import {
+  addItemsToLuggage,
+  createLuggage,
+  formatLuggageName,
+  getWardrobeItemsByUserId,
+  requestAutoOutfitSelection,
+} from "@/lib/api/luggage";
+import { useUserStore } from "@/store/store";
 
 const SEASON_OPTIONS = ["春", "夏", "秋", "冬"];
 
 export default function CreateLuggagePage() {
   const router = useRouter();
+  const userId = useUserStore((state) => state.userId);
   const [destination, setDestination] = useState("");
   const [days, setDays] = useState("");
   const [season, setSeason] = useState<string[]>([]);
@@ -22,21 +30,68 @@ export default function CreateLuggagePage() {
     );
   };
 
-  const handleConfirm = async () => {
+  function validateForm() {
     if (!destination.trim() || !days.trim() || season.length === 0) {
       setError("請填寫所有欄位");
-      return;
+      return false;
     }
+
+    if (!userId) {
+      setError("請先登入後再建立行李");
+      return false;
+    }
+
+    return true;
+  }
+
+  async function createCurrentLuggage() {
+    const name = formatLuggageName(destination, days, season);
+    return createLuggage(name);
+  }
+
+  const handleConfirm = async () => {
+    if (!validateForm()) return;
 
     setLoading(true);
     setError("");
 
     try {
-      const name = formatLuggageName(destination, days, season);
-      await createLuggage(name);
+      await createCurrentLuggage();
       router.push("/luggagePacking/luggageHome");
     } catch (err) {
       setError(err instanceof Error ? err.message : "建立行李失敗");
+      setLoading(false);
+    }
+  };
+
+  const handleAutoPack = async () => {
+    if (!validateForm()) return;
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const luggage = await createCurrentLuggage();
+      const wardrobeItems = await getWardrobeItemsByUserId(userId as string | number);
+      const seasonMatchedItems = wardrobeItems.filter((item) =>
+        season.some((selectedSeason) => item.season.includes(selectedSeason))
+      );
+      const candidateItems = seasonMatchedItems.length > 0 ? seasonMatchedItems : wardrobeItems;
+
+      if (candidateItems.length === 0) {
+        router.push(`/luggagePacking/lugageContent?id=${luggage.id}`);
+        return;
+      }
+
+      const result = await requestAutoOutfitSelection(luggage.id, candidateItems);
+
+      if (result.selectedItemIds.length > 0) {
+        await addItemsToLuggage(luggage.id, result.selectedItemIds);
+      }
+
+      router.push(`/luggagePacking/lugageContent?id=${luggage.id}&refresh=${Date.now()}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "一鍵穿搭失敗");
       setLoading(false);
     }
   };
@@ -92,13 +147,23 @@ export default function CreateLuggagePage() {
 
       {error && <div className="mb-5 w-full max-w-125 rounded bg-[#ffebee] px-3 py-3 text-sm text-[#d32f2f]">{error}</div>}
 
-      <button
-        onClick={handleConfirm}
-        className="mt-5 btn btn-primary btn-outline h-16 min-h-0 w-full rounded-2xl text-xl"
-        disabled={loading}
-      >
-        {loading ? "處理中..." : "確認"}
-      </button>
+      <div className="mt-5 flex w-full flex-col gap-4">
+        <button
+          onClick={handleConfirm}
+          className="btn btn-primary btn-outline h-16 min-h-0 w-full rounded-2xl text-xl"
+          disabled={loading}
+        >
+          {loading ? "處理中..." : "確認"}
+        </button>
+
+        <button
+          onClick={handleAutoPack}
+          className="btn btn-neutral h-16 min-h-0 w-full rounded-2xl text-xl"
+          disabled={loading}
+        >
+          {loading ? "處理中..." : "一鍵穿搭"}
+        </button>
+      </div>
     </div>
   );
 }
