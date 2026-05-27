@@ -79,7 +79,8 @@ def getOutfitsByItem(item_id):
         photo = row.get("Photo")
 
         result.append({
-            "imageUrl": f"/{photo}" if photo else None,
+            "id": row.get("History_ID"),
+            "imageUrl": _to_photo_url(photo),
             "wornDate": str(row.get("Worn_Date")) if row.get("Worn_Date") else None,
             "occasion": row.get("Occasion")
         })
@@ -121,7 +122,7 @@ def _format_item_detail(item):
         "name": item.get("Name"),
         "notes": item.get("Notes"),
         "photo": photo,
-        "photo_url": f"/{photo}" if photo else None,
+        "photo_url": _to_photo_url(photo),
         "user_id": item.get("User_ID"),
         "space_id": item.get("Space_ID"),
         "type_id": item.get("Type_ID"),
@@ -133,6 +134,21 @@ def _format_item_detail(item):
         "color_ids": _split_ints(item.get("Color_IDs")),
         "colors": _split_text(item.get("Colors"), ","),
     }
+
+
+def _to_photo_url(photo):
+    if not photo:
+        return None
+
+    photo_str = str(photo)
+
+    if photo_str.startswith("http://") or photo_str.startswith("https://"):
+        return photo_str
+
+    if photo_str.startswith("/"):
+        return photo_str
+
+    return f"/{photo_str}"
 # 整理多選 ID。
 def _normalize_id_list(value):
     if value is None or value == "":

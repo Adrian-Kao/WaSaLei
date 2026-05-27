@@ -63,6 +63,12 @@ def health_check():
 def serve_picture(filename):
     return send_from_directory(PICTURES_DIR, filename)
 
+# Serve uploaded images stored under backend/uploads.
+@app.get("/uploads/<path:filename>")
+def serve_upload(filename):
+    upload_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads")
+    return send_from_directory(upload_dir, filename)
+
 # Serve parsed output images for preview display.
 @app.route("/images/<path:filename>")
 def serve_image(filename):

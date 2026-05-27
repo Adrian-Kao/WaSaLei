@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import ItemCard from "@/component/item-card";
 import ColorStrip from "@/component/color-strip";
 import { getItemById, getItemHistory, updateItem, type ClothingItemDetail } from "@/lib/api/clothing";
+import { API_BASE_URL } from "@/lib/api/api-client";
 import { SEASON_ID, SEASON_OPTIONS, STYLE_ID, STYLE_OPTIONS, TYPE_ID, TYPE_OPTIONS } from "@/lib/constants/filter-options";
 import type { ItemHistory } from "@/lib/types/clothing";
 import { FiEdit2 } from "react-icons/fi";
@@ -29,6 +30,16 @@ function createDraftFromItem(item: ClothingItemDetail): EditableItemDraft {
 
 function toStyleArray(style: string | string[]) {
   return Array.isArray(style) ? style : [style];
+}
+
+function toHistoryImageUrl(url?: string | null) {
+  if (!url) return null;
+  if (/^(https?:)?\/\//i.test(url) || url.startsWith("data:") || url.startsWith("blob:")) {
+    return url;
+  }
+
+  const path = url.startsWith("/") ? url : `/${url}`;
+  return `${API_BASE_URL}${path}`;
 }
 
 export default function ItemDetailPage() {
@@ -329,44 +340,46 @@ export default function ItemDetailPage() {
 
         {history.length > 0 ? (
           <div className="space-y-4">
-            {history.map((record) => (
+            {history.map((record, index) => (
               <div
-                key={record.id}
+                key={Number.isFinite(record.id) ? record.id : `${record.wornDate ?? "unknown"}-${index}`}
                 className="card bg-base-100 shadow-sm border border-base-300 overflow-hidden"
               >
                 <div className="card-body p-0">
                   {/* Title with date */}
                   <div className="bg-primary text-primary-content px-4 py-2">
                     <h3 className="font-semibold">
-                      {new Date(record.time).toLocaleDateString("zh-TW")}
+                      {record.wornDate ? new Date(record.wornDate).toLocaleDateString("zh-TW") : "-"}
                     </h3>
                   </div>
 
                   {/* Content */}
                   <div className="p-4">
-                    <div className="flex gap-4">
+                    <div className="flex gap-4 flex-col">
+
+                      
+
                       {/* Photo */}
-                      {record.photo ? (
-                        <div className="relative w-24 h-24 shrink-0 rounded-lg overflow-hidden">
+                      {toHistoryImageUrl(record.imageUrl) ? (
+                        <div className="relative w-full h-auto shrink-0 rounded-lg overflow-hidden">
                           <img
-                            src={record.photo}
+                            src={toHistoryImageUrl(record.imageUrl) || "/1.webp"}
                             alt="History photo"
                             className="h-full w-full object-cover"
                           />
                         </div>
                       ) : null}
 
-                      {/* Info */}
                       <div className="flex-1">
                         {record.occasion && (
-                          <p className="text-sm font-medium text-primary mb-2">
-                            {record.occasion}
+                          <p className="text-2xl font-serif text-primary mb-2 text-center">
+                            occasion：{record.occasion}
                           </p>
                         )}
-                        {record.note && (
-                          <p className="text-sm text-gray-600">{record.note}</p>
-                        )}
+    
                       </div>
+
+                      
                     </div>
                   </div>
                 </div>

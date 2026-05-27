@@ -141,8 +141,12 @@ export async function getItemById(itemId: number): Promise<ClothingItemDetail | 
 }
 
 export async function getItemHistory(itemId: number): Promise<ItemHistory[]> {
-  void itemId;
-  return [];
+  const res = await apiFetch(`${API_BASE_URL}/api/items/${itemId}/outfits`);
+  if (!res.ok) return [];
+  const payload = await res.json();
+  if (!payload.success || !Array.isArray(payload.data)) return [];
+  console.log("Fetched item history:", payload.data);
+  return payload.data as ItemHistory[];
 }
 
 export type CreateItemPayload = {

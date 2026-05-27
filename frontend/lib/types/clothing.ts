@@ -20,11 +20,10 @@ export type ClothingFilters = {
 
 export type ItemHistory = {
   id: number;
-  itemId: number;
-  time: Date;
-  photo?: string;
-  note?: string;
-  occasion?: string;
+  imageUrl?: string | null;
+  wornDate?: string | null;
+  note?: string | null;
+  occasion?: string | null;
 };
 
 export const defaultClothingFilters: ClothingFilters = {
