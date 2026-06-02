@@ -34,11 +34,16 @@ function toStyleArray(style: string | string[]) {
 
 function toHistoryImageUrl(url?: string | null) {
   if (!url) return null;
-  if (/^(https?:)?\/\//i.test(url) || url.startsWith("data:") || url.startsWith("blob:")) {
+  if (/^(https?:)?\/\//i.test(url)) {
     return url;
   }
 
-  const path = url.startsWith("/") ? url : `/${url}`;
+  let path = url.startsWith("/") ? url : `/${url}`;
+
+  if (/^\/[^/]+\.(png|jpg|jpeg|webp)$/i.test(path)) {
+    path = `/pictures/Outfits/final${path}`;
+  }
+
   return `${API_BASE_URL}${path}`;
 }
 
